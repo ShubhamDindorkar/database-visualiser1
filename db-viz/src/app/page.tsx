@@ -11,29 +11,29 @@ const features = [
     icon: Database,
     title: 'Create Databases',
     description: 'Design and manage multiple databases with visual tools',
-    color: 'text-indigo-600',
-    bg: 'bg-indigo-100 dark:bg-indigo-900/30',
+    color: 'text-blue-600',
+    bg: 'bg-blue-100 dark:bg-blue-900/30',
   },
   {
     icon: Table,
     title: 'Visual Tables',
     description: 'Build tables with columns, types, and constraints visually',
-    color: 'text-purple-600',
-    bg: 'bg-purple-100 dark:bg-purple-900/30',
+    color: 'text-green-600',
+    bg: 'bg-green-100 dark:bg-green-900/30',
   },
   {
     icon: GitBranch,
     title: 'Relationships',
     description: 'Define primary and foreign keys with visual connectors',
-    color: 'text-violet-600',
-    bg: 'bg-violet-100 dark:bg-violet-900/30',
+    color: 'text-purple-600',
+    bg: 'bg-purple-100 dark:bg-purple-900/30',
   },
   {
     icon: Terminal,
     title: 'SQL Terminal',
     description: 'Interactive terminal with SQL syntax highlighting',
-    color: 'text-fuchsia-600',
-    bg: 'bg-fuchsia-100 dark:bg-fuchsia-900/30',
+    color: 'text-orange-600',
+    bg: 'bg-orange-100 dark:bg-orange-900/30',
   },
 ];
 
@@ -50,7 +50,7 @@ export default function LandingPage() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -60,7 +60,7 @@ export default function LandingPage() {
                 initial={{ rotate: -180, opacity: 0 }}
                 animate={{ rotate: 0, opacity: 1 }}
                 transition={{ duration: 0.5 }}
-                className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200"
+                className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center"
               >
                 <Database className="w-5 h-5 text-white" />
               </motion.div>
@@ -88,7 +88,7 @@ export default function LandingPage() {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <span className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full text-sm font-medium mb-6 border border-indigo-200 dark:border-indigo-800">
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium mb-6">
                 <Sparkles className="w-4 h-4" />
                 Visual Database Design Tool
               </span>
@@ -98,10 +98,10 @@ export default function LandingPage() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-5xl sm:text-6xl lg:text-7xl font-bold text-slate-900 dark:text-white mb-6"
+              className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white mb-6"
             >
               Design Your{' '}
-              <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                 MySQL Database
               </span>{' '}
               Visually
@@ -154,9 +154,9 @@ export default function LandingPage() {
               {/* Mock Dashboard Preview */}
               <div className="flex gap-4">
                 {/* Mock Sidebar */}
-                <div className="w-48 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-slate-200 dark:border-gray-700">
+                <div className="w-48 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-2 mb-4">
-                    <div className="w-3 h-3 bg-indigo-500 rounded" />
+                    <div className="w-3 h-3 bg-blue-500 rounded" />
                     <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded" />
                   </div>
                   <div className="space-y-2">
@@ -178,7 +178,7 @@ export default function LandingPage() {
                       transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
                       className="w-40 bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden shadow-md"
                     >
-                      <div className="bg-indigo-500 px-3 py-2">
+                      <div className="bg-blue-500 px-3 py-2">
                         <div className="h-3 w-16 bg-white/80 rounded" />
                       </div>
                       <div className="p-3 space-y-2">
@@ -231,7 +231,7 @@ export default function LandingPage() {
             </div>
 
             {/* Decorative Elements */}
-            <div className="absolute -top-4 -left-4 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl" />
+            <div className="absolute -top-4 -left-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl" />
             <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl" />
           </motion.div>
         </div>
@@ -246,10 +246,10 @@ export default function LandingPage() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Powerful Features for Database Design
             </h2>
-            <p className="text-lg text-slate-600 dark:text-gray-400 max-w-2xl mx-auto">
+            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               Everything you need to design, visualize, and manage your MySQL databases
             </p>
           </motion.div>
@@ -263,15 +263,15 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
                 whileHover={{ y: -5 }}
-                className="p-6 bg-slate-50 dark:bg-gray-800 rounded-xl border border-slate-200 dark:border-gray-700 hover:shadow-lg hover:shadow-indigo-100 dark:hover:shadow-none transition-all"
+                className="p-6 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow"
               >
                 <div className={`w-12 h-12 ${feature.bg} rounded-xl flex items-center justify-center mb-4`}>
                   <feature.icon className={`w-6 h-6 ${feature.color}`} />
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                   {feature.title}
                 </h3>
-                <p className="text-slate-600 dark:text-gray-400">
+                <p className="text-gray-600 dark:text-gray-400">
                   {feature.description}
                 </p>
               </motion.div>
@@ -281,7 +281,7 @@ export default function LandingPage() {
       </section>
 
       {/* Capabilities Section */}
-      <section className="py-20 px-4 bg-gradient-to-br from-indigo-50 via-purple-50 to-violet-50 dark:from-gray-900 dark:to-gray-800">
+      <section className="py-20 px-4 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <motion.div
@@ -289,10 +289,10 @@ export default function LandingPage() {
               whileInView={{ x: 0, opacity: 1 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-6">
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-6">
                 Everything You Need to Design Professional Databases
               </h2>
-              <p className="text-lg text-slate-600 dark:text-gray-400 mb-8">
+              <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
                 Our visual tool provides all the features you need to create robust, well-designed MySQL database schemas.
               </p>
               <div className="grid sm:grid-cols-2 gap-4">
@@ -305,10 +305,10 @@ export default function LandingPage() {
                     transition={{ delay: index * 0.1 }}
                     className="flex items-center gap-3"
                   >
-                    <div className="w-5 h-5 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center">
-                      <Check className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
+                    <div className="w-5 h-5 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                      <Check className="w-3 h-3 text-green-600 dark:text-green-400" />
                     </div>
-                    <span className="text-slate-700 dark:text-gray-300">{capability}</span>
+                    <span className="text-gray-700 dark:text-gray-300">{capability}</span>
                   </motion.div>
                 ))}
               </div>
@@ -341,7 +341,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600">
+      <section className="py-20 px-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
             initial={{ y: 20, opacity: 0 }}
@@ -359,7 +359,7 @@ export default function LandingPage() {
               size="lg"
               onClick={() => router.push('/login')}
               rightIcon={<ArrowRight className="w-5 h-5" />}
-              className="bg-white text-indigo-600 hover:bg-indigo-50 shadow-lg shadow-purple-900/20"
+              className="bg-white text-blue-600 hover:bg-blue-50"
             >
               Get Started for Free
             </Button>
@@ -368,10 +368,10 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-4 bg-slate-900 text-slate-400">
+      <footer className="py-8 px-4 bg-gray-900 text-gray-400">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Database className="w-5 h-5 text-indigo-400" />
+            <Database className="w-5 h-5 text-blue-400" />
             <span className="text-white font-semibold">DB Visualiser</span>
           </div>
           <p className="text-sm">© 2026 DB Visualiser. All rights reserved.</p>

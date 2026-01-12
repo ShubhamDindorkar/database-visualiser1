@@ -165,26 +165,34 @@ export default function CreateTableModal({
 
     setIsLoading(true);
     try {
-      const formattedColumns: Column[] = columns.map((col) => ({
-        id: col.id,
-        name: col.name,
-        dataType: col.dataType,
-        isPrimaryKey: col.isPrimaryKey,
-        isForeignKey: col.isForeignKey,
-        foreignKeyReference: col.isForeignKey
-          ? {
+      const formattedColumns: Column[] = columns.map((col) => {
+        const column: Column = {
+          id: col.id,
+          name: col.name,
+          dataType: col.dataType,
+          isPrimaryKey: col.isPrimaryKey,
+          isForeignKey: col.isForeignKey,
+          isNotNull: col.isNotNull,
+          isUnique: col.isUnique,
+        };
+
+        // Only add foreignKeyReference if it's a foreign key with valid references
+        if (col.isForeignKey && col.foreignKeyTableId && col.foreignKeyColumnId) {
+          const refTable = existingTables.find((t) => t.id === col.foreignKeyTableId);
+          const refColumn = refTable?.columns.find((c) => c.id === col.foreignKeyColumnId);
+          
+          if (refTable && refColumn) {
+            column.foreignKeyReference = {
               tableId: col.foreignKeyTableId,
-              tableName: existingTables.find((t) => t.id === col.foreignKeyTableId)?.name || '',
+              tableName: refTable.name,
               columnId: col.foreignKeyColumnId,
-              columnName:
-                existingTables
-                  .find((t) => t.id === col.foreignKeyTableId)
-                  ?.columns.find((c) => c.id === col.foreignKeyColumnId)?.name || '',
-            }
-          : undefined,
-        isNotNull: col.isNotNull,
-        isUnique: col.isUnique,
-      }));
+              columnName: refColumn.name,
+            };
+          }
+        }
+
+        return column;
+      });
 
       await onCreate(tableName, formattedColumns);
       handleClose();

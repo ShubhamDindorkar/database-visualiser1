@@ -68,8 +68,17 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading, logout } = useAuth();
 
-  // Theme state
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  // Theme state - initialize from localStorage or system preference
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) {
+        return savedTheme === 'dark';
+      }
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
 
   // UI State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -88,31 +97,20 @@ export default function DashboardPage() {
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
 
-  // Load theme from localStorage
+  // Sync theme with document class on mount and changes
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      setIsDarkMode(true);
+    if (isDarkMode) {
       document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
     } else {
-      setIsDarkMode(false);
       document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
     }
-  }, []);
+  }, [isDarkMode]);
 
   // Toggle theme
   const toggleTheme = useCallback(() => {
-    setIsDarkMode((prev) => {
-      const newTheme = !prev;
-      if (newTheme) {
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-      }
-      return newTheme;
-    });
+    setIsDarkMode((prev) => !prev);
   }, []);
 
   // Auth redirect
