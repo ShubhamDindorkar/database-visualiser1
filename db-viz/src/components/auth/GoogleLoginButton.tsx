@@ -20,16 +20,16 @@ export default function GoogleLoginButton({ onClick, isLoading = false }: Google
         flex items-center justify-center gap-3 w-full
         px-6 py-3 rounded-lg
         bg-white dark:bg-gray-800
-        border border-slate-300 dark:border-gray-600
-        text-slate-700 dark:text-gray-200
+        border border-gray-300 dark:border-gray-600
+        text-gray-700 dark:text-gray-200
         font-medium text-base
-        shadow-sm hover:shadow-md hover:border-indigo-300
+        shadow-sm hover:shadow-md
         transition-all duration-200
         disabled:opacity-50 disabled:cursor-not-allowed
       "
     >
       {isLoading ? (
-        <svg className="animate-spin h-5 w-5 text-indigo-600" viewBox="0 0 24 24">
+        <svg className="animate-spin h-5 w-5 text-blue-600" viewBox="0 0 24 24">
           <circle
             className="opacity-25"
             cx="12"
