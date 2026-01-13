@@ -1,17 +1,10 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Database, Table, GitBranch, Terminal, Sparkles, ArrowRight, Check } from 'lucide-react';
 import Button from '@/components/common/Button';
-
-// Initial positions for the draggable tables
-const INITIAL_POSITIONS = {
-  users: { x: 0, y: 0 },
-  orders: { x: 0, y: 0 },
-  products: { x: 0, y: 0 },
-};
 
 const features = [
   {
@@ -55,16 +48,6 @@ const capabilities = [
 
 export default function LandingPage() {
   const router = useRouter();
-  const constraintsRef = useRef<HTMLDivElement>(null);
-  const [tablePositions, setTablePositions] = useState(INITIAL_POSITIONS);
-  const [isDragging, setIsDragging] = useState<string | null>(null);
-
-  const handleDrag = useCallback((tableId: string, info: { offset: { x: number; y: number } }) => {
-    setTablePositions(prev => ({
-      ...prev,
-      [tableId]: { x: info.offset.x, y: info.offset.y }
-    }));
-  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#020617]">
@@ -160,7 +143,7 @@ export default function LandingPage() {
             </motion.div>
           </div>
 
-          {/* Hero Illustration - Draggable Tables with Relations */}
+          {/* Hero Illustration - Floating Tables with Relations */}
           <motion.div
             initial={{ y: 40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -168,14 +151,11 @@ export default function LandingPage() {
             className="mt-16 relative"
           >
             <div className="bg-slate-100 dark:bg-[#1E293B] rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700 p-8 min-h-[400px]">
-              {/* Interactive Database Schema Visualization */}
-              <div 
-                ref={constraintsRef}
-                className="relative w-full h-[350px]"
-              >
+              {/* Floating Database Schema Visualization */}
+              <div className="relative w-full h-[350px] flex items-center justify-center">
                 
                 {/* Background Grid */}
-                <div className="absolute inset-0 opacity-20 pointer-events-none">
+                <div className="absolute inset-0 opacity-20">
                   <svg width="100%" height="100%">
                     <defs>
                       <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -186,200 +166,174 @@ export default function LandingPage() {
                   </svg>
                 </div>
 
-                {/* Dynamic Relationship Lines SVG */}
-                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 1 }}>
-                  {/* Line from Users to Orders */}
-                  <motion.line
-                    x1={140 + tablePositions.users.x}
-                    y1={175 + tablePositions.users.y}
-                    x2={340 + tablePositions.orders.x}
-                    y2={175 + tablePositions.orders.y}
-                    stroke="#2563EB"
-                    strokeWidth="2"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 1, delay: 0.5 }}
-                  />
-                  {/* Connection dots */}
-                  <motion.circle
-                    cx={140 + tablePositions.users.x}
-                    cy={175 + tablePositions.users.y}
-                    r="5"
-                    fill="#2563EB"
-                    animate={{ scale: isDragging ? 1 : [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: isDragging ? 0 : Infinity }}
-                  />
-                  <motion.circle
-                    cx={340 + tablePositions.orders.x}
-                    cy={175 + tablePositions.orders.y}
-                    r="5"
-                    fill="#2563EB"
-                    animate={{ scale: isDragging ? 1 : [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: isDragging ? 0 : Infinity, delay: 0.3 }}
-                  />
+                {/* Container for tables and lines - uses flexbox for proper spacing */}
+                <div className="relative flex items-center justify-between w-full max-w-4xl px-4" style={{ zIndex: 2 }}>
+                  
+                  {/* Table 1: Users - Left */}
+                  <motion.div
+                    animate={{ 
+                      y: [0, -15, 0],
+                    }}
+                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                    className="relative w-[180px] bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700"
+                  >
+                    <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 bg-white/80 rounded-full" />
+                      <span className="text-white font-semibold text-sm">Users</span>
+                    </div>
+                    <div className="p-4 space-y-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-amber-400 rounded flex items-center justify-center">
+                          <span className="text-[7px] text-amber-900 font-bold">PK</span>
+                        </div>
+                        <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">id</span>
+                        <span className="text-[10px] text-slate-400 ml-auto">INT</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-slate-200 dark:bg-slate-600 rounded" />
+                        <span className="text-xs text-slate-600 dark:text-slate-300">email</span>
+                        <span className="text-[10px] text-slate-400 ml-auto">VARCHAR</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-slate-200 dark:bg-slate-600 rounded" />
+                        <span className="text-xs text-slate-600 dark:text-slate-300">name</span>
+                        <span className="text-[10px] text-slate-400 ml-auto">VARCHAR</span>
+                      </div>
+                    </div>
+                    {/* Connection point - right side */}
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3 h-3 bg-blue-500 rounded-full border-2 border-white dark:border-slate-800 shadow-lg z-10" />
+                  </motion.div>
 
-                  {/* Line from Orders to Products */}
-                  <motion.line
-                    x1={520 + tablePositions.orders.x}
-                    y1={175 + tablePositions.orders.y}
-                    x2={720 + tablePositions.products.x}
-                    y2={175 + tablePositions.products.y}
-                    stroke="#10B981"
-                    strokeWidth="2"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 1, delay: 0.8 }}
-                  />
-                  {/* Connection dots */}
-                  <motion.circle
-                    cx={520 + tablePositions.orders.x}
-                    cy={175 + tablePositions.orders.y}
-                    r="5"
-                    fill="#10B981"
-                    animate={{ scale: isDragging ? 1 : [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: isDragging ? 0 : Infinity, delay: 0.5 }}
-                  />
-                  <motion.circle
-                    cx={720 + tablePositions.products.x}
-                    cy={175 + tablePositions.products.y}
-                    r="5"
-                    fill="#10B981"
-                    animate={{ scale: isDragging ? 1 : [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: isDragging ? 0 : Infinity, delay: 0.7 }}
-                  />
-                </svg>
+                  {/* Relationship Line 1: Users -> Orders */}
+                  <svg className="absolute left-[180px] right-[calc(50%+90px)] top-1/2 h-4 -translate-y-1/2 overflow-visible" style={{ zIndex: 1, width: 'calc(50% - 180px - 90px)' }}>
+                    <motion.line
+                      x1="0"
+                      y1="50%"
+                      x2="100%"
+                      y2="50%"
+                      stroke="#2563EB"
+                      strokeWidth="2"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ duration: 1, delay: 0.5 }}
+                    />
+                    {/* Animated dot flowing along the line */}
+                    <motion.circle
+                      r="4"
+                      fill="#2563EB"
+                      animate={{ cx: ['0%', '100%'] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                      cy="50%"
+                    />
+                  </svg>
 
-                {/* Table 1: Users - Left */}
-                <motion.div
-                  drag
-                  dragConstraints={constraintsRef}
-                  dragElastic={0.1}
-                  dragMomentum={false}
-                  onDrag={(_, info) => handleDrag('users', info)}
-                  onDragStart={() => setIsDragging('users')}
-                  onDragEnd={() => setIsDragging(null)}
-                  whileDrag={{ scale: 1.02, zIndex: 50 }}
-                  animate={!isDragging ? { y: [0, -8, 0] } : {}}
-                  transition={!isDragging ? { duration: 3, repeat: Infinity, ease: 'easeInOut' } : {}}
-                  className="absolute left-[20px] top-[100px] w-[160px] bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700 cursor-grab active:cursor-grabbing select-none"
-                  style={{ zIndex: isDragging === 'users' ? 50 : 2 }}
-                >
-                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 bg-white/80 rounded-full" />
-                    <span className="text-white font-semibold text-sm">Users</span>
-                    <div className="ml-auto text-white/60 text-xs">⋮⋮</div>
-                  </div>
-                  <div className="p-4 space-y-2.5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 bg-amber-400 rounded flex items-center justify-center">
-                        <span className="text-[7px] text-amber-900 font-bold">PK</span>
+                  {/* Table 2: Orders - Center */}
+                  <motion.div
+                    animate={{ 
+                      y: [0, 12, 0],
+                    }}
+                    transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
+                    className="relative w-[180px] bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700 mx-8"
+                  >
+                    {/* Connection point - left side */}
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 bg-blue-500 rounded-full border-2 border-white dark:border-slate-800 shadow-lg z-10" />
+                    
+                    <div className="bg-gradient-to-r from-sky-500 to-sky-600 px-4 py-3 flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 bg-white/80 rounded-full" />
+                      <span className="text-white font-semibold text-sm">Orders</span>
+                    </div>
+                    <div className="p-4 space-y-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-amber-400 rounded flex items-center justify-center">
+                          <span className="text-[7px] text-amber-900 font-bold">PK</span>
+                        </div>
+                        <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">id</span>
+                        <span className="text-[10px] text-slate-400 ml-auto">INT</span>
                       </div>
-                      <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">id</span>
-                      <span className="text-[10px] text-slate-400 ml-auto">INT</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-sky-400 rounded flex items-center justify-center">
+                          <span className="text-[7px] text-sky-900 font-bold">FK</span>
+                        </div>
+                        <span className="text-xs text-slate-600 dark:text-slate-300">user_id</span>
+                        <span className="text-[10px] text-slate-400 ml-auto">INT</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-sky-400 rounded flex items-center justify-center">
+                          <span className="text-[7px] text-sky-900 font-bold">FK</span>
+                        </div>
+                        <span className="text-xs text-slate-600 dark:text-slate-300">product_id</span>
+                        <span className="text-[10px] text-slate-400 ml-auto">INT</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-slate-200 dark:bg-slate-600 rounded" />
+                        <span className="text-xs text-slate-600 dark:text-slate-300">total</span>
+                        <span className="text-[10px] text-slate-400 ml-auto">DECIMAL</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 bg-slate-200 dark:bg-slate-600 rounded" />
-                      <span className="text-xs text-slate-600 dark:text-slate-300">email</span>
-                      <span className="text-[10px] text-slate-400 ml-auto">VARCHAR</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 bg-slate-200 dark:bg-slate-600 rounded" />
-                      <span className="text-xs text-slate-600 dark:text-slate-300">name</span>
-                      <span className="text-[10px] text-slate-400 ml-auto">VARCHAR</span>
-                    </div>
-                  </div>
-                </motion.div>
+                    {/* Connection point - right side */}
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-800 shadow-lg z-10" />
+                  </motion.div>
 
-                {/* Table 2: Orders - Center */}
-                <motion.div
-                  drag
-                  dragConstraints={constraintsRef}
-                  dragElastic={0.1}
-                  dragMomentum={false}
-                  onDrag={(_, info) => handleDrag('orders', info)}
-                  onDragStart={() => setIsDragging('orders')}
-                  onDragEnd={() => setIsDragging(null)}
-                  whileDrag={{ scale: 1.02, zIndex: 50 }}
-                  animate={!isDragging ? { y: [0, 10, 0] } : {}}
-                  transition={!isDragging ? { duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 0.3 } : {}}
-                  className="absolute left-[340px] top-[80px] w-[180px] bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700 cursor-grab active:cursor-grabbing select-none"
-                  style={{ zIndex: isDragging === 'orders' ? 50 : 3 }}
-                >
-                  <div className="bg-gradient-to-r from-sky-500 to-sky-600 px-4 py-3 flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 bg-white/80 rounded-full" />
-                    <span className="text-white font-semibold text-sm">Orders</span>
-                    <div className="ml-auto text-white/60 text-xs">⋮⋮</div>
-                  </div>
-                  <div className="p-4 space-y-2.5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 bg-amber-400 rounded flex items-center justify-center">
-                        <span className="text-[7px] text-amber-900 font-bold">PK</span>
-                      </div>
-                      <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">id</span>
-                      <span className="text-[10px] text-slate-400 ml-auto">INT</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 bg-sky-400 rounded flex items-center justify-center">
-                        <span className="text-[7px] text-sky-900 font-bold">FK</span>
-                      </div>
-                      <span className="text-xs text-slate-600 dark:text-slate-300">user_id</span>
-                      <span className="text-[10px] text-slate-400 ml-auto">INT</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 bg-sky-400 rounded flex items-center justify-center">
-                        <span className="text-[7px] text-sky-900 font-bold">FK</span>
-                      </div>
-                      <span className="text-xs text-slate-600 dark:text-slate-300">product_id</span>
-                      <span className="text-[10px] text-slate-400 ml-auto">INT</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 bg-slate-200 dark:bg-slate-600 rounded" />
-                      <span className="text-xs text-slate-600 dark:text-slate-300">total</span>
-                      <span className="text-[10px] text-slate-400 ml-auto">DECIMAL</span>
-                    </div>
-                  </div>
-                </motion.div>
+                  {/* Relationship Line 2: Orders -> Products */}
+                  <svg className="absolute right-[180px] left-[calc(50%+90px)] top-1/2 h-4 -translate-y-1/2 overflow-visible" style={{ zIndex: 1, width: 'calc(50% - 180px - 90px)' }}>
+                    <motion.line
+                      x1="0"
+                      y1="50%"
+                      x2="100%"
+                      y2="50%"
+                      stroke="#10B981"
+                      strokeWidth="2"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ duration: 1, delay: 0.8 }}
+                    />
+                    {/* Animated dot flowing along the line */}
+                    <motion.circle
+                      r="4"
+                      fill="#10B981"
+                      animate={{ cx: ['0%', '100%'] }}
+                      transition={{ duration: 2.5, repeat: Infinity, ease: 'linear', delay: 0.5 }}
+                      cy="50%"
+                    />
+                  </svg>
 
-                {/* Table 3: Products - Right */}
-                <motion.div
-                  drag
-                  dragConstraints={constraintsRef}
-                  dragElastic={0.1}
-                  dragMomentum={false}
-                  onDrag={(_, info) => handleDrag('products', info)}
-                  onDragStart={() => setIsDragging('products')}
-                  onDragEnd={() => setIsDragging(null)}
-                  whileDrag={{ scale: 1.02, zIndex: 50 }}
-                  animate={!isDragging ? { y: [0, -6, 0] } : {}}
-                  transition={!isDragging ? { duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 0.6 } : {}}
-                  className="absolute left-[680px] top-[100px] w-[160px] bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700 cursor-grab active:cursor-grabbing select-none"
-                  style={{ zIndex: isDragging === 'products' ? 50 : 2 }}
-                >
-                  <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3 flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 bg-white/80 rounded-full" />
-                    <span className="text-white font-semibold text-sm">Products</span>
-                    <div className="ml-auto text-white/60 text-xs">⋮⋮</div>
-                  </div>
-                  <div className="p-4 space-y-2.5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 bg-amber-400 rounded flex items-center justify-center">
-                        <span className="text-[7px] text-amber-900 font-bold">PK</span>
+                  {/* Table 3: Products - Right */}
+                  <motion.div
+                    animate={{ 
+                      y: [0, -10, 0],
+                    }}
+                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
+                    className="relative w-[180px] bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700"
+                  >
+                    {/* Connection point - left side */}
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-800 shadow-lg z-10" />
+                    
+                    <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3 flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 bg-white/80 rounded-full" />
+                      <span className="text-white font-semibold text-sm">Products</span>
+                    </div>
+                    <div className="p-4 space-y-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-amber-400 rounded flex items-center justify-center">
+                          <span className="text-[7px] text-amber-900 font-bold">PK</span>
+                        </div>
+                        <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">id</span>
+                        <span className="text-[10px] text-slate-400 ml-auto">INT</span>
                       </div>
-                      <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">id</span>
-                      <span className="text-[10px] text-slate-400 ml-auto">INT</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-slate-200 dark:bg-slate-600 rounded" />
+                        <span className="text-xs text-slate-600 dark:text-slate-300">name</span>
+                        <span className="text-[10px] text-slate-400 ml-auto">VARCHAR</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-slate-200 dark:bg-slate-600 rounded" />
+                        <span className="text-xs text-slate-600 dark:text-slate-300">price</span>
+                        <span className="text-[10px] text-slate-400 ml-auto">DECIMAL</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 bg-slate-200 dark:bg-slate-600 rounded" />
-                      <span className="text-xs text-slate-600 dark:text-slate-300">name</span>
-                      <span className="text-[10px] text-slate-400 ml-auto">VARCHAR</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 bg-slate-200 dark:bg-slate-600 rounded" />
-                      <span className="text-xs text-slate-600 dark:text-slate-300">price</span>
-                      <span className="text-[10px] text-slate-400 ml-auto">DECIMAL</span>
-                    </div>
-                  </div>
-                </motion.div>
+                  </motion.div>
+
+                </div>
 
                 {/* Floating glow effects */}
                 <motion.div
@@ -397,14 +351,6 @@ export default function LandingPage() {
                   transition={{ duration: 3.5, repeat: Infinity, delay: 0.5 }}
                   className="absolute left-[45%] top-[40%] w-24 h-24 bg-sky-500/20 rounded-full blur-3xl pointer-events-none"
                 />
-
-                {/* Drag hint */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs text-slate-400 dark:text-slate-500 flex items-center gap-2 pointer-events-none">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M5 9l4-4 4 4M5 15l4 4 4-4" />
-                  </svg>
-                  Drag tables to reposition
-                </div>
               </div>
             </div>
 
