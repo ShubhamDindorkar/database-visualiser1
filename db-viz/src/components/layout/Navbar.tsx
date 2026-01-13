@@ -2,22 +2,18 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Sun, Moon, LogOut, Settings as SettingsIcon, User } from 'lucide-react';
+import { LogOut, Settings as SettingsIcon, User } from 'lucide-react';
 import Image from 'next/image';
 import { User as UserType } from '@/types/database';
 
 interface NavbarProps {
   user: UserType | null;
-  isDarkMode: boolean;
-  onToggleTheme: () => void;
   onLogout: () => void;
   onOpenSettings: () => void;
 }
 
 export default function Navbar({
   user,
-  isDarkMode,
-  onToggleTheme,
   onLogout,
   onOpenSettings,
 }: NavbarProps) {
@@ -25,11 +21,11 @@ export default function Navbar({
     <motion.nav
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="h-16 bg-white dark:bg-[#0F172A] border-b border-slate-200 dark:border-slate-700 px-4 flex items-center justify-between shadow-sm z-50"
+      className="h-16 bg-white border-b border-gray-200 px-4 flex items-center justify-between shadow-sm z-50"
     >
       {/* Logo and App Name */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+        <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
           <svg
             className="w-6 h-6 text-white"
             fill="none"
@@ -45,10 +41,10 @@ export default function Navbar({
           </svg>
         </div>
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+          <h1 className="text-xl font-bold text-black">
             DB Visualiser
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-gray-600">
             MySQL Workbench
           </p>
         </div>
@@ -56,40 +52,25 @@ export default function Navbar({
 
       {/* Right Side Actions */}
       <div className="flex items-center gap-4">
-        {/* Theme Toggle */}
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={onToggleTheme}
-          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          aria-label="Toggle theme"
-        >
-          {isDarkMode ? (
-            <Sun className="w-5 h-5 text-amber-400" />
-          ) : (
-            <Moon className="w-5 h-5 text-slate-600" />
-          )}
-        </motion.button>
-
         {/* Settings */}
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={onOpenSettings}
-          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
           aria-label="Settings"
         >
-          <SettingsIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+          <SettingsIcon className="w-5 h-5 text-gray-700" />
         </motion.button>
 
         {/* User Profile */}
         {user && (
-          <div className="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-700">
+          <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium text-slate-900 dark:text-white">
+              <p className="text-sm font-medium text-black">
                 {user.displayName}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-gray-600">
                 {user.email}
               </p>
             </div>
@@ -99,10 +80,10 @@ export default function Navbar({
                 alt={user.displayName || 'User'}
                 width={40}
                 height={40}
-                className="w-10 h-10 rounded-full border-2 border-slate-200 dark:border-slate-600"
+                className="w-10 h-10 rounded-full border-2 border-gray-200"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center">
                 <User className="w-5 h-5 text-white" />
               </div>
             )}
@@ -110,7 +91,7 @@ export default function Navbar({
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={onLogout}
-              className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 transition-colors"
+              className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
               aria-label="Logout"
             >
               <LogOut className="w-5 h-5" />

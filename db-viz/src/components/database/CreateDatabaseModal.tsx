@@ -102,20 +102,20 @@ export default function CreateDatabaseModal({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="bg-white dark:bg-[#0F172A] rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden"
+              className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-center justify-between p-4 border-b border-gray-200">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                    <Database className="w-5 h-5 text-blue-600" />
+                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <Database className="w-5 h-5 text-gray-800" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    <h2 className="text-lg font-semibold text-black">
                       Create Database
                     </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="text-sm text-gray-600">
                       Create a new MySQL database
                     </p>
                   </div>
@@ -124,9 +124,9 @@ export default function CreateDatabaseModal({
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={handleClose}
-                  className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
                 >
-                  <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                  <X className="w-5 h-5 text-gray-600" />
                 </motion.button>
               </div>
 
@@ -160,7 +160,7 @@ export default function CreateDatabaseModal({
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-8 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    className="absolute right-3 top-8 text-gray-500 hover:text-gray-700"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -180,9 +180,9 @@ export default function CreateDatabaseModal({
                 />
 
                 {/* Info Box */}
-                <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
-                  <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5" />
-                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <AlertCircle className="w-4 h-4 text-gray-700 mt-0.5" />
+                  <p className="text-xs text-gray-700">
                     The password will be securely hashed and stored. Make sure to remember it for future access.
                   </p>
                 </div>

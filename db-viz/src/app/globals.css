@@ -1,20 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  /* Light Mode Colors */
-  --background: #F8FAFC;
+  /* Light Mode Colors - Default */
+  --background: #FFFFFF;
   --foreground: #0F172A;
   --primary-accent: #2563EB;
   --secondary-accent: #38BDF8;
   --text-primary: #0F172A;
   --text-secondary: #475569;
   --text-muted: #64748B;
-  --border-color: #CBD5E1;
+  --border-color: #E2E8F0;
   --card-bg: #FFFFFF;
-  --sidebar-bg: #F1F5F9;
+  --sidebar-bg: #FFFFFF;
 }
 
-/* Dark mode variables */
+/* Dark mode variables - only applies in dashboard when .dark class is present */
 .dark {
   --background: #020617;
   --foreground: #E5E7EB;
@@ -35,7 +35,7 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Light mode by default */
+/* Light mode by default - white background */
 body {
   background: var(--background);
   color: var(--foreground);
@@ -60,14 +60,14 @@ body {
   height: 10px;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - Light mode default */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #E2E8F0;
+  background: #F1F5F9;
 }
 
 .dark ::-webkit-scrollbar-track {
@@ -75,7 +75,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #94A3B8;
+  background: #CBD5E1;
   border-radius: 4px;
 }
 
@@ -84,7 +84,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #64748B;
+  background: #94A3B8;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {

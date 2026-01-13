@@ -19,9 +19,9 @@ export default function GoogleLoginButton({ onClick, isLoading = false }: Google
       className="
         flex items-center justify-center gap-3 w-full
         px-6 py-3 rounded-lg
-        bg-white dark:bg-slate-800
-        border border-slate-300 dark:border-slate-600
-        text-slate-700 dark:text-slate-200
+        bg-white
+        border border-gray-400
+        text-gray-800
         font-medium text-base
         shadow-sm hover:shadow-md
         transition-all duration-200
@@ -29,7 +29,7 @@ export default function GoogleLoginButton({ onClick, isLoading = false }: Google
       "
     >
       {isLoading ? (
-        <svg className="animate-spin h-5 w-5 text-blue-600" viewBox="0 0 24 24">
+        <svg className="animate-spin h-5 w-5 text-black" viewBox="0 0 24 24">
           <circle
             className="opacity-25"
             cx="12"

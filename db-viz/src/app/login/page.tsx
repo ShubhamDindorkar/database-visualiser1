@@ -50,28 +50,28 @@ export default function LoginPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#020617]">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"
+          className="w-12 h-12 border-4 border-black border-t-transparent rounded-full"
         />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex bg-slate-50 dark:bg-[#020617]">
-      {/* Left Side - Benefits */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#0F172A] p-12 flex-col justify-between">
+    <div className="min-h-screen flex bg-white">
+      {/* Left Side - Benefits with BLACK background */}
+      <div className="hidden lg:flex lg:w-1/2 bg-black p-12 flex-col justify-between">
         <div>
           <motion.div
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             className="flex items-center gap-3"
           >
-            <div className="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center backdrop-blur-sm border border-blue-500/30">
-              <Database className="w-6 h-6 text-blue-400" />
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/30">
+              <Database className="w-6 h-6 text-white" />
             </div>
             <span className="text-2xl font-bold text-white">DB Visualiser</span>
           </motion.div>
@@ -86,7 +86,7 @@ export default function LoginPage() {
             <h1 className="text-4xl font-bold text-white mb-4">
               Design databases the visual way
             </h1>
-            <p className="text-xl text-slate-300">
+            <p className="text-xl text-gray-400">
               Create, manage, and visualize your MySQL databases with our intuitive interface.
             </p>
           </motion.div>
@@ -98,11 +98,10 @@ export default function LoginPage() {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 + index * 0.1 }}
-                className="p-4 bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700"
-              >
-                <benefit.icon className="w-8 h-8 text-blue-400 mb-3" />
+                className="p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
+                <benefit.icon className="w-8 h-8 text-white mb-3" />
                 <h3 className="text-white font-semibold mb-1">{benefit.title}</h3>
-                <p className="text-slate-400 text-sm">{benefit.description}</p>
+                <p className="text-gray-500 text-sm">{benefit.description}</p>
               </motion.div>
             ))}
           </div>
@@ -112,14 +111,13 @@ export default function LoginPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
-          className="text-slate-500 text-sm"
-        >
+          className="text-gray-600 text-sm">
           Trusted by developers worldwide
         </motion.p>
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -128,20 +126,20 @@ export default function LoginPage() {
         >
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center">
               <Database className="w-6 h-6 text-white" />
             </div>
-            <span className="text-2xl font-bold text-slate-900 dark:text-white">
+            <span className="text-2xl font-bold text-black">
               DB Visualiser
             </span>
           </div>
 
-          <div className="bg-white dark:bg-[#1E293B]/60 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-slate-200 dark:border-slate-700">
+          <div className="bg-white backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-gray-200">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+              <h2 className="text-2xl font-bold text-black mb-2">
                 Welcome back
               </h2>
-              <p className="text-slate-600 dark:text-slate-400">
+              <p className="text-gray-700">
                 Sign in to continue to your dashboard
               </p>
             </div>
@@ -149,13 +147,13 @@ export default function LoginPage() {
             <GoogleLoginButton onClick={handleGoogleSignIn} isLoading={loading} />
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-gray-600">
                 By signing in, you agree to our{' '}
-                <a href="#" className="text-blue-600 hover:text-blue-700 dark:text-blue-400">
+                <a href="#" className="text-black hover:text-gray-800 underline">
                   Terms of Service
                 </a>{' '}
                 and{' '}
-                <a href="#" className="text-blue-600 hover:text-blue-700 dark:text-blue-400">
+                <a href="#" className="text-black hover:text-gray-800 underline">
                   Privacy Policy
                 </a>
               </p>
@@ -170,7 +168,7 @@ export default function LoginPage() {
           >
             <button
               onClick={() => router.push('/')}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 transition-all duration-200 font-medium"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-200 transition-all duration-200 font-medium"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5M12 19l-7-7 7-7"/>

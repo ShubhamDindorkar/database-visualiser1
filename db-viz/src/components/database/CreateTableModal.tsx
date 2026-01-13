@@ -238,20 +238,20 @@ export default function CreateTableModal({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="bg-white dark:bg-[#0F172A] rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden"
+              className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-center justify-between p-4 border-b border-gray-200">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
-                    <Table className="w-5 h-5 text-emerald-600" />
+                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <Table className="w-5 h-5 text-gray-800" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    <h2 className="text-lg font-semibold text-black">
                       Create Table
                     </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="text-sm text-gray-600">
                       in {databaseName}
                     </p>
                   </div>
@@ -260,9 +260,9 @@ export default function CreateTableModal({
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={handleClose}
-                  className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
                 >
-                  <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                  <X className="w-5 h-5 text-gray-600" />
                 </motion.button>
               </div>
 
@@ -280,10 +280,9 @@ export default function CreateTableModal({
                   leftIcon={<Table className="w-4 h-4" />}
                 />
 
-                {/* Columns Section */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <label className="block text-sm font-medium text-gray-800">
                       Columns
                     </label>
                     <Button
@@ -304,7 +303,7 @@ export default function CreateTableModal({
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="p-3 bg-slate-50 dark:bg-[#1E293B] rounded-lg space-y-3"
+                        className="p-3 bg-gray-50 rounded-lg space-y-3"
                       >
                         <div className="flex items-start gap-3">
                           <div className="flex-1">
@@ -314,10 +313,10 @@ export default function CreateTableModal({
                               value={column.name}
                               onChange={(e) => updateColumn(column.id, { name: e.target.value })}
                               className={`w-full px-3 py-2 rounded-lg border text-sm
-                                bg-white dark:bg-slate-800
-                                text-slate-900 dark:text-slate-100
-                                border-slate-300 dark:border-slate-600
-                                focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                                bg-white
+                                text-black
+                                border-gray-400
+                                focus:ring-2 focus:ring-gray-600 focus:border-gray-600
                                 ${errors.columns?.[`${column.id}-name`] ? 'border-red-500' : ''}
                               `}
                             />
@@ -332,10 +331,10 @@ export default function CreateTableModal({
                             value={column.dataType}
                             onChange={(e) => updateColumn(column.id, { dataType: e.target.value as DataType })}
                             className="px-3 py-2 rounded-lg border text-sm
-                              bg-white dark:bg-slate-800
-                              text-slate-900 dark:text-slate-100
-                              border-slate-300 dark:border-slate-600
-                              focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              bg-white
+                              text-black
+                              border-gray-400
+                              focus:ring-2 focus:ring-gray-600 focus:border-gray-600"
                           >
                             {DATA_TYPES.map((type) => (
                               <option key={type} value={type}>
@@ -350,7 +349,7 @@ export default function CreateTableModal({
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
                               onClick={() => removeColumn(column.id)}
-                              className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 transition-colors"
+                              className="p-2 rounded-lg hover:bg-red-100 text-red-500 transition-colors"
                             >
                               <Trash2 className="w-4 h-4" />
                             </motion.button>
@@ -365,8 +364,8 @@ export default function CreateTableModal({
                             onClick={() => handlePrimaryKeyToggle(column.id)}
                             className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors
                               ${column.isPrimaryKey
-                                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700'
-                                : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
+                                ? 'bg-amber-100 text-amber-700 border border-amber-300'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                               }`}
                           >
                             <Key className="w-3 h-3" />
@@ -379,8 +378,8 @@ export default function CreateTableModal({
                             onClick={() => updateColumn(column.id, { isForeignKey: !column.isForeignKey })}
                             className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors
                               ${column.isForeignKey
-                                ? 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-700'
-                                : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
+                                ? 'bg-gray-400 text-gray-900 border border-gray-500'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                               }`}
                           >
                             <Link className="w-3 h-3" />
@@ -394,8 +393,8 @@ export default function CreateTableModal({
                             disabled={column.isPrimaryKey}
                             className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors
                               ${column.isNotNull
-                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700'
-                                : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
+                                ? 'bg-gray-400 text-gray-900 border border-gray-500'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                               }
                               ${column.isPrimaryKey ? 'opacity-50 cursor-not-allowed' : ''}
                             `}
@@ -410,8 +409,8 @@ export default function CreateTableModal({
                             disabled={column.isPrimaryKey}
                             className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors
                               ${column.isUnique
-                                ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
-                                : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
+                                ? 'bg-gray-400 text-gray-900 border border-gray-500'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                               }
                               ${column.isPrimaryKey ? 'opacity-50 cursor-not-allowed' : ''}
                             `}
@@ -426,7 +425,7 @@ export default function CreateTableModal({
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
-                            className="flex gap-2 pt-2 border-t border-slate-200 dark:border-slate-700"
+                            className="flex gap-2 pt-2 border-t border-gray-200"
                           >
                             <select
                               value={column.foreignKeyTableId}
@@ -437,10 +436,10 @@ export default function CreateTableModal({
                                 })
                               }
                               className="flex-1 px-3 py-2 rounded-lg border text-sm
-                                bg-white dark:bg-slate-800
-                                text-slate-900 dark:text-slate-100
-                                border-slate-300 dark:border-slate-600
-                                focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                bg-white
+                                text-black
+                                border-gray-400
+                                focus:ring-2 focus:ring-gray-600 focus:border-gray-600"
                             >
                               <option value="">Select table...</option>
                               {existingTables.map((table) => (
@@ -457,10 +456,10 @@ export default function CreateTableModal({
                               }
                               disabled={!column.foreignKeyTableId}
                               className="flex-1 px-3 py-2 rounded-lg border text-sm
-                                bg-white dark:bg-slate-800
-                                text-slate-900 dark:text-slate-100
-                                border-slate-300 dark:border-slate-600
-                                focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                                bg-white
+                                text-black
+                                border-gray-400
+                                focus:ring-2 focus:ring-gray-600 focus:border-gray-600
                                 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <option value="">Select column...</option>
@@ -492,7 +491,7 @@ export default function CreateTableModal({
               </form>
 
               {/* Actions */}
-              <div className="flex gap-3 p-4 border-t border-slate-200 dark:border-slate-700">
+              <div className="flex gap-3 p-4 border-t border-gray-200">
                 <Button
                   type="button"
                   variant="secondary"

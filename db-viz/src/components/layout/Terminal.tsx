@@ -70,7 +70,7 @@ export default function Terminal({
       case 'warning':
         return 'text-yellow-400';
       default:
-        return 'text-blue-400';
+        return 'text-gray-400';
     }
   };
 
@@ -87,22 +87,22 @@ export default function Terminal({
     <motion.div
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="bg-[#0F172A] border-t border-slate-700 flex flex-col"
+      className="bg-[#0F172A] border-t border-gray-800 flex flex-col"
       style={{ height: isMinimized ? '40px' : '200px' }}
     >
       {/* Terminal Header */}
-      <div className="flex items-center justify-between px-4 py-2 bg-[#1E293B] border-b border-slate-700">
+      <div className="flex items-center justify-between px-4 py-2 bg-[#1E293B] border-b border-gray-800">
         <div className="flex items-center gap-2">
-          <TerminalIcon className="w-4 h-4 text-emerald-400" />
-          <span className="text-sm font-medium text-slate-300">SQL Terminal</span>
-          <span className="text-xs text-slate-500">MySQL 8.0</span>
+          <TerminalIcon className="w-4 h-4 text-gray-500" />
+          <span className="text-sm font-medium text-gray-400">SQL Terminal</span>
+          <span className="text-xs text-gray-600">MySQL 8.0</span>
         </div>
         <div className="flex items-center gap-1">
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={onToggleMinimize}
-            className="p-1 rounded hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className="p-1 rounded hover:bg-gray-800 text-gray-500 hover:text-white transition-colors"
           >
             {isMinimized ? (
               <ChevronUp className="w-4 h-4" />
@@ -128,16 +128,16 @@ export default function Terminal({
               onClick={() => inputRef.current?.focus()}
             >
               {/* Welcome Message */}
-              <div className="text-slate-500 mb-2">
+              <div className="text-gray-600 mb-2">
                 <p>Welcome to MySQL Terminal (Simulation Mode)</p>
                 <p>Type SQL commands or &apos;help&apos; for assistance.</p>
-                <p className="text-slate-600">---</p>
+                <p className="text-gray-700">---</p>
               </div>
 
               {/* Logs */}
               {logs.map((log) => (
                 <div key={log.id} className="flex gap-2 mb-1">
-                  <span className="text-slate-600">[{formatTimestamp(log.timestamp)}]</span>
+                  <span className="text-gray-700">[{formatTimestamp(log.timestamp)}]</span>
                   <span className={getLogColor(log.type)}>{log.message}</span>
                 </div>
               ))}
@@ -146,14 +146,14 @@ export default function Terminal({
 
             {/* Input Area */}
             <form onSubmit={handleSubmit} className="flex items-center px-3 pb-3">
-              <span className="text-emerald-400 font-mono">mysql&gt;</span>
+              <span className="text-gray-500 font-mono">mysql&gt;</span>
               <input
                 ref={inputRef}
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="flex-1 bg-transparent border-none outline-none text-white font-mono text-sm ml-2 placeholder:text-slate-600"
+                className="flex-1 bg-transparent border-none outline-none text-white font-mono text-sm ml-2 placeholder:text-gray-700"
                 placeholder="Enter SQL command..."
                 autoComplete="off"
                 spellCheck={false}
