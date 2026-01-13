@@ -210,7 +210,7 @@ export default function DashboardPage() {
               animated: true,
               markerEnd: {
                 type: MarkerType.ArrowClosed,
-                color: '#8b5cf6',
+                color: '#2563EB',
               },
               data: {
                 sourceColumn: column.name,
@@ -509,11 +509,11 @@ export default function DashboardPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#020617]">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"
+          className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"
         />
       </div>
     );
@@ -524,7 +524,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className={`h-screen flex flex-col bg-gray-100 dark:bg-gray-900 ${isDarkMode ? 'dark' : ''}`}>
+    <div className={`h-screen flex flex-col bg-slate-100 dark:bg-[#020617] ${isDarkMode ? 'dark' : ''}`}>
       {/* Navbar */}
       <Navbar
         user={user}
@@ -564,28 +564,28 @@ export default function DashboardPage() {
                 edgeTypes={edgeTypes}
                 fitView
                 proOptions={{ hideAttribution: true }}
-                className="bg-gray-50 dark:bg-gray-800"
+                className="bg-slate-50 dark:bg-[#0F172A]"
               >
                 <Background
                   variant={BackgroundVariant.Dots}
                   gap={20}
                   size={1}
-                  color={isDarkMode ? '#374151' : '#e5e7eb'}
+                  color={isDarkMode ? '#334155' : '#CBD5E1'}
                 />
                 <Controls
-                  className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg"
+                  className="bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg"
                 />
               </ReactFlow>
             ) : (
-              <div className="h-full flex items-center justify-center bg-gray-50 dark:bg-gray-800">
+              <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-[#0F172A]">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="text-center"
                 >
-                  <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-20 h-20 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg
-                      className="w-10 h-10 text-gray-400 dark:text-gray-500"
+                      className="w-10 h-10 text-slate-400 dark:text-slate-500"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -598,15 +598,15 @@ export default function DashboardPage() {
                       />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">
                     No Database Selected
                   </h3>
-                  <p className="text-gray-500 dark:text-gray-400 mb-4">
+                  <p className="text-slate-500 dark:text-slate-400 mb-4">
                     Select or create a database to start designing tables
                   </p>
                   <button
                     onClick={() => setIsCreateDbModalOpen(true)}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Create Database
                   </button>
@@ -619,10 +619,10 @@ export default function DashboardPage() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="absolute top-4 right-4 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700"
+                className="absolute top-4 right-4 bg-white dark:bg-[#1E293B] px-4 py-2 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700"
               >
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  <span className="font-semibold text-gray-900 dark:text-white">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  <span className="font-semibold text-slate-900 dark:text-white">
                     {selectedDatabaseName}
                   </span>{' '}
                   • {tablesForSelectedDb.length} table{tablesForSelectedDb.length !== 1 ? 's' : ''}

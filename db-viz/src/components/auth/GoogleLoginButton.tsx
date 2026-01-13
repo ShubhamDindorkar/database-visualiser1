@@ -19,9 +19,9 @@ export default function GoogleLoginButton({ onClick, isLoading = false }: Google
       className="
         flex items-center justify-center gap-3 w-full
         px-6 py-3 rounded-lg
-        bg-white dark:bg-gray-800
-        border border-gray-300 dark:border-gray-600
-        text-gray-700 dark:text-gray-200
+        bg-white dark:bg-slate-800
+        border border-slate-300 dark:border-slate-600
+        text-slate-700 dark:text-slate-200
         font-medium text-base
         shadow-sm hover:shadow-md
         transition-all duration-200

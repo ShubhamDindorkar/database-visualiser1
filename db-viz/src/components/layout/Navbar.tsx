@@ -25,11 +25,11 @@ export default function Navbar({
     <motion.nav
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 flex items-center justify-between shadow-sm z-50"
+      className="h-16 bg-white dark:bg-[#0F172A] border-b border-slate-200 dark:border-slate-700 px-4 flex items-center justify-between shadow-sm z-50"
     >
       {/* Logo and App Name */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
           <svg
             className="w-6 h-6 text-white"
             fill="none"
@@ -45,10 +45,10 @@ export default function Navbar({
           </svg>
         </div>
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">
             DB Visualiser
           </h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             MySQL Workbench
           </p>
         </div>
@@ -61,13 +61,13 @@ export default function Navbar({
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={onToggleTheme}
-          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           aria-label="Toggle theme"
         >
           {isDarkMode ? (
-            <Sun className="w-5 h-5 text-yellow-500" />
+            <Sun className="w-5 h-5 text-amber-400" />
           ) : (
-            <Moon className="w-5 h-5 text-gray-600" />
+            <Moon className="w-5 h-5 text-slate-600" />
           )}
         </motion.button>
 
@@ -76,20 +76,20 @@ export default function Navbar({
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={onOpenSettings}
-          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           aria-label="Settings"
         >
-          <SettingsIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          <SettingsIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
         </motion.button>
 
         {/* User Profile */}
         {user && (
-          <div className="flex items-center gap-3 pl-4 border-l border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-700">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
+              <p className="text-sm font-medium text-slate-900 dark:text-white">
                 {user.displayName}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {user.email}
               </p>
             </div>
@@ -99,10 +99,10 @@ export default function Navbar({
                 alt={user.displayName || 'User'}
                 width={40}
                 height={40}
-                className="w-10 h-10 rounded-full border-2 border-gray-200 dark:border-gray-600"
+                className="w-10 h-10 rounded-full border-2 border-slate-200 dark:border-slate-600"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
                 <User className="w-5 h-5 text-white" />
               </div>
             )}
