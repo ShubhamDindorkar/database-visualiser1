@@ -109,8 +109,7 @@ export default function LandingPage() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-5xl sm:text-6xl lg:text-7xl font-bold text-black mb-6"
             >
-              Design Your
-              
+              Design Your<br />
               Database Visually
             </motion.h1>
 
@@ -128,7 +127,7 @@ export default function LandingPage() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4"
+              className="flex items-center justify-center"
             >
               <Button
                 variant="primary"
@@ -137,15 +136,6 @@ export default function LandingPage() {
                 rightIcon={<ArrowRight className="w-5 h-5" />}
               >
                 Get Started Free
-              </Button>
-              <Button
-                variant="secondary"
-                size="lg"
-                onClick={() => {
-                  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-              >
-                Learn More
               </Button>
             </motion.div>
           </div>
