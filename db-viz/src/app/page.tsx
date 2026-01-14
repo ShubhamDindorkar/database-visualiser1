@@ -128,7 +128,7 @@ export default function LandingPage() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="text-xl text-gray-700 max-w-3xl mx-auto mb-10"
             >
-              Create, manage, and visualize your MySQL databases with an intuitive drag-and-drop interface.
+              Create, manage, and visualize your SQL databases with an intuitive drag-and-drop interface.
               Design tables, define relationships, and see your schema come to life.
             </motion.p>
 
@@ -481,10 +481,10 @@ export default function LandingPage() {
             viewport={{ once: true }}
           >
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
-              Ready to Design Your Database?
+              Build Databases with Clarity and Control.
             </h2>
             <p className="text-xl text-gray-400 mb-8">
-              Start creating beautiful, well-structured MySQL databases today.
+              {/* Start creating beautiful, well-structured databases today. */}
             </p>
             <Button
               variant="secondary"

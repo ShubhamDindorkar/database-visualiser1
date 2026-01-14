@@ -149,7 +149,7 @@ export default function Settings({
                     Version 1.0.0
                   </p>
                   <p className="text-xs text-gray-600 mt-2">
-                    A visual MySQL database management tool for creating and managing databases, tables, and relationships.
+                    A visual SQL database management tool for creating and managing databases, tables, and relationships.
                   </p>
                 </div>
               </div>

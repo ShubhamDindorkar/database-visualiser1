@@ -45,7 +45,7 @@ export default function Navbar({
             DB Visualiser
           </h1>
           <p className="text-xs text-gray-600">
-            MySQL Workbench
+            {/* MySQL Workbench */}
           </p>
         </div>
       </div>
