@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Database, Table, GitBranch, Terminal, Sparkles, ArrowRight, Check, X } from 'lucide-react';
 import Button from '@/components/common/Button';
+import { LayoutTextFlip } from '@/components/ui/layout-text-flip';
 
 const features = [
   {
@@ -107,10 +108,18 @@ export default function LandingPage() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-5xl sm:text-6xl lg:text-7xl font-bold text-black mb-6"
+              className="mb-6 text-center"
             >
-              Design Your<br />
-              Database Visually
+              <div className="text-5xl sm:text-6xl lg:text-7xl font-bold text-black mb-2">
+                Build Your
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <LayoutTextFlip
+                  text="Database"
+                  words={["Visually", "Structured", "Optimised"]}
+                  duration={2500}
+                />
+              </div>
             </motion.h1>
 
             <motion.p
