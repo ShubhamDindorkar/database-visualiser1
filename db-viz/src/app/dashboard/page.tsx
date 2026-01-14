@@ -42,6 +42,7 @@ import Terminal from '@/components/layout/Terminal';
 import Settings from '@/components/layout/Settings';
 import CreateDatabaseModal from '@/components/database/CreateDatabaseModal';
 import CreateTableModal from '@/components/database/CreateTableModal';
+import EditTableModal from '@/components/database/EditTableModal';
 import TableNode from '@/components/database/TableNode';
 import RelationshipEdge from '@/components/database/RelationshipEdge';
 
@@ -73,6 +74,8 @@ export default function DashboardPage() {
   const [isTerminalMinimized, setIsTerminalMinimized] = useState(false);
   const [isCreateDbModalOpen, setIsCreateDbModalOpen] = useState(false);
   const [isCreateTableModalOpen, setIsCreateTableModalOpen] = useState(false);
+  const [isEditTableModalOpen, setIsEditTableModalOpen] = useState(false);
+  const [editingTableId, setEditingTableId] = useState<string | null>(null);
 
   // Data State
   const [databases, setDatabases] = useState<DatabaseType[]>([]);
@@ -117,10 +120,15 @@ export default function DashboardPage() {
         });
       });
       setDatabases(dbs);
+      
+      // Auto-select first database if no database is selected and databases exist
+      if (dbs.length > 0 && !selectedDatabaseId) {
+        setSelectedDatabaseId(dbs[0].id);
+      }
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, selectedDatabaseId]);
 
   // Firebase: Subscribe to tables for selected database
   useEffect(() => {
@@ -359,6 +367,37 @@ export default function DashboardPage() {
     [tables, selectedTableId, addLog]
   );
 
+  // Handle edit table
+  const handleEditTable = useCallback(
+    (tableId: string) => {
+      setEditingTableId(tableId);
+      setIsEditTableModalOpen(true);
+    },
+    []
+  );
+
+  // Update table columns
+  const handleUpdateTable = useCallback(
+    async (tableId: string, columns: Column[]) => {
+      try {
+        const tableName = tables.find((t) => t.id === tableId)?.name;
+        
+        await updateDoc(doc(db, 'tables', tableId), {
+          columns,
+          updatedAt: Timestamp.now(),
+        });
+
+        addLog('success', `Table '${tableName}' updated successfully`);
+        setIsEditTableModalOpen(false);
+        setEditingTableId(null);
+      } catch (error) {
+        console.error('Error updating table:', error);
+        addLog('error', 'Failed to update table');
+      }
+    },
+    [tables, addLog]
+  );
+
   // Handle terminal command
   const handleTerminalCommand = useCallback(
     (command: string) => {
@@ -525,6 +564,7 @@ export default function DashboardPage() {
           onDeleteDatabase={handleDeleteDatabase}
           onDeleteTable={handleDeleteTable}
           onQuickSQL={handleQuickSQL}
+          onEditTable={handleEditTable}
         />
 
         {/* Canvas Area */}
@@ -539,6 +579,12 @@ export default function DashboardPage() {
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
                 fitView
+                fitViewOptions={{
+                  padding: 0.2,
+                  maxZoom: 0.85,
+                  minZoom: 0.5,
+                }}
+                defaultViewport={{ x: 0, y: 0, zoom: 0.75 }}
                 proOptions={{ hideAttribution: true }}
                 className="bg-gray-50"
               >
@@ -621,6 +667,8 @@ export default function DashboardPage() {
       <Settings
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+        user={user}
+        onLogout={handleLogout}
       />
 
       {/* Create Database Modal */}
@@ -638,6 +686,18 @@ export default function DashboardPage() {
         onCreate={handleCreateTable}
         existingTables={tablesForSelectedDb}
         databaseName={selectedDatabaseName}
+      />
+
+      {/* Edit Table Modal */}
+      <EditTableModal
+        isOpen={isEditTableModalOpen}
+        onClose={() => {
+          setIsEditTableModalOpen(false);
+          setEditingTableId(null);
+        }}
+        table={tables.find((t) => t.id === editingTableId) || null}
+        onUpdate={handleUpdateTable}
+        existingTables={tablesForSelectedDb}
       />
     </div>
   );

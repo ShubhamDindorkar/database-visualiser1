@@ -501,13 +501,29 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-4 bg-[#0F172A] text-gray-500">
+      <footer className="py-8 px-4 bg-[#000000] text-gray-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Database className="w-5 h-5 text-white" />
             <span className="text-white font-semibold">DB Visualiser</span>
           </div>
-          <p className="text-sm">© 2026 DB Visualiser. All rights reserved.</p>
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+            <p className="text-sm">© 2026 DB Visualiser. All rights reserved.</p>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => router.push('/terms-of-service')}
+                className="text-sm text-gray-400 hover:text-white transition-colors"
+              >
+                Terms of Service
+              </button>
+              <button
+                onClick={() => router.push('/privacy-policy')}
+                className="text-sm text-gray-400 hover:text-white transition-colors"
+              >
+                Privacy Policy
+              </button>
+            </div>
+          </div>
         </div>
       </footer>
 
@@ -614,21 +630,6 @@ export default function LandingPage() {
                 <p className="text-gray-700 leading-relaxed">
                   {selectedFeature.detailedDescription}
                 </p>
-              </div>
-              
-              {/* Modal Footer */}
-              <div className="p-6 border-t border-gray-200">
-                <Button
-                  variant="primary"
-                  className="w-full"
-                  onClick={() => {
-                    setSelectedFeature(null);
-                    router.push('/login');
-                  }}
-                  rightIcon={<ArrowRight className="w-4 h-4" />}
-                >
-                  Try This Feature
-                </Button>
               </div>
             </motion.div>
           </>

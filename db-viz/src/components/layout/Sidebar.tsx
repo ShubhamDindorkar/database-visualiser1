@@ -28,6 +28,7 @@ interface SidebarProps {
   onDeleteDatabase: (databaseId: string) => void;
   onDeleteTable: (tableId: string) => void;
   onQuickSQL: (type: 'CREATE' | 'SELECT' | 'UPDATE' | 'DELETE') => void;
+  onEditTable: (tableId: string) => void;
 }
 
 export default function Sidebar({
@@ -42,6 +43,7 @@ export default function Sidebar({
   onDeleteDatabase,
   onDeleteTable,
   onQuickSQL,
+  onEditTable,
 }: SidebarProps) {
   const [expandedDatabases, setExpandedDatabases] = useState<Set<string>>(new Set());
 
@@ -92,18 +94,18 @@ export default function Sidebar({
         </div>
 
         {/* Quick SQL Buttons */}
-        <div className="grid grid-cols-4 gap-1">
+        <div className="grid grid-cols-2 gap-2">
           {sqlButtons.map(({ type, color, icon: Icon }) => (
             <motion.button
               key={type}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => onQuickSQL(type)}
-              className={`${color} text-white text-xs py-1.5 px-2 rounded flex items-center justify-center gap-1 transition-colors`}
+              className={`${color} text-white text-sm py-3 px-4 rounded-full flex items-center justify-center gap-2 transition-colors shadow-sm font-medium`}
               title={type}
             >
-              <Icon className="w-3 h-3" />
-              <span className="hidden lg:inline">{type}</span>
+              <Icon className="w-4 h-4" />
+              <span>{type}</span>
             </motion.button>
           ))}
         </div>
@@ -206,6 +208,18 @@ export default function Sidebar({
                                 <span className="text-xs text-gray-500">
                                   {table.columns.length} cols
                                 </span>
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onEditTable(table.id);
+                                  }}
+                                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-blue-100 text-blue-500 transition-all"
+                                  title="Edit Table"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </motion.button>
                                 <motion.button
                                   whileHover={{ scale: 1.1 }}
                                   whileTap={{ scale: 0.9 }}

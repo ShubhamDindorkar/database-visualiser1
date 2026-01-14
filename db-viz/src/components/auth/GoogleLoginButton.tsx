@@ -20,7 +20,7 @@ export default function GoogleLoginButton({ onClick, isLoading = false }: Google
         flex items-center justify-center gap-3 w-full
         px-6 py-3 rounded-lg
         bg-white
-        border border-gray-400
+        border border-gray-300
         text-gray-800
         font-medium text-base
         shadow-sm hover:shadow-md

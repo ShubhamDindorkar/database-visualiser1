@@ -2,17 +2,22 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Database, Info } from 'lucide-react';
+import { X, Database, Info, User as UserIcon, LogOut } from 'lucide-react';
 import Button from '@/components/common/Button';
+import { User } from '@/types/database';
 
 interface SettingsProps {
   isOpen: boolean;
   onClose: () => void;
+  user: User | null;
+  onLogout: () => void;
 }
 
 export default function Settings({
   isOpen,
   onClose,
+  user,
+  onLogout,
 }: SettingsProps) {
   return (
     <AnimatePresence>
@@ -52,6 +57,48 @@ export default function Settings({
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-6">
+              {/* Profile Section */}
+              {user && (
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <UserIcon className="w-5 h-5 text-gray-800" />
+                    <h3 className="text-sm font-semibold text-gray-800 uppercase tracking-wider">
+                      Profile
+                    </h3>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="p-3 rounded-lg bg-gray-50 flex items-center gap-3">
+                      {user.photoURL && (
+                        <img 
+                          src={user.photoURL} 
+                          alt={user.displayName || 'User'}
+                          className="w-12 h-12 rounded-full border-2 border-gray-200"
+                        />
+                      )}
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-black mb-1">
+                          {user.displayName || 'User'}
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
+
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={onLogout}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-medium"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </motion.button>
+                  </div>
+                </div>
+              )}
+
               {/* Database Section */}
               <div>
                 <div className="flex items-center gap-2 mb-4">

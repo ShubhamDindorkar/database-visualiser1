@@ -111,7 +111,7 @@ export default function LoginPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
-          className="text-gray-600 text-sm">
+          className="text-white text-sm">
           Trusted by developers worldwide
         </motion.p>
       </div>
@@ -149,13 +149,19 @@ export default function LoginPage() {
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 By signing in, you agree to our{' '}
-                <a href="#" className="text-black hover:text-gray-800 underline">
+                <button
+                  onClick={() => router.push('/terms-of-service')}
+                  className="text-black hover:text-gray-800 underline"
+                >
                   Terms of Service
-                </a>{' '}
+                </button>{' '}
                 and{' '}
-                <a href="#" className="text-black hover:text-gray-800 underline">
+                <button
+                  onClick={() => router.push('/privacy-policy')}
+                  className="text-black hover:text-gray-800 underline"
+                >
                   Privacy Policy
-                </a>
+                </button>
               </p>
             </div>
           </div>

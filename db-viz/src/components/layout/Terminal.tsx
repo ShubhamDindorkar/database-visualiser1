@@ -128,10 +128,10 @@ export default function Terminal({
               onClick={() => inputRef.current?.focus()}
             >
               {/* Welcome Message */}
-              <div className="text-gray-600 mb-2">
+              <div className="text-white mb-2">
                 <p>Welcome to MySQL Terminal (Simulation Mode)</p>
                 <p>Type SQL commands or &apos;help&apos; for assistance.</p>
-                <p className="text-gray-700">---</p>
+                <p className="text-white">---</p>
               </div>
 
               {/* Logs */}
@@ -146,14 +146,14 @@ export default function Terminal({
 
             {/* Input Area */}
             <form onSubmit={handleSubmit} className="flex items-center px-3 pb-3">
-              <span className="text-gray-500 font-mono">mysql&gt;</span>
+              <span className="text-white font-mono">mysql&gt;</span>
               <input
                 ref={inputRef}
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="flex-1 bg-transparent border-none outline-none text-white font-mono text-sm ml-2 placeholder:text-gray-700"
+                className="flex-1 bg-transparent border-none outline-none text-white font-mono text-sm ml-2 placeholder:text-white"
                 placeholder="Enter SQL command..."
                 autoComplete="off"
                 spellCheck={false}
