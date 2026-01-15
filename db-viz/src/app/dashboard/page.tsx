@@ -43,6 +43,11 @@ import Settings from '@/components/layout/Settings';
 import CreateDatabaseModal from '@/components/database/CreateDatabaseModal';
 import CreateTableModal from '@/components/database/CreateTableModal';
 import EditTableModal from '@/components/database/EditTableModal';
+import InsertDataModal from '@/components/database/InsertDataModal';
+import UpdateDataModal from '@/components/database/UpdateDataModal';
+import DeleteDataModal from '@/components/database/DeleteDataModal';
+import SelectDataModal from '@/components/database/SelectDataModal';
+import DropModal from '@/components/database/DropModal';
 import TableNode from '@/components/database/TableNode';
 import RelationshipEdge from '@/components/database/RelationshipEdge';
 
@@ -75,6 +80,11 @@ export default function DashboardPage() {
   const [isCreateDbModalOpen, setIsCreateDbModalOpen] = useState(false);
   const [isCreateTableModalOpen, setIsCreateTableModalOpen] = useState(false);
   const [isEditTableModalOpen, setIsEditTableModalOpen] = useState(false);
+  const [isInsertDataModalOpen, setIsInsertDataModalOpen] = useState(false);
+  const [isUpdateDataModalOpen, setIsUpdateDataModalOpen] = useState(false);
+  const [isDeleteDataModalOpen, setIsDeleteDataModalOpen] = useState(false);
+  const [isSelectDataModalOpen, setIsSelectDataModalOpen] = useState(false);
+  const [isDropModalOpen, setIsDropModalOpen] = useState(false);
   const [editingTableId, setEditingTableId] = useState<string | null>(null);
 
   // Data State
@@ -115,6 +125,7 @@ export default function DashboardPage() {
           name: data.name,
           userId: data.userId,
           db_password_hash: data.db_password_hash,
+          mysqlName: data.mysqlName, // Include actual MySQL name
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
         });
@@ -255,11 +266,11 @@ export default function DashboardPage() {
       if (!user) return;
 
       try {
-        // First, create the database in MySQL
+        // First, create the database in MySQL with user isolation
         const mysqlResponse = await fetch('/api/database/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name }),
+          body: JSON.stringify({ name, userId: user.uid }),
         });
         const mysqlResult = await mysqlResponse.json();
 
@@ -276,6 +287,7 @@ export default function DashboardPage() {
           name,
           userId: user.uid,
           db_password_hash: hashedPassword,
+          mysqlName: mysqlResult.actualDatabaseName, // Store actual MySQL name
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
         });
@@ -294,16 +306,18 @@ export default function DashboardPage() {
   // Delete database
   const handleDeleteDatabase = useCallback(
     async (databaseId: string) => {
+      if (!user) return;
+      
       try {
         const dbToDelete = databases.find((d) => d.id === databaseId);
         const dbName = dbToDelete?.name;
         
         if (dbName) {
-          // First, drop the database in MySQL
+          // First, drop the database in MySQL with user isolation
           const mysqlResponse = await fetch('/api/database/drop', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: dbName }),
+            body: JSON.stringify({ name: dbName, userId: user.uid }),
           });
           const mysqlResult = await mysqlResponse.json();
 
@@ -331,7 +345,7 @@ export default function DashboardPage() {
         addLog('error', 'Failed to delete database');
       }
     },
-    [databases, tables, selectedDatabaseId, addLog]
+    [user, databases, tables, selectedDatabaseId, addLog]
   );
 
   // Create table
@@ -340,7 +354,8 @@ export default function DashboardPage() {
       if (!selectedDatabaseId) return;
 
       try {
-        const databaseName = databases.find((d) => d.id === selectedDatabaseId)?.name;
+        const selectedDatabase = databases.find((d) => d.id === selectedDatabaseId);
+        const databaseName = selectedDatabase?.mysqlName || selectedDatabase?.name;
         
         if (!databaseName) {
           addLog('error', 'No database selected');
@@ -423,7 +438,8 @@ export default function DashboardPage() {
         const tableToDelete = tables.find((t) => t.id === tableId);
         const tableName = tableToDelete?.name;
         const databaseId = tableToDelete?.databaseId;
-        const databaseName = databases.find((d) => d.id === databaseId)?.name;
+        const selectedDatabase = databases.find((d) => d.id === databaseId);
+        const databaseName = selectedDatabase?.mysqlName || selectedDatabase?.name;
 
         if (tableName && databaseName) {
           // First, drop the table in MySQL
@@ -489,6 +505,92 @@ export default function DashboardPage() {
     [tables, addLog]
   );
 
+  // Execute query helper for modals
+  const executeQuery = useCallback(
+    async (database: string, query: string): Promise<{ success: boolean; results?: unknown[]; error?: string }> => {
+      try {
+        const response = await fetch('/api/query/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ database, query }),
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+          addLog('success', `Query executed: ${query.substring(0, 50)}${query.length > 50 ? '...' : ''}`);
+          if (result.formattedOutput) {
+            result.formattedOutput.forEach((line: string) => addLog('info', line));
+          }
+        } else {
+          addLog('error', result.error || 'Query failed');
+        }
+        
+        return result;
+      } catch (error) {
+        const errMsg = error instanceof Error ? error.message : 'Query execution failed';
+        addLog('error', errMsg);
+        return { success: false, error: errMsg };
+      }
+    },
+    [addLog]
+  );
+
+  // Handle INSERT data
+  const handleInsertData = useCallback(
+    async (database: string, table: string, values: Record<string, string>) => {
+      const columns = Object.keys(values).filter((k) => values[k] !== '');
+      const vals = columns.map((col) => {
+        const val = values[col];
+        // Check if value is numeric
+        if (/^-?\d+(\.\d+)?$/.test(val)) {
+          return val;
+        }
+        return `'${val.replace(/'/g, "''")}'`;
+      });
+      
+      if (columns.length === 0) {
+        throw new Error('At least one value is required');
+      }
+
+      const query = `INSERT INTO \`${table}\` (\`${columns.join('`, `')}\`) VALUES (${vals.join(', ')})`;
+      const result = await executeQuery(database, query);
+      
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+    },
+    [executeQuery]
+  );
+
+  // Handle DROP table from modal
+  const handleDropTable = useCallback(
+    async (database: string, tableName: string) => {
+      // Find the table in Firebase
+      const tableToDelete = tables.find((t) => t.name === tableName);
+      const dbObject = databases.find((d) => d.name === database || d.mysqlName === database);
+      
+      if (tableToDelete && dbObject && tableToDelete.databaseId === dbObject.id) {
+        // Drop from MySQL
+        const result = await executeQuery(database, `DROP TABLE \`${tableName}\``);
+        if (!result.success) {
+          throw new Error(result.error);
+        }
+        
+        // Delete from Firebase
+        await deleteDoc(doc(db, 'tables', tableToDelete.id));
+        
+        if (selectedTableId === tableToDelete.id) {
+          setSelectedTableId(null);
+        }
+        
+        addLog('success', `Table '${tableName}' dropped successfully`);
+      } else {
+        throw new Error('Table not found');
+      }
+    },
+    [tables, databases, selectedTableId, executeQuery, addLog]
+  );
+
   // Handle terminal command - Execute real MySQL queries
   const handleTerminalCommand = useCallback(
     async (command: string) => {
@@ -517,6 +619,28 @@ export default function DashboardPage() {
         return;
       }
 
+      // Handle SHOW DATABASES - filter to show only user's databases
+      if (upperCommand === 'SHOW DATABASES' || upperCommand === 'SHOW DATABASES;') {
+        addLog('info', 'Executing: SHOW DATABASES');
+        if (databases.length === 0) {
+          addLog('info', '+--------------------+');
+          addLog('info', '| Database           |');
+          addLog('info', '+--------------------+');
+          addLog('info', '+--------------------+');
+          addLog('info', 'Empty set (0 databases)');
+        } else {
+          addLog('info', '+--------------------+');
+          addLog('info', '| Database           |');
+          addLog('info', '+--------------------+');
+          databases.forEach((db) => {
+            addLog('info', `| ${db.name.padEnd(18)} |`);
+          });
+          addLog('info', '+--------------------+');
+          addLog('info', `${databases.length} row${databases.length !== 1 ? 's' : ''} in set`);
+        }
+        return;
+      }
+
       // Handle USE command - changes selected database locally
       if (upperCommand.startsWith('USE ')) {
         const dbName = trimmedCommand.substring(4).trim().replace(';', '');
@@ -533,7 +657,8 @@ export default function DashboardPage() {
       }
 
       // Get current database name for queries that need it
-      const currentDatabaseName = databases.find((d) => d.id === selectedDatabaseId)?.name;
+      const selectedDatabase = databases.find((d) => d.id === selectedDatabaseId);
+      const currentDatabaseName = selectedDatabase?.mysqlName || selectedDatabase?.name;
 
       // Execute query against MySQL
       try {
@@ -577,30 +702,53 @@ export default function DashboardPage() {
 
   // Handle quick SQL buttons
   const handleQuickSQL = useCallback(
-    (type: 'CREATE' | 'SELECT' | 'UPDATE' | 'DELETE') => {
+    (type: 'CREATE' | 'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE' | 'DROP') => {
       switch (type) {
         case 'CREATE':
-          if (selectedDatabaseId) {
-            setIsCreateTableModalOpen(true);
-          } else {
+          // If no databases exist, automatically create database
+          if (databases.length === 0) {
             setIsCreateDbModalOpen(true);
+          } else {
+            // Show choice: Database or Table
+            // For now, open database modal. User can also create tables from selected database
+            // If a database is selected, prefer table creation
+            if (selectedDatabaseId) {
+              // Show a simple choice
+              const choice = window.confirm('Create TABLE in selected database?\n\nOK = Create Table\nCancel = Create New Database');
+              if (choice) {
+                setIsCreateTableModalOpen(true);
+              } else {
+                setIsCreateDbModalOpen(true);
+              }
+            } else {
+              // No database selected, offer choice
+              const choice = window.confirm('What would you like to create?\n\nOK = Create Database\nCancel = Create Table (select database first)');
+              if (choice) {
+                setIsCreateDbModalOpen(true);
+              } else {
+                addLog('warning', 'Please select a database first to create a table');
+              }
+            }
           }
           break;
+        case 'INSERT':
+          setIsInsertDataModalOpen(true);
+          break;
         case 'SELECT':
-          addLog('info', 'Example: SELECT * FROM table_name;');
-          addLog('info', 'Type your SELECT query in the terminal to execute against MySQL');
+          setIsSelectDataModalOpen(true);
           break;
         case 'UPDATE':
-          addLog('info', 'Example: UPDATE table_name SET column = value WHERE condition;');
-          addLog('info', 'Type your UPDATE query in the terminal to execute against MySQL');
+          setIsUpdateDataModalOpen(true);
           break;
         case 'DELETE':
-          addLog('info', 'Example: DELETE FROM table_name WHERE condition;');
-          addLog('info', 'Type your DELETE query in the terminal to execute against MySQL');
+          setIsDeleteDataModalOpen(true);
+          break;
+        case 'DROP':
+          setIsDropModalOpen(true);
           break;
       }
     },
-    [selectedDatabaseId, addLog]
+    [selectedDatabaseId]
   );
 
   // Get selected database name
@@ -787,6 +935,57 @@ export default function DashboardPage() {
         table={tables.find((t) => t.id === editingTableId) || null}
         onUpdate={handleUpdateTable}
         existingTables={tablesForSelectedDb}
+      />
+
+      {/* Insert Data Modal */}
+      <InsertDataModal
+        isOpen={isInsertDataModalOpen}
+        onClose={() => setIsInsertDataModalOpen(false)}
+        databases={databases}
+        tables={tables}
+        selectedDatabaseId={selectedDatabaseId}
+        onInsert={handleInsertData}
+      />
+
+      {/* Update Data Modal */}
+      <UpdateDataModal
+        isOpen={isUpdateDataModalOpen}
+        onClose={() => setIsUpdateDataModalOpen(false)}
+        databases={databases}
+        tables={tables}
+        selectedDatabaseId={selectedDatabaseId}
+        onExecuteQuery={executeQuery}
+      />
+
+      {/* Delete Data Modal */}
+      <DeleteDataModal
+        isOpen={isDeleteDataModalOpen}
+        onClose={() => setIsDeleteDataModalOpen(false)}
+        databases={databases}
+        tables={tables}
+        selectedDatabaseId={selectedDatabaseId}
+        onExecuteQuery={executeQuery}
+      />
+
+      {/* Select Data Modal */}
+      <SelectDataModal
+        isOpen={isSelectDataModalOpen}
+        onClose={() => setIsSelectDataModalOpen(false)}
+        databases={databases}
+        tables={tables}
+        selectedDatabaseId={selectedDatabaseId}
+        onExecuteQuery={executeQuery}
+      />
+
+      {/* Drop Modal */}
+      <DropModal
+        isOpen={isDropModalOpen}
+        onClose={() => setIsDropModalOpen(false)}
+        databases={databases}
+        tables={tables}
+        selectedDatabaseId={selectedDatabaseId}
+        onDropDatabase={handleDeleteDatabase}
+        onDropTable={handleDropTable}
       />
     </div>
   );

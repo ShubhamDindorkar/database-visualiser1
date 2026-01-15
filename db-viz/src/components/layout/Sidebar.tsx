@@ -13,6 +13,8 @@ import {
   FileText,
   Edit3,
   Trash2,
+  PlusCircle,
+  XCircle,
 } from 'lucide-react';
 import { Database as DatabaseType, Table as TableType } from '@/types/database';
 
@@ -27,7 +29,7 @@ interface SidebarProps {
   onCreateTable: () => void;
   onDeleteDatabase: (databaseId: string) => void;
   onDeleteTable: (tableId: string) => void;
-  onQuickSQL: (type: 'CREATE' | 'SELECT' | 'UPDATE' | 'DELETE') => void;
+  onQuickSQL: (type: 'CREATE' | 'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE' | 'DROP') => void;
   onEditTable: (tableId: string) => void;
 }
 
@@ -65,9 +67,11 @@ export default function Sidebar({
 
   const sqlButtons = [
     { type: 'CREATE' as const, color: 'bg-green-500 hover:bg-green-600', icon: Plus },
+    { type: 'INSERT' as const, color: 'bg-emerald-500 hover:bg-emerald-600', icon: PlusCircle },
     { type: 'SELECT' as const, color: 'bg-blue-500 hover:bg-blue-600', icon: FileText },
     { type: 'UPDATE' as const, color: 'bg-yellow-500 hover:bg-yellow-600', icon: Edit3 },
-    { type: 'DELETE' as const, color: 'bg-red-500 hover:bg-red-600', icon: Trash2 },
+    { type: 'DELETE' as const, color: 'bg-orange-500 hover:bg-orange-600', icon: Trash2 },
+    { type: 'DROP' as const, color: 'bg-red-500 hover:bg-red-600', icon: XCircle },
   ];
 
   return (
@@ -94,17 +98,17 @@ export default function Sidebar({
         </div>
 
         {/* Quick SQL Buttons */}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {sqlButtons.map(({ type, color, icon: Icon }) => (
             <motion.button
               key={type}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => onQuickSQL(type)}
-              className={`${color} text-white text-sm py-3 px-4 rounded-full flex items-center justify-center gap-2 transition-colors shadow-sm font-medium`}
+              className={`${color} text-white text-xs py-2.5 px-3 rounded-full flex items-center justify-center gap-1.5 transition-colors shadow-sm font-medium`}
               title={type}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-3.5 h-3.5" />
               <span>{type}</span>
             </motion.button>
           ))}

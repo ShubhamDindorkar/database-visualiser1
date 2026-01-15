@@ -4,6 +4,7 @@ export interface Database {
   name: string;
   userId: string;
   db_password_hash: string;
+  mysqlName?: string; // Actual prefixed name in MySQL
   createdAt: Date;
   updatedAt: Date;
 }

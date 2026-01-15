@@ -3,17 +3,19 @@ import { executeQuery } from '@/lib/mysql';
 
 interface CreateDatabaseRequest {
   name: string;
+  userId: string;
 }
 
 /**
  * POST /api/database/create
  * 
- * Create a new MySQL database.
- * Called when user creates a database from the UI.
+ * Create a new MySQL database with user isolation.
+ * Database names are prefixed with userId to ensure user isolation.
  * 
  * Request body:
  * {
- *   "name": "database_name"
+ *   "name": "database_name",
+ *   "userId": "user_firebase_uid"
  * }
  * 
  * Response:
@@ -21,15 +23,16 @@ interface CreateDatabaseRequest {
  *   "success": boolean,
  *   "message": string,
  *   "database": string,
+ *   "actualDatabaseName": string,
  *   "error"?: string
  * }
  */
 export async function POST(request: NextRequest) {
   try {
     const body: CreateDatabaseRequest = await request.json();
-    const { name } = body;
+    const { name, userId } = body;
 
-    // Validate database name
+    // Validate database name and userId
     if (!name || typeof name !== 'string') {
       return NextResponse.json({
         success: false,
@@ -37,7 +40,18 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    if (!userId || typeof userId !== 'string') {
+      return NextResponse.json({
+        success: false,
+        error: 'User ID is required',
+      }, { status: 400 });
+    }
+
     const trimmedName = name.trim();
+    
+    // Create prefixed database name for user isolation
+    // Format: user_{userId}_{databaseName}
+    const prefixedName = `user_${userId.substring(0, 8)}_${trimmedName}`;
 
     // Validate database name format (MySQL naming rules)
     // Must start with letter or underscore, contain only alphanumeric and underscores
@@ -48,24 +62,25 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Check length (MySQL limit is 64 characters)
-    if (trimmedName.length > 64) {
+    // Check length (MySQL limit is 64 characters, accounting for prefix)
+    if (prefixedName.length > 64) {
       return NextResponse.json({
         success: false,
-        error: 'Database name must be 64 characters or less',
+        error: 'Database name is too long',
       }, { status: 400 });
     }
 
-    // Execute CREATE DATABASE query
+    // Execute CREATE DATABASE query with prefixed name
     // Using backticks to safely escape the database name
-    const query = `CREATE DATABASE \`${trimmedName}\``;
+    const query = `CREATE DATABASE \`${prefixedName}\``;
     const result = await executeQuery(query);
 
     if (result.success) {
       return NextResponse.json({
         success: true,
         message: `Database '${trimmedName}' created successfully`,
-        database: trimmedName,
+        database: trimmedName, // Return user-friendly name
+        actualDatabaseName: prefixedName, // Return actual MySQL name
       });
     } else {
       // Handle specific MySQL errors
