@@ -48,8 +48,10 @@ import UpdateDataModal from '@/components/database/UpdateDataModal';
 import DeleteDataModal from '@/components/database/DeleteDataModal';
 import SelectDataModal from '@/components/database/SelectDataModal';
 import DropModal from '@/components/database/DropModal';
+import CreateChoiceModal from '@/components/database/CreateChoiceModal';
 import TableNode from '@/components/database/TableNode';
 import RelationshipEdge from '@/components/database/RelationshipEdge';
+import QueryResultsPanel from '@/components/database/QueryResultsPanel';
 
 // Hooks and Types
 import { useAuth } from '@/hooks/useAuth';
@@ -77,6 +79,7 @@ export default function DashboardPage() {
   // UI State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isTerminalMinimized, setIsTerminalMinimized] = useState(false);
+  const [isCreateChoiceModalOpen, setIsCreateChoiceModalOpen] = useState(false);
   const [isCreateDbModalOpen, setIsCreateDbModalOpen] = useState(false);
   const [isCreateTableModalOpen, setIsCreateTableModalOpen] = useState(false);
   const [isEditTableModalOpen, setIsEditTableModalOpen] = useState(false);
@@ -86,6 +89,7 @@ export default function DashboardPage() {
   const [isSelectDataModalOpen, setIsSelectDataModalOpen] = useState(false);
   const [isDropModalOpen, setIsDropModalOpen] = useState(false);
   const [editingTableId, setEditingTableId] = useState<string | null>(null);
+  const [queryResults, setQueryResults] = useState<{ results: unknown[]; query: string } | null>(null);
 
   // Data State
   const [databases, setDatabases] = useState<DatabaseType[]>([]);
@@ -682,6 +686,14 @@ export default function DashboardPage() {
               addLog('success', line);
             });
           }
+          
+          // If it's a SELECT query and has results, also show in panel
+          if (upperCommand.startsWith('SELECT') && result.results && Array.isArray(result.results) && result.results.length > 0) {
+            setQueryResults({
+              results: result.results,
+              query: trimmedCommand,
+            });
+          }
         } else {
           // Log error
           if (result.formattedOutput && Array.isArray(result.formattedOutput)) {
@@ -709,26 +721,8 @@ export default function DashboardPage() {
           if (databases.length === 0) {
             setIsCreateDbModalOpen(true);
           } else {
-            // Show choice: Database or Table
-            // For now, open database modal. User can also create tables from selected database
-            // If a database is selected, prefer table creation
-            if (selectedDatabaseId) {
-              // Show a simple choice
-              const choice = window.confirm('Create TABLE in selected database?\n\nOK = Create Table\nCancel = Create New Database');
-              if (choice) {
-                setIsCreateTableModalOpen(true);
-              } else {
-                setIsCreateDbModalOpen(true);
-              }
-            } else {
-              // No database selected, offer choice
-              const choice = window.confirm('What would you like to create?\n\nOK = Create Database\nCancel = Create Table (select database first)');
-              if (choice) {
-                setIsCreateDbModalOpen(true);
-              } else {
-                addLog('warning', 'Please select a database first to create a table');
-              }
-            }
+            // Show choice modal
+            setIsCreateChoiceModalOpen(true);
           }
           break;
         case 'INSERT':
@@ -888,6 +882,15 @@ export default function DashboardPage() {
                 </p>
               </motion.div>
             )}
+            
+            {/* Query Results Panel */}
+            {queryResults && (
+              <QueryResultsPanel
+                results={queryResults.results}
+                query={queryResults.query}
+                onClose={() => setQueryResults(null)}
+              />
+            )}
           </div>
 
           {/* Terminal */}
@@ -906,6 +909,20 @@ export default function DashboardPage() {
         onClose={() => setIsSettingsOpen(false)}
         user={user}
         onLogout={handleLogout}
+      />
+
+      {/* Create Choice Modal */}
+      <CreateChoiceModal
+        isOpen={isCreateChoiceModalOpen}
+        onClose={() => setIsCreateChoiceModalOpen(false)}
+        onChoose={(choice) => {
+          if (choice === 'database') {
+            setIsCreateDbModalOpen(true);
+          } else {
+            setIsCreateTableModalOpen(true);
+          }
+        }}
+        hasSelectedDatabase={!!selectedDatabaseId}
       />
 
       {/* Create Database Modal */}
