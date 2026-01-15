@@ -129,7 +129,7 @@ export default function Terminal({
             >
               {/* Welcome Message */}
               <div className="text-white mb-2">
-                <p>Welcome to MySQL Terminal (Simulation Mode)</p>
+                <p>Welcome to MySQL Terminal (Connected to Local MySQL)</p>
                 <p>Type SQL commands or &apos;help&apos; for assistance.</p>
                 <p className="text-white">---</p>
               </div>

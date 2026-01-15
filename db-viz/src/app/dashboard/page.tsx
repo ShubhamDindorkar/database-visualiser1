@@ -255,6 +255,20 @@ export default function DashboardPage() {
       if (!user) return;
 
       try {
+        // First, create the database in MySQL
+        const mysqlResponse = await fetch('/api/database/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name }),
+        });
+        const mysqlResult = await mysqlResponse.json();
+
+        if (!mysqlResult.success) {
+          addLog('error', `MySQL Error: ${mysqlResult.error}`);
+          return;
+        }
+
+        // If MySQL creation successful, save to Firebase
         const hashedPassword = await bcrypt.hash(password, 10);
         const dbId = uuidv4();
 
@@ -266,7 +280,7 @@ export default function DashboardPage() {
           updatedAt: Timestamp.now(),
         });
 
-        addLog('success', `Database '${name}' created successfully`);
+        addLog('success', `Database '${name}' created successfully in MySQL`);
         setSelectedDatabaseId(dbId);
         setIsCreateDbModalOpen(false);
       } catch (error) {
@@ -281,9 +295,25 @@ export default function DashboardPage() {
   const handleDeleteDatabase = useCallback(
     async (databaseId: string) => {
       try {
-        const dbName = databases.find((d) => d.id === databaseId)?.name;
+        const dbToDelete = databases.find((d) => d.id === databaseId);
+        const dbName = dbToDelete?.name;
         
-        // Delete all tables in the database first
+        if (dbName) {
+          // First, drop the database in MySQL
+          const mysqlResponse = await fetch('/api/database/drop', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: dbName }),
+          });
+          const mysqlResult = await mysqlResponse.json();
+
+          if (!mysqlResult.success) {
+            // Log warning but continue with Firebase deletion
+            addLog('warning', `MySQL: ${mysqlResult.error}`);
+          }
+        }
+
+        // Delete all tables in the database from Firebase
         const tablesToDelete = tables.filter((t) => t.databaseId === databaseId);
         for (const table of tablesToDelete) {
           await deleteDoc(doc(db, 'tables', table.id));
@@ -310,6 +340,45 @@ export default function DashboardPage() {
       if (!selectedDatabaseId) return;
 
       try {
+        const databaseName = databases.find((d) => d.id === selectedDatabaseId)?.name;
+        
+        if (!databaseName) {
+          addLog('error', 'No database selected');
+          return;
+        }
+
+        // First, create the table in MySQL
+        const mysqlColumns = columns.map((col) => ({
+          name: col.name,
+          dataType: col.dataType,
+          isPrimaryKey: col.isPrimaryKey,
+          isNotNull: col.isNotNull,
+          isUnique: col.isUnique,
+          defaultValue: col.defaultValue,
+          isForeignKey: col.isForeignKey,
+          foreignKeyReference: col.foreignKeyReference ? {
+            tableName: col.foreignKeyReference.tableName,
+            columnName: col.foreignKeyReference.columnName,
+          } : undefined,
+        }));
+
+        const mysqlResponse = await fetch('/api/table/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            database: databaseName,
+            tableName: name,
+            columns: mysqlColumns,
+          }),
+        });
+        const mysqlResult = await mysqlResponse.json();
+
+        if (!mysqlResult.success) {
+          addLog('error', `MySQL Error: ${mysqlResult.error}`);
+          return;
+        }
+
+        // If MySQL creation successful, save to Firebase
         const tableId = uuidv4();
         
         // Calculate position for new table
@@ -326,7 +395,7 @@ export default function DashboardPage() {
           updatedAt: Timestamp.now(),
         });
 
-        addLog('success', `Table '${name}' created successfully`);
+        addLog('success', `Table '${name}' created successfully in MySQL`);
 
         // Log foreign key relationships
         columns.forEach((col) => {
@@ -344,14 +413,36 @@ export default function DashboardPage() {
         addLog('error', `Failed to create table '${name}'`);
       }
     },
-    [selectedDatabaseId, tables, addLog]
+    [selectedDatabaseId, databases, tables, addLog]
   );
 
   // Delete table
   const handleDeleteTable = useCallback(
     async (tableId: string) => {
       try {
-        const tableName = tables.find((t) => t.id === tableId)?.name;
+        const tableToDelete = tables.find((t) => t.id === tableId);
+        const tableName = tableToDelete?.name;
+        const databaseId = tableToDelete?.databaseId;
+        const databaseName = databases.find((d) => d.id === databaseId)?.name;
+
+        if (tableName && databaseName) {
+          // First, drop the table in MySQL
+          const mysqlResponse = await fetch('/api/query/execute', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              database: databaseName,
+              query: `DROP TABLE \`${tableName}\``,
+            }),
+          });
+          const mysqlResult = await mysqlResponse.json();
+
+          if (!mysqlResult.success) {
+            // Log warning but continue with Firebase deletion
+            addLog('warning', `MySQL: ${mysqlResult.error}`);
+          }
+        }
+
         await deleteDoc(doc(db, 'tables', tableId));
         
         if (selectedTableId === tableId) {
@@ -364,7 +455,7 @@ export default function DashboardPage() {
         addLog('error', 'Failed to delete table');
       }
     },
-    [tables, selectedTableId, addLog]
+    [tables, databases, selectedTableId, addLog]
   );
 
   // Handle edit table
@@ -398,37 +489,37 @@ export default function DashboardPage() {
     [tables, addLog]
   );
 
-  // Handle terminal command
+  // Handle terminal command - Execute real MySQL queries
   const handleTerminalCommand = useCallback(
-    (command: string) => {
+    async (command: string) => {
       const upperCommand = command.toUpperCase().trim();
+      const trimmedCommand = command.trim();
 
-      // Simulate MySQL responses
-      if (upperCommand.startsWith('SHOW DATABASES')) {
-        addLog('info', '+--------------------+');
-        addLog('info', '| Database           |');
-        addLog('info', '+--------------------+');
-        databases.forEach((db) => {
-          addLog('info', `| ${db.name.padEnd(18)} |`);
-        });
-        addLog('info', '+--------------------+');
-        addLog('success', `${databases.length} rows in set (0.00 sec)`);
-      } else if (upperCommand.startsWith('SHOW TABLES')) {
-        if (!selectedDatabaseId) {
-          addLog('error', 'ERROR 1046 (3D000): No database selected');
-        } else {
-          const dbTables = tables.filter((t) => t.databaseId === selectedDatabaseId);
-          addLog('info', '+--------------------+');
-          addLog('info', '| Tables             |');
-          addLog('info', '+--------------------+');
-          dbTables.forEach((t) => {
-            addLog('info', `| ${t.name.padEnd(18)} |`);
-          });
-          addLog('info', '+--------------------+');
-          addLog('success', `${dbTables.length} rows in set (0.00 sec)`);
-        }
-      } else if (upperCommand.startsWith('USE ')) {
-        const dbName = command.substring(4).trim().replace(';', '');
+      // Handle local commands (HELP, CLEAR)
+      if (upperCommand === 'HELP' || upperCommand === '\\H') {
+        addLog('info', 'Available commands (connected to MySQL):');
+        addLog('info', '  SHOW DATABASES    - List all databases');
+        addLog('info', '  SHOW TABLES       - List tables in current database');
+        addLog('info', '  USE <database>    - Select a database');
+        addLog('info', '  DESCRIBE <table>  - Show table structure');
+        addLog('info', '  SELECT ...        - Query data');
+        addLog('info', '  INSERT ...        - Insert data');
+        addLog('info', '  UPDATE ...        - Update data');
+        addLog('info', '  DELETE ...        - Delete data');
+        addLog('info', '  CREATE TABLE ...  - Create a new table');
+        addLog('info', '  DROP TABLE ...    - Drop a table');
+        addLog('info', '  CLEAR             - Clear terminal');
+        return;
+      }
+
+      if (upperCommand === 'CLEAR' || upperCommand === '\\C') {
+        setTerminalLogs([]);
+        return;
+      }
+
+      // Handle USE command - changes selected database locally
+      if (upperCommand.startsWith('USE ')) {
+        const dbName = trimmedCommand.substring(4).trim().replace(';', '');
         const targetDb = databases.find(
           (d) => d.name.toLowerCase() === dbName.toLowerCase()
         );
@@ -438,52 +529,50 @@ export default function DashboardPage() {
         } else {
           addLog('error', `ERROR 1049 (42000): Unknown database '${dbName}'`);
         }
-      } else if (upperCommand.startsWith('DESCRIBE ') || upperCommand.startsWith('DESC ')) {
-        const tableName = command.split(' ')[1]?.trim().replace(';', '');
-        const table = tables.find(
-          (t) => t.name.toLowerCase() === tableName?.toLowerCase()
-        );
-        if (table) {
-          addLog('info', '+-------------+-------------+------+-----+---------+-------+');
-          addLog('info', '| Field       | Type        | Null | Key | Default | Extra |');
-          addLog('info', '+-------------+-------------+------+-----+---------+-------+');
-          table.columns.forEach((col) => {
-            const keyType = col.isPrimaryKey ? 'PRI' : col.isForeignKey ? 'MUL' : '';
-            const nullType = col.isNotNull ? 'NO' : 'YES';
-            addLog(
-              'info',
-              `| ${col.name.padEnd(11)} | ${col.dataType.padEnd(11)} | ${nullType.padEnd(4)} | ${keyType.padEnd(3)} | NULL    |       |`
-            );
-          });
-          addLog('info', '+-------------+-------------+------+-----+---------+-------+');
-          addLog('success', `${table.columns.length} rows in set (0.00 sec)`);
+        return;
+      }
+
+      // Get current database name for queries that need it
+      const currentDatabaseName = databases.find((d) => d.id === selectedDatabaseId)?.name;
+
+      // Execute query against MySQL
+      try {
+        addLog('info', `Executing: ${trimmedCommand}`);
+
+        const response = await fetch('/api/query/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            database: currentDatabaseName,
+            query: trimmedCommand,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Log formatted output
+          if (result.formattedOutput && Array.isArray(result.formattedOutput)) {
+            result.formattedOutput.forEach((line: string) => {
+              addLog('success', line);
+            });
+          }
         } else {
-          addLog('error', `ERROR 1146 (42S02): Table '${tableName}' doesn't exist`);
+          // Log error
+          if (result.formattedOutput && Array.isArray(result.formattedOutput)) {
+            result.formattedOutput.forEach((line: string) => {
+              addLog('error', line);
+            });
+          } else {
+            addLog('error', result.error || 'Query execution failed');
+          }
         }
-      } else if (upperCommand === 'HELP' || upperCommand === '\\H') {
-        addLog('info', 'Available commands (simulation mode):');
-        addLog('info', '  SHOW DATABASES    - List all databases');
-        addLog('info', '  SHOW TABLES       - List tables in current database');
-        addLog('info', '  USE <database>    - Select a database');
-        addLog('info', '  DESCRIBE <table>  - Show table structure');
-        addLog('info', '  CLEAR             - Clear terminal');
-      } else if (upperCommand === 'CLEAR' || upperCommand === '\\C') {
-        setTerminalLogs([]);
-      } else if (upperCommand.startsWith('SELECT')) {
-        addLog('info', 'Query simulation - data retrieval not yet implemented');
-        addLog('success', 'Query OK, 0 rows affected (0.01 sec)');
-      } else if (upperCommand.startsWith('INSERT') || upperCommand.startsWith('UPDATE') || upperCommand.startsWith('DELETE')) {
-        addLog('info', 'Query simulation - DML operations not yet implemented');
-        addLog('success', 'Query OK, 0 rows affected (0.02 sec)');
-      } else if (upperCommand.startsWith('CREATE')) {
-        addLog('warning', 'Use the UI to create databases and tables');
-      } else if (upperCommand.startsWith('DROP')) {
-        addLog('warning', 'Use the UI to drop databases and tables');
-      } else {
-        addLog('error', `ERROR 1064 (42000): Unknown command: '${command}'`);
+      } catch (error) {
+        console.error('Error executing query:', error);
+        addLog('error', 'Failed to execute query. Check if MySQL is running.');
       }
     },
-    [databases, tables, selectedDatabaseId, addLog]
+    [databases, selectedDatabaseId, addLog]
   );
 
   // Handle quick SQL buttons
@@ -498,16 +587,16 @@ export default function DashboardPage() {
           }
           break;
         case 'SELECT':
-          addLog('info', 'SELECT * FROM table_name;');
-          addLog('info', 'Query simulation - use DESCRIBE <table> to view structure');
+          addLog('info', 'Example: SELECT * FROM table_name;');
+          addLog('info', 'Type your SELECT query in the terminal to execute against MySQL');
           break;
         case 'UPDATE':
-          addLog('info', 'UPDATE table_name SET column = value WHERE condition;');
-          addLog('warning', 'DML operations are simulated in this version');
+          addLog('info', 'Example: UPDATE table_name SET column = value WHERE condition;');
+          addLog('info', 'Type your UPDATE query in the terminal to execute against MySQL');
           break;
         case 'DELETE':
-          addLog('info', 'DELETE FROM table_name WHERE condition;');
-          addLog('warning', 'DML operations are simulated in this version');
+          addLog('info', 'Example: DELETE FROM table_name WHERE condition;');
+          addLog('info', 'Type your DELETE query in the terminal to execute against MySQL');
           break;
       }
     },
