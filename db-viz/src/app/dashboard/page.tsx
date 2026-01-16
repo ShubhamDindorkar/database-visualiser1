@@ -653,7 +653,7 @@ export default function DashboardPage() {
       type: 'tableNode',
       position: table.position,
       data: {
-        table,
+        table: { ...table, columns: [...table.columns] }, // Create new reference to force re-render
         onDelete: handleDeleteTable,
         onViewData: handleViewData,
         isSelected: selectedTableId === table.id,

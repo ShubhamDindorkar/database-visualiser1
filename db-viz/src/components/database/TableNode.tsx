@@ -181,4 +181,37 @@ function TableNode({ data, selected }: NodeProps<TableNodeData>) {
   );
 }
 
-export default memo(TableNode);
+// Custom comparison function for memo to check if table columns changed
+const arePropsEqual = (prevProps: NodeProps<TableNodeData>, nextProps: NodeProps<TableNodeData>) => {
+  // Always re-render if table or columns changed
+  if (prevProps.data.table.columns.length !== nextProps.data.table.columns.length) {
+    return false;
+  }
+  
+  // Check if any column properties changed
+  for (let i = 0; i < prevProps.data.table.columns.length; i++) {
+    const prevCol = prevProps.data.table.columns[i];
+    const nextCol = nextProps.data.table.columns[i];
+    
+    if (
+      prevCol.name !== nextCol.name ||
+      prevCol.dataType !== nextCol.dataType ||
+      prevCol.isPrimaryKey !== nextCol.isPrimaryKey ||
+      prevCol.isForeignKey !== nextCol.isForeignKey ||
+      prevCol.isNotNull !== nextCol.isNotNull ||
+      prevCol.isUnique !== nextCol.isUnique
+    ) {
+      return false;
+    }
+  }
+  
+  // Check other props
+  return (
+    prevProps.selected === nextProps.selected &&
+    prevProps.data.isSelected === nextProps.data.isSelected &&
+    prevProps.data.table.id === nextProps.data.table.id
+  );
+};
+
+export default memo(TableNode, arePropsEqual);
+
