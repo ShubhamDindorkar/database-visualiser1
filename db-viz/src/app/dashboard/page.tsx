@@ -492,8 +492,94 @@ export default function DashboardPage() {
   const handleUpdateTable = useCallback(
     async (tableId: string, columns: Column[]) => {
       try {
-        const tableName = tables.find((t) => t.id === tableId)?.name;
+        const table = tables.find((t) => t.id === tableId);
+        if (!table) {
+          addLog('error', 'Table not found');
+          return;
+        }
         
+        const tableName = table.name;
+        const selectedDatabase = databases.find((d) => d.id === table.databaseId);
+        const databaseName = selectedDatabase?.mysqlName || selectedDatabase?.name;
+        
+        if (!databaseName) {
+          addLog('error', 'Database not found');
+          return;
+        }
+        
+        // Get the old columns to compare
+        const oldColumns = table.columns;
+        const oldColumnNames = new Set(oldColumns.map((c) => c.name));
+        const newColumnNames = new Set(columns.map((c) => c.name));
+        
+        // Identify added columns
+        const addedColumns = columns.filter((c) => !oldColumnNames.has(c.name));
+        
+        // Identify removed columns
+        const removedColumns = oldColumns.filter((c) => !newColumnNames.has(c.name));
+        
+        // Identify modified columns (same name but different properties)
+        const modifiedColumns = columns.filter((newCol) => {
+          const oldCol = oldColumns.find((c) => c.name === newCol.name);
+          if (!oldCol) return false;
+          return (
+            oldCol.dataType !== newCol.dataType ||
+            oldCol.isNotNull !== newCol.isNotNull ||
+            oldCol.isUnique !== newCol.isUnique ||
+            oldCol.defaultValue !== newCol.defaultValue
+          );
+        });
+        
+        // Execute ALTER TABLE commands for each change
+        const alterCommands: string[] = [];
+        
+        // Add new columns
+        for (const col of addedColumns) {
+          let colDef = `ADD COLUMN \`${col.name}\` ${col.dataType}`;
+          if (col.isNotNull) colDef += ' NOT NULL';
+          if (col.isUnique) colDef += ' UNIQUE';
+          if (col.defaultValue) colDef += ` DEFAULT '${col.defaultValue}'`;
+          alterCommands.push(colDef);
+        }
+        
+        // Drop removed columns
+        for (const col of removedColumns) {
+          alterCommands.push(`DROP COLUMN \`${col.name}\``);
+        }
+        
+        // Modify existing columns
+        for (const col of modifiedColumns) {
+          let colDef = `MODIFY COLUMN \`${col.name}\` ${col.dataType}`;
+          if (col.isNotNull) colDef += ' NOT NULL';
+          if (col.isUnique) colDef += ' UNIQUE';
+          if (col.defaultValue) colDef += ` DEFAULT '${col.defaultValue}'`;
+          alterCommands.push(colDef);
+        }
+        
+        // Execute all ALTER TABLE commands
+        if (alterCommands.length > 0) {
+          const alterQuery = `ALTER TABLE \`${tableName}\` ${alterCommands.join(', ')}`;
+          
+          const response = await fetch('/api/query/execute', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              database: databaseName,
+              query: alterQuery,
+            }),
+          });
+          
+          const result = await response.json();
+          
+          if (!result.success) {
+            addLog('error', `Failed to alter table: ${result.error}`);
+            return;
+          }
+          
+          addLog('success', `Table '${tableName}' structure altered in MySQL`);
+        }
+        
+        // Update Firebase with new columns
         await updateDoc(doc(db, 'tables', tableId), {
           columns,
           updatedAt: Timestamp.now(),
@@ -507,7 +593,7 @@ export default function DashboardPage() {
         addLog('error', 'Failed to update table');
       }
     },
-    [tables, addLog]
+    [tables, databases, addLog]
   );
 
   // Execute query helper for modals
@@ -825,17 +911,76 @@ export default function DashboardPage() {
                 const describeResult = await describeResponse.json();
                 
                 if (describeResult.success && Array.isArray(describeResult.results)) {
+                  // Get foreign key information from INFORMATION_SCHEMA
+                  const fkResponse = await fetch('/api/query/execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      database: 'information_schema',
+                      query: `
+                        SELECT 
+                          COLUMN_NAME,
+                          REFERENCED_TABLE_NAME,
+                          REFERENCED_COLUMN_NAME
+                        FROM KEY_COLUMN_USAGE
+                        WHERE TABLE_SCHEMA = '${currentDatabaseName}'
+                          AND TABLE_NAME = '${tableName}'
+                          AND REFERENCED_TABLE_NAME IS NOT NULL
+                      `,
+                    }),
+                  });
+                  const fkResult = await fkResponse.json();
+                  const foreignKeys = fkResult.success && Array.isArray(fkResult.results) ? fkResult.results : [];
+                  
+                  // Create a map of column name -> foreign key reference
+                  const fkMap = new Map<string, { tableName: string; columnName: string }>();
+                  foreignKeys.forEach((fk: any) => {
+                    fkMap.set(fk.COLUMN_NAME, {
+                      tableName: fk.REFERENCED_TABLE_NAME,
+                      columnName: fk.REFERENCED_COLUMN_NAME,
+                    });
+                  });
+                  
                   // Convert MySQL column info to our Column format
-                  const columns = describeResult.results.map((col: any, index: number) => ({
-                    id: uuidv4(),
-                    name: col.Field,
-                    dataType: col.Type,
-                    isPrimaryKey: col.Key === 'PRI',
-                    isNotNull: col.Null === 'NO',
-                    isUnique: col.Key === 'UNI',
-                    defaultValue: col.Default,
-                    isForeignKey: col.Key === 'MUL',
-                  }));
+                  const columns = describeResult.results.map((col: any) => {
+                    const column: Column = {
+                      id: uuidv4(),
+                      name: col.Field,
+                      dataType: col.Type,
+                      isPrimaryKey: col.Key === 'PRI',
+                      isNotNull: col.Null === 'NO',
+                      isUnique: col.Key === 'UNI',
+                      defaultValue: col.Default,
+                      isForeignKey: col.Key === 'MUL' || fkMap.has(col.Field),
+                    };
+                    
+                    // Add foreign key reference if exists
+                    const fkRef = fkMap.get(col.Field);
+                    if (fkRef) {
+                      // Find the referenced table in our tables array
+                      const referencedTable = tables.find((t) => 
+                        t.name === fkRef.tableName && t.databaseId === selectedDatabaseId
+                      );
+                      
+                      if (referencedTable) {
+                        // Find the referenced column in that table
+                        const referencedColumn = referencedTable.columns.find((c) => 
+                          c.name === fkRef.columnName
+                        );
+                        
+                        if (referencedColumn) {
+                          column.foreignKeyReference = {
+                            tableId: referencedTable.id,
+                            columnId: referencedColumn.id,
+                            tableName: referencedTable.name,
+                            columnName: referencedColumn.name,
+                          };
+                        }
+                      }
+                    }
+                    
+                    return column;
+                  });
 
                   // Add table to Firebase
                   const tableId = uuidv4();
@@ -853,6 +998,13 @@ export default function DashboardPage() {
                   });
                   
                   addLog('info', `Table '${tableName}' added to workflow`);
+                  
+                  // Log foreign key relationships
+                  columns.forEach((col: Column) => {
+                    if (col.isForeignKey && col.foreignKeyReference) {
+                      addLog('info', `Foreign key linked: ${tableName}.${col.name} → ${col.foreignKeyReference.tableName}.${col.foreignKeyReference.columnName}`);
+                    }
+                  });
                 }
               } catch (err) {
                 console.error('Error syncing table to Firebase:', err);
@@ -882,17 +1034,76 @@ export default function DashboardPage() {
                   const describeResult = await describeResponse.json();
                   
                   if (describeResult.success && Array.isArray(describeResult.results)) {
+                    // Get foreign key information from INFORMATION_SCHEMA
+                    const fkResponse = await fetch('/api/query/execute', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        database: 'information_schema',
+                        query: `
+                          SELECT 
+                            COLUMN_NAME,
+                            REFERENCED_TABLE_NAME,
+                            REFERENCED_COLUMN_NAME
+                          FROM KEY_COLUMN_USAGE
+                          WHERE TABLE_SCHEMA = '${currentDatabaseName}'
+                            AND TABLE_NAME = '${tableName}'
+                            AND REFERENCED_TABLE_NAME IS NOT NULL
+                        `,
+                      }),
+                    });
+                    const fkResult = await fkResponse.json();
+                    const foreignKeys = fkResult.success && Array.isArray(fkResult.results) ? fkResult.results : [];
+                    
+                    // Create a map of column name -> foreign key reference
+                    const fkMap = new Map<string, { tableName: string; columnName: string }>();
+                    foreignKeys.forEach((fk: any) => {
+                      fkMap.set(fk.COLUMN_NAME, {
+                        tableName: fk.REFERENCED_TABLE_NAME,
+                        columnName: fk.REFERENCED_COLUMN_NAME,
+                      });
+                    });
+                    
                     // Convert MySQL column info to our Column format
-                    const updatedColumns = describeResult.results.map((col: any) => ({
-                      id: uuidv4(),
-                      name: col.Field,
-                      dataType: col.Type,
-                      isPrimaryKey: col.Key === 'PRI',
-                      isNotNull: col.Null === 'NO',
-                      isUnique: col.Key === 'UNI',
-                      defaultValue: col.Default,
-                      isForeignKey: col.Key === 'MUL',
-                    }));
+                    const updatedColumns = describeResult.results.map((col: any) => {
+                      const column: Column = {
+                        id: uuidv4(),
+                        name: col.Field,
+                        dataType: col.Type,
+                        isPrimaryKey: col.Key === 'PRI',
+                        isNotNull: col.Null === 'NO',
+                        isUnique: col.Key === 'UNI',
+                        defaultValue: col.Default,
+                        isForeignKey: col.Key === 'MUL' || fkMap.has(col.Field),
+                      };
+                      
+                      // Add foreign key reference if exists
+                      const fkRef = fkMap.get(col.Field);
+                      if (fkRef) {
+                        // Find the referenced table in our tables array
+                        const referencedTable = tables.find((t) => 
+                          t.name === fkRef.tableName && t.databaseId === selectedDatabaseId
+                        );
+                        
+                        if (referencedTable) {
+                          // Find the referenced column in that table
+                          const referencedColumn = referencedTable.columns.find((c) => 
+                            c.name === fkRef.columnName
+                          );
+                          
+                          if (referencedColumn) {
+                            column.foreignKeyReference = {
+                              tableId: referencedTable.id,
+                              columnId: referencedColumn.id,
+                              tableName: referencedTable.name,
+                              columnName: referencedColumn.name,
+                            };
+                          }
+                        }
+                      }
+                      
+                      return column;
+                    });
 
                     // Update table in Firebase
                     await updateDoc(doc(db, 'tables', tableToUpdate.id), {
@@ -901,6 +1112,13 @@ export default function DashboardPage() {
                     });
                     
                     addLog('info', `Table '${tableName}' structure updated in workflow`);
+                    
+                    // Log foreign key relationships
+                    updatedColumns.forEach((col: Column) => {
+                      if (col.isForeignKey && col.foreignKeyReference) {
+                        addLog('info', `Foreign key linked: ${tableName}.${col.name} → ${col.foreignKeyReference.tableName}.${col.foreignKeyReference.columnName}`);
+                      }
+                    });
                   }
                 } catch (err) {
                   console.error('Error updating table structure:', err);
