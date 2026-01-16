@@ -115,9 +115,22 @@ export default function InsertDataModal({
       const db = databases.find((d) => d.name === selectedDatabase);
       const mysqlDatabaseName = db?.mysqlName || selectedDatabase;
       
+      // Get primary key columns
+      const primaryKeyColumns = columns
+        .filter(col => col.Key === 'PRI')
+        .map(col => col.Field);
+      
       // Insert all rows
       for (const rowValues of rows) {
-        await onInsert(mysqlDatabaseName, selectedTable, rowValues);
+        // Filter out empty primary key values (let them auto-increment)
+        const filteredValues = { ...rowValues };
+        primaryKeyColumns.forEach(pkCol => {
+          if (!filteredValues[pkCol] || filteredValues[pkCol].trim() === '') {
+            delete filteredValues[pkCol];
+          }
+        });
+        
+        await onInsert(mysqlDatabaseName, selectedTable, filteredValues);
       }
       handleClose();
     } catch (err) {

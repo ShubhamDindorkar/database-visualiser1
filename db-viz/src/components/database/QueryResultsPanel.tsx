@@ -60,7 +60,7 @@ export default function QueryResultsPanel({ results, query, onClose }: QueryResu
         <div className="flex-1 overflow-auto p-4">
           {results.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              Empty set (0 rows)
+              No data found
             </div>
           ) : (
             <div className="overflow-x-auto">

@@ -3,12 +3,13 @@
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { motion } from 'framer-motion';
-import { Key, Link, Hash, Type, Calendar, ToggleLeft, FileJson, Trash2 } from 'lucide-react';
+import { Key, Link, Hash, Type, Calendar, ToggleLeft, FileJson, Trash2, ChevronRight } from 'lucide-react';
 import { Table, Column, DataType } from '@/types/database';
 
 interface TableNodeData {
   table: Table;
   onDelete: (tableId: string) => void;
+  onViewData: (tableId: string, tableName: string) => void;
   isSelected: boolean;
 }
 
@@ -32,7 +33,7 @@ const getTypeIcon = (dataType: DataType) => {
 };
 
 function TableNode({ data, selected }: NodeProps<TableNodeData>) {
-  const { table, onDelete, isSelected } = data;
+  const { table, onDelete, onViewData, isSelected } = data;
 
   return (
     <motion.div
@@ -40,7 +41,7 @@ function TableNode({ data, selected }: NodeProps<TableNodeData>) {
       animate={{ scale: 1, opacity: 1 }}
       whileHover={{ scale: 1.02 }}
       className={`
-        relative bg-white rounded-xl overflow-hidden
+        relative bg-white rounded-xl overflow-visible
         shadow-lg hover:shadow-xl transition-shadow duration-300
         border-2 ${selected || isSelected ? 'border-black' : 'border-gray-200'}
         min-w-[220px]
@@ -57,7 +58,7 @@ function TableNode({ data, selected }: NodeProps<TableNodeData>) {
       />
 
       {/* Table Header */}
-      <div className="bg-black px-4 py-3 flex items-center justify-between group">
+      <div className="bg-black px-4 py-3 flex items-center justify-between group rounded-t-xl">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-white rounded-full opacity-80" />
           <h3 className="text-white font-semibold text-sm tracking-wide">
@@ -78,7 +79,7 @@ function TableNode({ data, selected }: NodeProps<TableNodeData>) {
       </div>
 
       {/* Columns */}
-      <div className="divide-y divide-gray-100">
+      <div className="divide-y divide-gray-100 overflow-hidden">
         {table.columns.map((column, index) => (
           <div
             key={column.id}
@@ -143,7 +144,7 @@ function TableNode({ data, selected }: NodeProps<TableNodeData>) {
       </div>
 
       {/* Table Footer */}
-      <div className="px-4 py-2 bg-gray-50 border-t border-gray-100">
+      <div className="px-4 py-2 bg-gray-50 border-t border-gray-100 rounded-b-xl">
         <div className="flex items-center justify-between text-xs text-gray-600">
           <span>{table.columns.length} columns</span>
           <span className="flex items-center gap-1">
@@ -162,6 +163,20 @@ function TableNode({ data, selected }: NodeProps<TableNodeData>) {
           </span>
         </div>
       </div>
+
+      {/* View Data Arrow Button */}
+      <motion.button
+        whileHover={{ scale: 1.1, x: 3 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onViewData(table.id, table.name);
+        }}
+        className="absolute -right-5 top-1/2 -translate-y-1/2 w-8 h-8 bg-black hover:bg-gray-800 text-white rounded-full shadow-lg flex items-center justify-center transition-colors z-20"
+        title="View table data"
+      >
+        <ChevronRight className="w-4 h-4" />
+      </motion.button>
     </motion.div>
   );
 }

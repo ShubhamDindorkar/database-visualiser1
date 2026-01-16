@@ -173,21 +173,6 @@ export default function DashboardPage() {
     return () => unsubscribe();
   }, [selectedDatabaseId]);
 
-  // Convert tables to React Flow nodes
-  useEffect(() => {
-    const newNodes: Node[] = tables.map((table) => ({
-      id: table.id,
-      type: 'tableNode',
-      position: table.position,
-      data: {
-        table,
-        onDelete: handleDeleteTable,
-        isSelected: selectedTableId === table.id,
-      },
-    }));
-    setNodes(newNodes);
-  }, [tables, selectedTableId]);
-
   // Convert foreign key relationships to edges
   useEffect(() => {
     const newEdges: Edge[] = [];
@@ -366,6 +351,22 @@ export default function DashboardPage() {
           return;
         }
 
+        // Check if table already exists in MySQL
+        const checkResponse = await fetch('/api/query/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            database: databaseName,
+            query: `SHOW TABLES LIKE '${name}'`,
+          }),
+        });
+        const checkResult = await checkResponse.json();
+        
+        if (checkResult.success && checkResult.results && checkResult.results.length > 0) {
+          addLog('error', `Table '${name}' already exists in MySQL. Use DROP TABLE \`${name}\` to remove it first.`);
+          return;
+        }
+
         // First, create the table in MySQL
         const mysqlColumns = columns.map((col) => ({
           name: col.name,
@@ -539,6 +540,42 @@ export default function DashboardPage() {
     [addLog]
   );
 
+  // Handle view data from table node arrow button
+  const handleViewData = useCallback(
+    async (tableId: string, tableName: string) => {
+      const db = databases.find((d) => d.id === selectedDatabaseId);
+      if (!db) return;
+      
+      const mysqlDatabaseName = db.mysqlName || db.name;
+      const query = `SELECT * FROM \`${tableName}\``;
+      
+      const result = await executeQuery(mysqlDatabaseName, query);
+      if (result.success && result.results) {
+        setQueryResults({
+          results: result.results,
+          query,
+        });
+      }
+    },
+    [databases, selectedDatabaseId, executeQuery]
+  );
+
+  // Convert tables to React Flow nodes
+  useEffect(() => {
+    const newNodes: Node[] = tables.map((table) => ({
+      id: table.id,
+      type: 'tableNode',
+      position: table.position,
+      data: {
+        table,
+        onDelete: handleDeleteTable,
+        onViewData: handleViewData,
+        isSelected: selectedTableId === table.id,
+      },
+    }));
+    setNodes(newNodes);
+  }, [tables, selectedTableId, handleViewData]);
+
   // Handle INSERT data
   const handleInsertData = useCallback(
     async (database: string, table: string, values: Record<string, string>) => {
@@ -650,7 +687,7 @@ export default function DashboardPage() {
           addLog('info', '| Database           |');
           addLog('info', '+--------------------+');
           addLog('info', '+--------------------+');
-          addLog('info', 'Empty set (0 databases)');
+          addLog('info', 'No databases found');
           
           setQueryResults({
             results: [],
@@ -689,7 +726,7 @@ export default function DashboardPage() {
         addLog('info', `Executing: SHOW TABLES from ${selectedDatabase?.name}`);
         
         if (currentTables.length === 0) {
-          addLog('info', 'Empty set (0 tables)');
+          addLog('info', 'No tables found in database');
           setQueryResults({
             results: [],
             query: `SHOW TABLES FROM ${selectedDatabase?.name}`,
@@ -756,6 +793,8 @@ export default function DashboardPage() {
             result.formattedOutput.forEach((line: string) => {
               addLog('success', line);
             });
+          } else {
+            addLog('success', 'Query executed successfully');
           }
           
           // If it's a SELECT query and has results, also show in panel
@@ -819,23 +858,85 @@ export default function DashboardPage() {
                 console.error('Error syncing table to Firebase:', err);
               }
             }
+          } else if (upperCommand.startsWith('ALTER TABLE')) {
+            // Handle ALTER TABLE to update columns live
+            const match = trimmedCommand.match(/ALTER\s+TABLE\s+[`"]?(\w+)[`"]?/i);
+            if (match && match[1] && selectedDatabaseId) {
+              const tableName = match[1];
+              const tableToUpdate = tables.find((t) => 
+                t.name.toLowerCase() === tableName.toLowerCase() && 
+                t.databaseId === selectedDatabaseId
+              );
+              
+              if (tableToUpdate) {
+                // Fetch updated table structure from MySQL
+                try {
+                  const describeResponse = await fetch('/api/query/execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      database: currentDatabaseName,
+                      query: `DESCRIBE \`${tableName}\``,
+                    }),
+                  });
+                  const describeResult = await describeResponse.json();
+                  
+                  if (describeResult.success && Array.isArray(describeResult.results)) {
+                    // Convert MySQL column info to our Column format
+                    const updatedColumns = describeResult.results.map((col: any) => ({
+                      id: uuidv4(),
+                      name: col.Field,
+                      dataType: col.Type,
+                      isPrimaryKey: col.Key === 'PRI',
+                      isNotNull: col.Null === 'NO',
+                      isUnique: col.Key === 'UNI',
+                      defaultValue: col.Default,
+                      isForeignKey: col.Key === 'MUL',
+                    }));
+
+                    // Update table in Firebase
+                    await updateDoc(doc(db, 'tables', tableToUpdate.id), {
+                      columns: updatedColumns,
+                      updatedAt: Timestamp.now(),
+                    });
+                    
+                    addLog('info', `Table '${tableName}' structure updated in workflow`);
+                  }
+                } catch (err) {
+                  console.error('Error updating table structure:', err);
+                }
+              }
+            }
           } else if (upperCommand.startsWith('DROP TABLE')) {
             // Extract table name from DROP TABLE query
             const match = trimmedCommand.match(/DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?[`"]?(\w+)[`"]?/i);
             if (match && match[1]) {
               const tableName = match[1];
+              
+              // Find table with case-insensitive matching
               const tableToDelete = tables.find((t) => 
                 t.name.toLowerCase() === tableName.toLowerCase() && 
                 t.databaseId === selectedDatabaseId
               );
               
               if (tableToDelete) {
-                await deleteDoc(doc(db, 'tables', tableToDelete.id));
-                if (selectedTableId === tableToDelete.id) {
-                  setSelectedTableId(null);
+                // Delete from Firebase
+                try {
+                  await deleteDoc(doc(db, 'tables', tableToDelete.id));
+                  if (selectedTableId === tableToDelete.id) {
+                    setSelectedTableId(null);
+                  }
+                  addLog('info', `Table '${tableName}' removed from workflow`);
+                } catch (err) {
+                  console.error('Error removing table from Firebase:', err);
+                  addLog('warning', `Failed to remove table '${tableName}' from workflow`);
                 }
-                addLog('info', `Table '${tableName}' removed from workflow`);
+              } else {
+                addLog('info', `Table '${tableName}' not found in workflow (dropped from MySQL only)`);
               }
+              
+              // Small delay to ensure MySQL has committed the DROP
+              await new Promise(resolve => setTimeout(resolve, 200));
             }
           } else if (upperCommand.startsWith('DROP DATABASE')) {
             // Extract database name from DROP DATABASE query
@@ -980,7 +1081,6 @@ export default function DashboardPage() {
                 onNodesChange={onNodesChange}
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
-                fitView
                 fitViewOptions={{
                   padding: 0.2,
                   maxZoom: 0.85,
