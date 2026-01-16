@@ -24,6 +24,10 @@ interface ColumnInfo {
   Extra: string;
 }
 
+interface RowValues {
+  [key: string]: string;
+}
+
 export default function InsertDataModal({
   isOpen,
   onClose,
@@ -35,7 +39,7 @@ export default function InsertDataModal({
   const [selectedDatabase, setSelectedDatabase] = useState<string>('');
   const [selectedTable, setSelectedTable] = useState<string>('');
   const [columns, setColumns] = useState<ColumnInfo[]>([]);
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [rows, setRows] = useState<RowValues[]>([{}]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingColumns, setIsFetchingColumns] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +66,7 @@ export default function InsertDataModal({
       fetchColumns();
     } else {
       setColumns([]);
-      setValues({});
+      setRows([{}]);
     }
   }, [selectedDatabase, selectedTable]);
 
@@ -85,12 +89,12 @@ export default function InsertDataModal({
       
       if (result.success && Array.isArray(result.results)) {
         setColumns(result.results);
-        // Initialize values with empty strings
+        // Initialize first row with empty strings
         const initialValues: Record<string, string> = {};
         result.results.forEach((col: ColumnInfo) => {
           initialValues[col.Field] = '';
         });
-        setValues(initialValues);
+        setRows([initialValues]);
       } else {
         setError(result.error || 'Failed to fetch columns');
       }
@@ -111,7 +115,10 @@ export default function InsertDataModal({
       const db = databases.find((d) => d.name === selectedDatabase);
       const mysqlDatabaseName = db?.mysqlName || selectedDatabase;
       
-      await onInsert(mysqlDatabaseName, selectedTable, values);
+      // Insert all rows
+      for (const rowValues of rows) {
+        await onInsert(mysqlDatabaseName, selectedTable, rowValues);
+      }
       handleClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to insert data');
@@ -120,11 +127,31 @@ export default function InsertDataModal({
     }
   };
 
+  const addNewRow = () => {
+    const initialValues: Record<string, string> = {};
+    columns.forEach((col) => {
+      initialValues[col.Field] = '';
+    });
+    setRows([...rows, initialValues]);
+  };
+
+  const removeRow = (index: number) => {
+    if (rows.length > 1) {
+      setRows(rows.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateRowValue = (rowIndex: number, field: string, value: string) => {
+    const updatedRows = [...rows];
+    updatedRows[rowIndex] = { ...updatedRows[rowIndex], [field]: value };
+    setRows(updatedRows);
+  };
+
   const handleClose = () => {
     setSelectedDatabase('');
     setSelectedTable('');
     setColumns([]);
-    setValues({});
+    setRows([{}]);
     setError(null);
     onClose();
   };
@@ -162,7 +189,7 @@ export default function InsertDataModal({
                   </div>
                   <div>
                     <h2 className="text-xl font-semibold text-gray-900">Insert Data</h2>
-                    <p className="text-sm text-gray-500">Add a new row to a table</p>
+                    <p className="text-sm text-gray-500">Add rows to a table</p>
                   </div>
                 </div>
                 <button
@@ -227,38 +254,64 @@ export default function InsertDataModal({
                   </div>
                 )}
 
-                {/* Column Inputs */}
+                {/* Column Inputs - Multiple Rows */}
                 {columns.length > 0 && !isFetchingColumns && (
-                  <div className="space-y-4 mt-6">
-                    <h3 className="text-sm font-medium text-gray-700 border-b pb-2">
-                      Column Values
-                    </h3>
-                    {columns.map((col) => (
-                      <div key={col.Field}>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          {col.Field}
-                          <span className="text-gray-400 font-normal ml-2">
-                            ({col.Type})
-                          </span>
-                          {col.Key === 'PRI' && (
-                            <span className="ml-2 text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">
-                              PK
-                            </span>
+                  <div className="space-y-6 mt-6">
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <h3 className="text-sm font-medium text-gray-700">
+                        Row Values ({rows.length} row{rows.length !== 1 ? 's' : ''})
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={addNewRow}
+                        className="flex items-center gap-1 text-sm text-green-600 hover:text-green-700 font-medium"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Row
+                      </button>
+                    </div>
+                    
+                    {rows.map((rowValues, rowIndex) => (
+                      <div key={rowIndex} className="border border-gray-200 rounded-lg p-4 space-y-3 relative">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-medium text-gray-500">Row {rowIndex + 1}</span>
+                          {rows.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeRow(rowIndex)}
+                              className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded"
+                              title="Remove row"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
                           )}
-                          {col.Null === 'NO' && col.Extra !== 'auto_increment' && (
-                            <span className="ml-2 text-xs text-red-500">*</span>
-                          )}
-                        </label>
-                        <input
-                          type="text"
-                          value={values[col.Field] || ''}
-                          onChange={(e) =>
-                            setValues((prev) => ({ ...prev, [col.Field]: e.target.value }))
-                          }
-                          placeholder={getPlaceholder(col)}
-                          disabled={col.Extra === 'auto_increment'}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400"
-                        />
+                        </div>
+                        {columns.map((col) => (
+                          <div key={col.Field}>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              {col.Field}
+                              <span className="text-gray-400 font-normal ml-2">
+                                ({col.Type})
+                              </span>
+                              {col.Key === 'PRI' && (
+                                <span className="ml-2 text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">
+                                  PK
+                                </span>
+                              )}
+                              {col.Null === 'NO' && col.Extra !== 'auto_increment' && (
+                                <span className="ml-2 text-xs text-red-500">*</span>
+                              )}
+                            </label>
+                            <input
+                              type="text"
+                              value={rowValues[col.Field] || ''}
+                              onChange={(e) => updateRowValue(rowIndex, col.Field, e.target.value)}
+                              placeholder={getPlaceholder(col)}
+                              disabled={col.Extra === 'auto_increment'}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400"
+                            />
+                          </div>
+                        ))}
                       </div>
                     ))}
                   </div>
@@ -281,7 +334,7 @@ export default function InsertDataModal({
                     disabled={!selectedDatabase || !selectedTable || columns.length === 0 || isLoading}
                     isLoading={isLoading}
                   >
-                    Insert Row
+                    Insert {rows.length} Row{rows.length !== 1 ? 's' : ''}
                   </Button>
                 </div>
               </form>

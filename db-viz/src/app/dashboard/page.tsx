@@ -694,6 +694,106 @@ export default function DashboardPage() {
               query: trimmedCommand,
             });
           }
+
+          // Handle schema-changing queries to update UI immediately
+          if (upperCommand.startsWith('CREATE TABLE') && selectedDatabaseId) {
+            // Extract table name from CREATE TABLE query
+            const match = trimmedCommand.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`"]?(\w+)[`"]?/i);
+            if (match && match[1]) {
+              const tableName = match[1];
+              
+              // Fetch table structure from MySQL
+              try {
+                const describeResponse = await fetch('/api/query/execute', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    database: currentDatabaseName,
+                    query: `DESCRIBE \`${tableName}\``,
+                  }),
+                });
+                const describeResult = await describeResponse.json();
+                
+                if (describeResult.success && Array.isArray(describeResult.results)) {
+                  // Convert MySQL column info to our Column format
+                  const columns = describeResult.results.map((col: any, index: number) => ({
+                    id: uuidv4(),
+                    name: col.Field,
+                    dataType: col.Type,
+                    isPrimaryKey: col.Key === 'PRI',
+                    isNotNull: col.Null === 'NO',
+                    isUnique: col.Key === 'UNI',
+                    defaultValue: col.Default,
+                    isForeignKey: col.Key === 'MUL',
+                  }));
+
+                  // Add table to Firebase
+                  const tableId = uuidv4();
+                  const existingTables = tables.filter((t) => t.databaseId === selectedDatabaseId);
+                  const xOffset = (existingTables.length % 3) * 280;
+                  const yOffset = Math.floor(existingTables.length / 3) * 250;
+
+                  await setDoc(doc(db, 'tables', tableId), {
+                    name: tableName,
+                    databaseId: selectedDatabaseId,
+                    columns,
+                    position: { x: 100 + xOffset, y: 100 + yOffset },
+                    createdAt: Timestamp.now(),
+                    updatedAt: Timestamp.now(),
+                  });
+                  
+                  addLog('info', `Table '${tableName}' added to workflow`);
+                }
+              } catch (err) {
+                console.error('Error syncing table to Firebase:', err);
+              }
+            }
+          } else if (upperCommand.startsWith('DROP TABLE')) {
+            // Extract table name from DROP TABLE query
+            const match = trimmedCommand.match(/DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?[`"]?(\w+)[`"]?/i);
+            if (match && match[1]) {
+              const tableName = match[1];
+              const tableToDelete = tables.find((t) => 
+                t.name.toLowerCase() === tableName.toLowerCase() && 
+                t.databaseId === selectedDatabaseId
+              );
+              
+              if (tableToDelete) {
+                await deleteDoc(doc(db, 'tables', tableToDelete.id));
+                if (selectedTableId === tableToDelete.id) {
+                  setSelectedTableId(null);
+                }
+                addLog('info', `Table '${tableName}' removed from workflow`);
+              }
+            }
+          } else if (upperCommand.startsWith('DROP DATABASE')) {
+            // Extract database name from DROP DATABASE query
+            const match = trimmedCommand.match(/DROP\s+DATABASE\s+(?:IF\s+EXISTS\s+)?[`"]?(\w+)[`"]?/i);
+            if (match && match[1]) {
+              const dbName = match[1];
+              const dbToDelete = databases.find((d) => d.name.toLowerCase() === dbName.toLowerCase());
+              
+              if (dbToDelete) {
+                // Delete all tables in the database from Firebase
+                const tablesToDelete = tables.filter((t) => t.databaseId === dbToDelete.id);
+                for (const table of tablesToDelete) {
+                  await deleteDoc(doc(db, 'tables', table.id));
+                }
+                
+                // Delete database from Firebase
+                await deleteDoc(doc(db, 'databases', dbToDelete.id));
+                
+                if (selectedDatabaseId === dbToDelete.id) {
+                  setSelectedDatabaseId(null);
+                }
+                
+                addLog('info', `Database '${dbName}' removed from workflow`);
+              }
+            }
+          } else if (upperCommand.startsWith('INSERT INTO') || upperCommand.startsWith('UPDATE') || upperCommand.startsWith('DELETE FROM')) {
+            // For data modification queries, just log success - data will be visible when queried
+            addLog('info', 'Data modified successfully');
+          }
         } else {
           // Log error
           if (result.formattedOutput && Array.isArray(result.formattedOutput)) {
@@ -709,7 +809,7 @@ export default function DashboardPage() {
         addLog('error', 'Failed to execute query. Check if MySQL is running.');
       }
     },
-    [databases, selectedDatabaseId, addLog]
+    [databases, selectedDatabaseId, tables, selectedTableId, addLog]
   );
 
   // Handle quick SQL buttons
@@ -992,6 +1092,9 @@ export default function DashboardPage() {
         tables={tables}
         selectedDatabaseId={selectedDatabaseId}
         onExecuteQuery={executeQuery}
+        onShowResults={(results, query) => {
+          setQueryResults({ results, query });
+        }}
       />
 
       {/* Drop Modal */}

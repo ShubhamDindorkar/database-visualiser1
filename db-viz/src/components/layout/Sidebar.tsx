@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Database,
@@ -60,6 +60,15 @@ export default function Sidebar({
       return next;
     });
   };
+
+  // Memoize table counts to prevent recalculation on every render
+  const tableCountsByDatabase = useMemo(() => {
+    const counts: Record<string, number> = {};
+    databases.forEach((db) => {
+      counts[db.id] = tables.filter((t) => t.databaseId === db.id).length;
+    });
+    return counts;
+  }, [databases, tables]);
 
   const getTablesForDatabase = (databaseId: string) => {
     return tables.filter((t) => t.databaseId === databaseId);
@@ -162,7 +171,7 @@ export default function Sidebar({
                       {db.name}
                     </span>
                     <span className="text-xs text-gray-500">
-                      {dbTables.length}
+                      {tableCountsByDatabase[db.id] || 0}
                     </span>
                     <motion.button
                       whileHover={{ scale: 1.1 }}
