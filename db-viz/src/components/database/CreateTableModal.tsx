@@ -14,6 +14,8 @@ interface CreateTableModalProps {
   onCreate: (name: string, columns: Column[]) => void;
   existingTables: TableType[];
   databaseName: string;
+  onInsertData?: (database: string, table: string, values: Record<string, string>) => Promise<void>;
+  mysqlDatabaseName?: string;
 }
 
 interface ColumnFormData {
@@ -28,12 +30,18 @@ interface ColumnFormData {
   isUnique: boolean;
 }
 
+interface RowValues {
+  [key: string]: string;
+}
+
 export default function CreateTableModal({
   isOpen,
   onClose,
   onCreate,
   existingTables,
   databaseName,
+  onInsertData,
+  mysqlDatabaseName,
 }: CreateTableModalProps) {
   const [tableName, setTableName] = useState('');
   const [columns, setColumns] = useState<ColumnFormData[]>([
@@ -49,6 +57,8 @@ export default function CreateTableModal({
       isUnique: false,
     },
   ]);
+  const [wantsToAddData, setWantsToAddData] = useState(false);
+  const [rows, setRows] = useState<RowValues[]>([{}]);
   const [errors, setErrors] = useState<{ tableName?: string; columns?: { [key: string]: string } }>({});
   const [isLoading, setIsLoading] = useState(false);
 
@@ -152,6 +162,32 @@ export default function CreateTableModal({
     return table?.columns.filter((c) => c.isPrimaryKey) || [];
   };
 
+  const addNewRow = () => {
+    const initialRow: RowValues = {};
+    columns.forEach((col) => {
+      initialRow[col.name] = '';
+    });
+    setRows([...rows, initialRow]);
+  };
+
+  const removeRow = (index: number) => {
+    if (rows.length > 1) {
+      setRows(rows.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateRowValue = (rowIndex: number, field: string, value: string) => {
+    const updatedRows = [...rows];
+    updatedRows[rowIndex] = { ...updatedRows[rowIndex], [field]: value };
+    setRows(updatedRows);
+  };
+
+  const getPlaceholder = (col: ColumnFormData): string => {
+    if (col.isPrimaryKey && col.dataType === 'INT') return 'Auto (leave empty)';
+    if (col.isNotNull) return `Required`;
+    return `NULL (optional)`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -195,6 +231,31 @@ export default function CreateTableModal({
       });
 
       await onCreate(tableName, formattedColumns);
+      
+      // Insert data if user wants to add data
+      if (wantsToAddData && rows.length > 0 && onInsertData && mysqlDatabaseName) {
+        // Get primary key columns (they should be auto-increment and not included unless explicitly provided)
+        const primaryKeyColumns = columns
+          .filter(col => col.isPrimaryKey && col.name)
+          .map(col => col.name);
+        
+        for (const rowValues of rows) {
+          // Filter out empty primary key values (let them auto-increment)
+          const filteredValues = { ...rowValues };
+          primaryKeyColumns.forEach(pkCol => {
+            if (!filteredValues[pkCol] || filteredValues[pkCol].trim() === '') {
+              delete filteredValues[pkCol];
+            }
+          });
+          
+          // Only insert if at least one value is provided
+          const hasValues = Object.values(filteredValues).some((v) => v !== '');
+          if (hasValues) {
+            await onInsertData(mysqlDatabaseName, tableName, filteredValues);
+          }
+        }
+      }
+      
       handleClose();
     } catch (error) {
       console.error('Error creating table:', error);
@@ -218,6 +279,8 @@ export default function CreateTableModal({
         isUnique: false,
       },
     ]);
+    setWantsToAddData(false);
+    setRows([{}]);
     setErrors({});
     onClose();
   };
@@ -488,6 +551,93 @@ export default function CreateTableModal({
                     ))}
                   </div>
                 </div>
+
+                {/* Optional Data Insertion Section */}
+                {onInsertData && mysqlDatabaseName && (
+                  <div className="space-y-4 border-t border-gray-200 pt-4">
+                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={wantsToAddData}
+                        onChange={(e) => setWantsToAddData(e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-300 text-gray-600 focus:ring-gray-500"
+                      />
+                      <span>Add initial data to this table?</span>
+                    </label>
+
+                    {wantsToAddData && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="space-y-3"
+                      >
+                        <p className="text-xs text-gray-500">
+                          Leave fields empty to insert NULL values
+                        </p>
+
+                        {rows.map((rowValues, rowIndex) => (
+                          <div
+                            key={rowIndex}
+                            className="p-3 bg-gray-50 rounded-lg space-y-2 border border-gray-200"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-medium text-gray-600">
+                                Row {rowIndex + 1}
+                              </span>
+                              {rows.length > 1 && (
+                                <motion.button
+                                  type="button"
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={() => removeRow(rowIndex)}
+                                  className="text-red-500 hover:text-red-700 transition-colors"
+                                >
+                                  <X className="w-4 h-4" />
+                                </motion.button>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                              {columns.map((column) => (
+                                <div key={column.id} className="space-y-1">
+                                  <label className="text-xs font-medium text-gray-700">
+                                    {column.name}
+                                    {column.isNotNull && (
+                                      <span className="text-red-500 ml-1">*</span>
+                                    )}
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={rowValues[column.name] || ''}
+                                    onChange={(e) =>
+                                      updateRowValue(rowIndex, column.name, e.target.value)
+                                    }
+                                    placeholder={getPlaceholder(column)}
+                                    className="w-full px-2 py-1.5 text-sm rounded border
+                                      bg-white text-black border-gray-300
+                                      focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+
+                        <motion.button
+                          type="button"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={addNewRow}
+                          className="w-full py-2 px-4 rounded-lg border-2 border-dashed
+                            border-gray-300 text-gray-600 hover:border-gray-400
+                            hover:text-gray-700 transition-colors text-sm font-medium"
+                        >
+                          + Add Another Row
+                        </motion.button>
+                      </motion.div>
+                    )}
+                  </div>
+                )}
               </form>
 
               {/* Actions */}

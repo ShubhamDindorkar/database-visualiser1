@@ -615,6 +615,25 @@ export default function DashboardPage() {
         addLog('info', '  CREATE TABLE ...  - Create a new table');
         addLog('info', '  DROP TABLE ...    - Drop a table');
         addLog('info', '  CLEAR             - Clear terminal');
+        
+        // Show in workflow area
+        const helpData = [
+          { Command: 'SHOW DATABASES', Description: 'List all databases' },
+          { Command: 'SHOW TABLES', Description: 'List tables in current database' },
+          { Command: 'USE <database>', Description: 'Select a database' },
+          { Command: 'DESCRIBE <table>', Description: 'Show table structure' },
+          { Command: 'SELECT ...', Description: 'Query data' },
+          { Command: 'INSERT ...', Description: 'Insert data' },
+          { Command: 'UPDATE ...', Description: 'Update data' },
+          { Command: 'DELETE ...', Description: 'Delete data' },
+          { Command: 'CREATE TABLE ...', Description: 'Create a new table' },
+          { Command: 'DROP TABLE ...', Description: 'Drop a table' },
+          { Command: 'CLEAR', Description: 'Clear terminal' },
+        ];
+        setQueryResults({
+          results: helpData,
+          query: 'HELP',
+        });
         return;
       }
 
@@ -632,6 +651,11 @@ export default function DashboardPage() {
           addLog('info', '+--------------------+');
           addLog('info', '+--------------------+');
           addLog('info', 'Empty set (0 databases)');
+          
+          setQueryResults({
+            results: [],
+            query: 'SHOW DATABASES',
+          });
         } else {
           addLog('info', '+--------------------+');
           addLog('info', '| Database           |');
@@ -641,6 +665,53 @@ export default function DashboardPage() {
           });
           addLog('info', '+--------------------+');
           addLog('info', `${databases.length} row${databases.length !== 1 ? 's' : ''} in set`);
+          
+          // Show in workflow area
+          const dbData = databases.map((db) => ({ Database: db.name }));
+          setQueryResults({
+            results: dbData,
+            query: 'SHOW DATABASES',
+          });
+        }
+        return;
+      }
+
+      // Handle SHOW TABLES
+      if (upperCommand === 'SHOW TABLES' || upperCommand === 'SHOW TABLES;') {
+        if (!selectedDatabaseId) {
+          addLog('error', 'No database selected. Use "USE <database>" first.');
+          return;
+        }
+        
+        const selectedDatabase = databases.find((d) => d.id === selectedDatabaseId);
+        const currentTables = tables.filter((t) => t.databaseId === selectedDatabaseId);
+        
+        addLog('info', `Executing: SHOW TABLES from ${selectedDatabase?.name}`);
+        
+        if (currentTables.length === 0) {
+          addLog('info', 'Empty set (0 tables)');
+          setQueryResults({
+            results: [],
+            query: `SHOW TABLES FROM ${selectedDatabase?.name}`,
+          });
+        } else {
+          addLog('info', '+--------------------+');
+          addLog('info', `| Tables_in_${selectedDatabase?.name?.padEnd(8)} |`);
+          addLog('info', '+--------------------+');
+          currentTables.forEach((table) => {
+            addLog('info', `| ${table.name.padEnd(18)} |`);
+          });
+          addLog('info', '+--------------------+');
+          addLog('info', `${currentTables.length} row${currentTables.length !== 1 ? 's' : ''} in set`);
+          
+          // Show in workflow area
+          const tableData = currentTables.map((t) => ({
+            [`Tables_in_${selectedDatabase?.name}`]: t.name,
+          }));
+          setQueryResults({
+            results: tableData,
+            query: `SHOW TABLES FROM ${selectedDatabase?.name}`,
+          });
         }
         return;
       }
@@ -1040,6 +1111,8 @@ export default function DashboardPage() {
         onCreate={handleCreateTable}
         existingTables={tablesForSelectedDb}
         databaseName={selectedDatabaseName}
+        onInsertData={handleInsertData}
+        mysqlDatabaseName={databases.find((d) => d.id === selectedDatabaseId)?.mysqlName || selectedDatabaseName}
       />
 
       {/* Edit Table Modal */}

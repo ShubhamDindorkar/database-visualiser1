@@ -261,14 +261,6 @@ export default function InsertDataModal({
                       <h3 className="text-sm font-medium text-gray-700">
                         Row Values ({rows.length} row{rows.length !== 1 ? 's' : ''})
                       </h3>
-                      <button
-                        type="button"
-                        onClick={addNewRow}
-                        className="flex items-center gap-1 text-sm text-green-600 hover:text-green-700 font-medium"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Add Row
-                      </button>
                     </div>
                     
                     {rows.map((rowValues, rowIndex) => (
@@ -314,6 +306,16 @@ export default function InsertDataModal({
                         ))}
                       </div>
                     ))}
+                    
+                    {/* Add Row Button - Below all rows */}
+                    <button
+                      type="button"
+                      onClick={addNewRow}
+                      className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-green-300 rounded-lg text-green-600 hover:text-green-700 hover:border-green-400 hover:bg-green-50 font-medium transition-colors"
+                    >
+                      <Plus className="w-5 h-5" />
+                      Add Another Row
+                    </button>
                   </div>
                 )}
 
