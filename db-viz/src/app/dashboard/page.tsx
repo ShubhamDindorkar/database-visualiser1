@@ -403,8 +403,8 @@ export default function DashboardPage() {
         
         // Calculate position for new table
         const existingTables = tables.filter((t) => t.databaseId === selectedDatabaseId);
-        const xOffset = (existingTables.length % 3) * 280;
-        const yOffset = Math.floor(existingTables.length / 3) * 250;
+        const xOffset = (existingTables.length % 3) * 550;
+        const yOffset = Math.floor(existingTables.length / 3) * 450;
 
         await setDoc(doc(db, 'tables', tableId), {
           name,
@@ -985,8 +985,8 @@ export default function DashboardPage() {
                   // Add table to Firebase
                   const tableId = uuidv4();
                   const existingTables = tables.filter((t) => t.databaseId === selectedDatabaseId);
-                  const xOffset = (existingTables.length % 3) * 280;
-                  const yOffset = Math.floor(existingTables.length / 3) * 250;
+                  const xOffset = (existingTables.length % 3) * 550;
+                  const yOffset = Math.floor(existingTables.length / 3) * 450;
 
                   await setDoc(doc(db, 'tables', tableId), {
                     name: tableName,
