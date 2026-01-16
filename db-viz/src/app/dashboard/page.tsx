@@ -574,7 +574,7 @@ export default function DashboardPage() {
       },
     }));
     setNodes(newNodes);
-  }, [tables, selectedTableId, handleViewData]);
+  }, [tables, selectedTableId, handleViewData, handleDeleteTable, setNodes]);
 
   // Handle INSERT data
   const handleInsertData = useCallback(
