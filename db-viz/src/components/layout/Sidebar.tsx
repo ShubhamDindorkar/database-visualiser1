@@ -15,6 +15,8 @@ import {
   Trash2,
   PlusCircle,
   XCircle,
+  Link,
+  Unlink,
 } from 'lucide-react';
 import { Database as DatabaseType, Table as TableType } from '@/types/database';
 
@@ -31,6 +33,7 @@ interface SidebarProps {
   onDeleteTable: (tableId: string) => void;
   onQuickSQL: (type: 'CREATE' | 'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE' | 'DROP') => void;
   onEditTable: (tableId: string) => void;
+  onManageForeignKeys: () => void;
 }
 
 export default function Sidebar({
@@ -46,6 +49,7 @@ export default function Sidebar({
   onDeleteTable,
   onQuickSQL,
   onEditTable,
+  onManageForeignKeys,
 }: SidebarProps) {
   const [expandedDatabases, setExpandedDatabases] = useState<Set<string>>(new Set());
 
@@ -122,6 +126,28 @@ export default function Sidebar({
             </motion.button>
           ))}
         </div>
+
+        {/* Foreign Key Management */}
+        {selectedDatabaseId && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-3 pt-3 border-t border-gray-200"
+          >
+            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+              Relationships
+            </label>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onManageForeignKeys}
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-lg font-medium text-sm transition-colors"
+            >
+              <Link className="w-4 h-4" />
+              <span>Manage Foreign Keys</span>
+            </motion.button>
+          </motion.div>
+        )}
       </div>
 
       {/* Database List */}

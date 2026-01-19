@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import ReactFlow, {
   Node,
@@ -52,6 +52,8 @@ import CreateChoiceModal from '@/components/database/CreateChoiceModal';
 import TableNode from '@/components/database/TableNode';
 import RelationshipEdge from '@/components/database/RelationshipEdge';
 import QueryResultsPanel from '@/components/database/QueryResultsPanel';
+import ForeignKeyModal from '@/components/database/ForeignKeyModal';
+import ExportModal from '@/components/database/ExportModal';
 
 // Hooks and Types
 import { useAuth } from '@/hooks/useAuth';
@@ -88,7 +90,12 @@ export default function DashboardPage() {
   const [isDeleteDataModalOpen, setIsDeleteDataModalOpen] = useState(false);
   const [isSelectDataModalOpen, setIsSelectDataModalOpen] = useState(false);
   const [isDropModalOpen, setIsDropModalOpen] = useState(false);
+  const [isForeignKeyModalOpen, setIsForeignKeyModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [editingTableId, setEditingTableId] = useState<string | null>(null);
+
+  // Workflow ref for export
+  const workflowRef = useRef<HTMLDivElement>(null);
   const [queryResults, setQueryResults] = useState<{ results: unknown[]; query: string } | null>(null);
 
   // Data State
@@ -594,6 +601,138 @@ export default function DashboardPage() {
       }
     },
     [tables, databases, addLog]
+  );
+
+  // Add foreign key to existing table
+  const handleAddForeignKey = useCallback(
+    async (
+      sourceTableId: string,
+      sourceColumnId: string,
+      targetTableId: string,
+      targetColumnId: string
+    ) => {
+      const sourceTable = tables.find((t) => t.id === sourceTableId);
+      const targetTable = tables.find((t) => t.id === targetTableId);
+      const sourceColumn = sourceTable?.columns.find((c) => c.id === sourceColumnId);
+      const targetColumn = targetTable?.columns.find((c) => c.id === targetColumnId);
+      const selectedDatabase = databases.find((d) => d.id === selectedDatabaseId);
+      const databaseName = selectedDatabase?.mysqlName || selectedDatabase?.name;
+
+      if (!sourceTable || !targetTable || !sourceColumn || !targetColumn || !databaseName) {
+        throw new Error('Invalid table or column selection');
+      }
+
+      try {
+        // First, add the foreign key constraint in MySQL
+        const constraintName = `fk_${sourceTable.name}_${sourceColumn.name}`;
+        const alterQuery = `ALTER TABLE \`${sourceTable.name}\` ADD CONSTRAINT \`${constraintName}\` FOREIGN KEY (\`${sourceColumn.name}\`) REFERENCES \`${targetTable.name}\`(\`${targetColumn.name}\`)`;
+
+        const response = await fetch('/api/query/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            database: databaseName,
+            query: alterQuery,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to add foreign key in MySQL');
+        }
+
+        // Update Firebase with the foreign key reference
+        const updatedColumns = sourceTable.columns.map((col) => {
+          if (col.id === sourceColumnId) {
+            return {
+              ...col,
+              isForeignKey: true,
+              foreignKeyReference: {
+                tableId: targetTableId,
+                tableName: targetTable.name,
+                columnId: targetColumnId,
+                columnName: targetColumn.name,
+              },
+            };
+          }
+          return col;
+        });
+
+        await updateDoc(doc(db, 'tables', sourceTableId), {
+          columns: updatedColumns,
+          updatedAt: Timestamp.now(),
+        });
+
+        addLog(
+          'success',
+          `Foreign key added: ${sourceTable.name}.${sourceColumn.name} → ${targetTable.name}.${targetColumn.name}`
+        );
+      } catch (error) {
+        console.error('Error adding foreign key:', error);
+        throw error;
+      }
+    },
+    [tables, databases, selectedDatabaseId, addLog]
+  );
+
+  // Remove foreign key from existing table
+  const handleRemoveForeignKey = useCallback(
+    async (tableId: string, columnId: string) => {
+      const table = tables.find((t) => t.id === tableId);
+      const column = table?.columns.find((c) => c.id === columnId);
+      const selectedDatabase = databases.find((d) => d.id === selectedDatabaseId);
+      const databaseName = selectedDatabase?.mysqlName || selectedDatabase?.name;
+
+      if (!table || !column || !databaseName) {
+        throw new Error('Invalid table or column');
+      }
+
+      try {
+        // First, remove the foreign key constraint from MySQL
+        const constraintName = `fk_${table.name}_${column.name}`;
+        const alterQuery = `ALTER TABLE \`${table.name}\` DROP FOREIGN KEY \`${constraintName}\``;
+
+        const response = await fetch('/api/query/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            database: databaseName,
+            query: alterQuery,
+          }),
+        });
+
+        const result = await response.json();
+
+        // Even if MySQL fails (constraint might have different name), update Firebase
+        if (!result.success) {
+          addLog('warning', `MySQL: ${result.error}. Updating workflow...`);
+        }
+
+        // Update Firebase to remove the foreign key reference
+        const updatedColumns = table.columns.map((col) => {
+          if (col.id === columnId) {
+            const { foreignKeyReference, ...rest } = col;
+            return {
+              ...rest,
+              isForeignKey: false,
+            };
+          }
+          return col;
+        });
+
+        await updateDoc(doc(db, 'tables', tableId), {
+          columns: updatedColumns,
+          updatedAt: Timestamp.now(),
+        });
+
+        addLog('success', `Foreign key removed from ${table.name}.${column.name}`);
+      } catch (error) {
+        console.error('Error removing foreign key:', error);
+        throw error;
+      }
+    },
+    [tables, databases, selectedDatabaseId, addLog]
   );
 
   // Execute query helper for modals
@@ -1286,12 +1425,13 @@ export default function DashboardPage() {
           onDeleteTable={handleDeleteTable}
           onQuickSQL={handleQuickSQL}
           onEditTable={handleEditTable}
+          onManageForeignKeys={() => setIsForeignKeyModalOpen(true)}
         />
 
         {/* Canvas Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* React Flow Canvas */}
-          <div className="flex-1 relative">
+          <div className="flex-1 relative" ref={workflowRef}>
             {selectedDatabaseId ? (
               <ReactFlow
                 nodes={nodes}
@@ -1358,18 +1498,35 @@ export default function DashboardPage() {
 
             {/* Table count badge */}
             {selectedDatabaseId && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="absolute top-4 right-4 bg-white px-4 py-2 rounded-lg shadow-lg border border-gray-200"
-              >
-                <p className="text-sm text-gray-700">
-                  <span className="font-semibold text-black">
-                    {selectedDatabaseName}
-                  </span>{' '}
-                  • {tablesForSelectedDb.length} table{tablesForSelectedDb.length !== 1 ? 's' : ''}
-                </p>
-              </motion.div>
+              <div className="absolute top-4 right-4 space-y-2">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-white px-4 py-2 rounded-lg shadow-lg border border-gray-200"
+                >
+                  <p className="text-sm text-gray-700">
+                    <span className="font-semibold text-black">
+                      {selectedDatabaseName}
+                    </span>{' '}
+                    • {tablesForSelectedDb.length} table{tablesForSelectedDb.length !== 1 ? 's' : ''}
+                  </p>
+                </motion.div>
+                
+                {/* Export Button */}
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setIsExportModalOpen(true)}
+                  className="w-full bg-black hover:bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg font-medium text-sm flex items-center justify-center gap-2 transition-all"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Export Data
+                </motion.button>
+              </div>
             )}
             
             {/* Query Results Panel */}
@@ -1497,6 +1654,25 @@ export default function DashboardPage() {
         selectedDatabaseId={selectedDatabaseId}
         onDropDatabase={handleDeleteDatabase}
         onDropTable={handleDropTable}
+      />
+
+      {/* Foreign Key Modal */}
+      <ForeignKeyModal
+        isOpen={isForeignKeyModalOpen}
+        onClose={() => setIsForeignKeyModalOpen(false)}
+        tables={tablesForSelectedDb}
+        onAddForeignKey={handleAddForeignKey}
+        onRemoveForeignKey={handleRemoveForeignKey}
+        databaseName={selectedDatabaseName}
+      />
+
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        databaseName={selectedDatabaseName}
+        tables={tablesForSelectedDb}
+        workflowRef={workflowRef}
       />
     </div>
   );

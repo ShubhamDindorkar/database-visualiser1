@@ -95,11 +95,7 @@ export default function DropModal({
         return;
       }
 
-      if (!confirmDrop) {
-        setConfirmDrop(true);
-        return;
-      }
-
+      // Drop table immediately without confirmation
       setIsLoading(true);
       setError(null);
 
@@ -108,7 +104,6 @@ export default function DropModal({
         handleClose();
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to drop table');
-        setConfirmDrop(false);
       } finally {
         setIsLoading(false);
       }
@@ -293,8 +288,8 @@ export default function DropModal({
                       </div>
                     )}
 
-                    {/* Confirmation */}
-                    {confirmDrop && (
+                    {/* Confirmation - Only for database drops */}
+                    {confirmDrop && mode === 'database' && (
                       <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -333,7 +328,7 @@ export default function DropModal({
                         }}
                         type="button"
                       >
-                        {confirmDrop ? 'Cancel' : mode ? 'Back' : 'Close'}
+                        {confirmDrop && mode === 'database' ? 'Cancel' : mode ? 'Back' : 'Close'}
                       </Button>
                       {mode && (
                         <Button
@@ -344,9 +339,9 @@ export default function DropModal({
                             (mode === 'table' && (!selectedDatabase || !selectedTable))
                           }
                           isLoading={isLoading}
-                          className={`${confirmDrop ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600'}`}
+                          className={`${confirmDrop && mode === 'database' ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600'}`}
                         >
-                          {confirmDrop ? 'Confirm Drop' : `Drop ${mode === 'database' ? 'Database' : 'Table'}`}
+                          {confirmDrop && mode === 'database' ? 'Confirm Drop' : `Drop ${mode === 'database' ? 'Database' : 'Table'}`}
                         </Button>
                       )}
                     </div>
