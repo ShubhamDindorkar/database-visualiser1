@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { executeQuery } from '@/lib/mysql';
+import { executeQuery, getPrefixedDatabaseName } from '@/lib/mysql';
 
 interface CreateDatabaseRequest {
   name: string;
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     
     // Create prefixed database name for user isolation
     // Format: user_{userId}_{databaseName}
-    const prefixedName = `user_${userId.substring(0, 8)}_${trimmedName}`;
+    const prefixedName = getPrefixedDatabaseName(trimmedName, userId);
 
     // Validate database name format (MySQL naming rules)
     // Must start with letter or underscore, contain only alphanumeric and underscores

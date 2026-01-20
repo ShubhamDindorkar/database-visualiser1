@@ -4,11 +4,13 @@ import {
   executeQueryInDatabase,
   formatResultsForTerminal,
   formatErrorForTerminal,
+  isDatabaseOwnedByUser,
 } from '@/lib/mysql';
 
 interface ExecuteQueryRequest {
   database?: string;
   query: string;
+  userId?: string;
 }
 
 /**
@@ -34,7 +36,7 @@ interface ExecuteQueryRequest {
 export async function POST(request: NextRequest) {
   try {
     const body: ExecuteQueryRequest = await request.json();
-    const { database, query } = body;
+    const { database, query, userId } = body;
 
     // Validate request
     if (!query || typeof query !== 'string') {
@@ -52,6 +54,15 @@ export async function POST(request: NextRequest) {
         error: 'Query cannot be empty',
         formattedOutput: ['ERROR: Query cannot be empty'],
       }, { status: 400 });
+    }
+
+    // Validate database ownership if userId and database are provided
+    if (userId && database && !isDatabaseOwnedByUser(database, userId)) {
+      return NextResponse.json({
+        success: false,
+        error: 'Access denied. You can only access your own databases.',
+        formattedOutput: ['ERROR 1044 (42000): Access denied. You can only access your own databases.'],
+      }, { status: 403 });
     }
 
     // Determine if we need a database context

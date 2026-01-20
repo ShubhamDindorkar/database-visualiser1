@@ -11,6 +11,45 @@ const connectionConfig = {
 };
 
 /**
+ * Generate the user-specific database prefix
+ * Format: user_{first8charsOfUserId}_
+ */
+export function getUserDatabasePrefix(userId: string): string {
+  return `user_${userId.substring(0, 8)}_`;
+}
+
+/**
+ * Check if a database name belongs to a specific user
+ */
+export function isDatabaseOwnedByUser(databaseName: string, userId: string): boolean {
+  const prefix = getUserDatabasePrefix(userId);
+  return databaseName.startsWith(prefix);
+}
+
+/**
+ * Get the actual MySQL database name with user prefix
+ */
+export function getPrefixedDatabaseName(databaseName: string, userId: string): string {
+  const prefix = getUserDatabasePrefix(userId);
+  // If already prefixed, return as is
+  if (databaseName.startsWith(prefix)) {
+    return databaseName;
+  }
+  return `${prefix}${databaseName}`;
+}
+
+/**
+ * Remove user prefix from database name for display
+ */
+export function getDisplayDatabaseName(mysqlName: string, userId: string): string {
+  const prefix = getUserDatabasePrefix(userId);
+  if (mysqlName.startsWith(prefix)) {
+    return mysqlName.replace(prefix, '');
+  }
+  return mysqlName;
+}
+
+/**
  * Create a MySQL connection without specifying a database
  * Used for operations like CREATE DATABASE, SHOW DATABASES
  */

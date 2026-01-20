@@ -365,6 +365,7 @@ export default function DashboardPage() {
           body: JSON.stringify({
             database: databaseName,
             query: `SHOW TABLES LIKE '${name}'`,
+            userId: user?.uid,
           }),
         });
         const checkResult = await checkResponse.json();
@@ -461,6 +462,7 @@ export default function DashboardPage() {
             body: JSON.stringify({
               database: databaseName,
               query: `DROP TABLE \`${tableName}\``,
+              userId: user?.uid,
             }),
           });
           const mysqlResult = await mysqlResponse.json();
@@ -573,6 +575,7 @@ export default function DashboardPage() {
             body: JSON.stringify({
               database: databaseName,
               query: alterQuery,
+              userId: user?.uid,
             }),
           });
           
@@ -699,6 +702,7 @@ export default function DashboardPage() {
           body: JSON.stringify({
             database: databaseName,
             query: alterQuery,
+            userId: user?.uid,
           }),
         });
 
@@ -742,7 +746,7 @@ export default function DashboardPage() {
         const response = await fetch('/api/query/execute', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ database, query }),
+          body: JSON.stringify({ database, query, userId: user?.uid }),
         });
         const result = await response.json();
         
@@ -904,36 +908,51 @@ export default function DashboardPage() {
         return;
       }
 
-      // Handle SHOW DATABASES - filter to show only user's databases
+      // Handle SHOW DATABASES - fetch from MySQL with user filter
       if (upperCommand === 'SHOW DATABASES' || upperCommand === 'SHOW DATABASES;') {
         addLog('info', 'Executing: SHOW DATABASES');
-        if (databases.length === 0) {
-          addLog('info', '+--------------------+');
-          addLog('info', '| Database           |');
-          addLog('info', '+--------------------+');
-          addLog('info', '+--------------------+');
-          addLog('info', 'No databases found');
+        
+        try {
+          const response = await fetch(`/api/database/list?userId=${user?.uid}`);
+          const result = await response.json();
           
-          setQueryResults({
-            results: [],
-            query: 'SHOW DATABASES',
-          });
-        } else {
-          addLog('info', '+--------------------+');
-          addLog('info', '| Database           |');
-          addLog('info', '+--------------------+');
-          databases.forEach((db) => {
-            addLog('info', `| ${db.name.padEnd(18)} |`);
-          });
-          addLog('info', '+--------------------+');
-          addLog('info', `${databases.length} row${databases.length !== 1 ? 's' : ''} in set`);
-          
-          // Show in workflow area
-          const dbData = databases.map((db) => ({ Database: db.name }));
-          setQueryResults({
-            results: dbData,
-            query: 'SHOW DATABASES',
-          });
+          if (result.success && result.databases) {
+            const mysqlDatabases = result.databases;
+            
+            if (mysqlDatabases.length === 0) {
+              addLog('info', '+--------------------+');
+              addLog('info', '| Database           |');
+              addLog('info', '+--------------------+');
+              addLog('info', '+--------------------+');
+              addLog('info', 'No databases found');
+              
+              setQueryResults({
+                results: [],
+                query: 'SHOW DATABASES',
+              });
+            } else {
+              addLog('info', '+--------------------+');
+              addLog('info', '| Database           |');
+              addLog('info', '+--------------------+');
+              mysqlDatabases.forEach((db: { name: string }) => {
+                addLog('info', `| ${db.name.padEnd(18)} |`);
+              });
+              addLog('info', '+--------------------+');
+              addLog('info', `${mysqlDatabases.length} row${mysqlDatabases.length !== 1 ? 's' : ''} in set`);
+              
+              // Show in workflow area
+              const dbData = mysqlDatabases.map((db: { name: string }) => ({ Database: db.name }));
+              setQueryResults({
+                results: dbData,
+                query: 'SHOW DATABASES',
+              });
+            }
+          } else {
+            addLog('error', `Error fetching databases: ${result.error || 'Unknown error'}`);
+          }
+        } catch (error) {
+          addLog('error', 'Failed to fetch databases from MySQL');
+          console.error('Error fetching databases:', error);
         }
         return;
       }
@@ -1007,6 +1026,7 @@ export default function DashboardPage() {
           body: JSON.stringify({
             database: currentDatabaseName,
             query: trimmedCommand,
+            userId: user?.uid,
           }),
         });
 
@@ -1045,6 +1065,7 @@ export default function DashboardPage() {
                   body: JSON.stringify({
                     database: currentDatabaseName,
                     query: `DESCRIBE \`${tableName}\``,
+                    userId: user?.uid,
                   }),
                 });
                 const describeResult = await describeResponse.json();
@@ -1168,6 +1189,7 @@ export default function DashboardPage() {
                     body: JSON.stringify({
                       database: currentDatabaseName,
                       query: `DESCRIBE \`${tableName}\``,
+                      userId: user?.uid,
                     }),
                   });
                   const describeResult = await describeResponse.json();

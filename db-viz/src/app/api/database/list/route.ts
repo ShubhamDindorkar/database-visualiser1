@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { executeQuery } from '@/lib/mysql';
+import { executeQuery, getUserDatabasePrefix, getDisplayDatabaseName } from '@/lib/mysql';
 
 /**
  * GET /api/database/list
@@ -38,11 +38,11 @@ export async function GET(request: NextRequest) {
       );
 
       // Filter databases by user prefix
-      const userPrefix = `user_${userId.substring(0, 8)}_`;
+      const userPrefix = getUserDatabasePrefix(userId);
       const userDatabases = allDatabases
         .filter((db) => db.startsWith(userPrefix))
         .map((db) => ({
-          name: db.replace(userPrefix, ''), // Remove prefix for display
+          name: getDisplayDatabaseName(db, userId), // Remove prefix for display
           actualName: db, // Keep actual name for MySQL operations
         }));
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { executeQuery } from '@/lib/mysql';
+import { executeQuery, getPrefixedDatabaseName } from '@/lib/mysql';
 
 interface DropDatabaseRequest {
   name: string;
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     const trimmedName = name.trim();
     
     // Create prefixed database name for user isolation
-    const prefixedName = `user_${userId.substring(0, 8)}_${trimmedName}`;
+    const prefixedName = getPrefixedDatabaseName(trimmedName, userId);
 
     // Execute DROP DATABASE query with prefixed name
     // Using backticks to safely escape the database name

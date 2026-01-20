@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { executeQueryInDatabase } from '@/lib/mysql';
+import { executeQueryInDatabase, isDatabaseOwnedByUser } from '@/lib/mysql';
 
 interface DescribeTableRequest {
   database: string;
   table: string;
+  userId?: string;
 }
 
 /**
@@ -28,7 +29,7 @@ interface DescribeTableRequest {
 export async function POST(request: NextRequest) {
   try {
     const body: DescribeTableRequest = await request.json();
-    const { database, table } = body;
+    const { database, table, userId } = body;
 
     // Validate request
     if (!database || typeof database !== 'string') {
@@ -43,6 +44,14 @@ export async function POST(request: NextRequest) {
         success: false,
         error: 'Table name is required',
       }, { status: 400 });
+    }
+
+    // Validate database ownership if userId is provided
+    if (userId && !isDatabaseOwnedByUser(database, userId)) {
+      return NextResponse.json({
+        success: false,
+        error: 'Access denied. You can only access your own databases.',
+      }, { status: 403 });
     }
 
     const result = await executeQueryInDatabase(database, `DESCRIBE \`${table}\``);
