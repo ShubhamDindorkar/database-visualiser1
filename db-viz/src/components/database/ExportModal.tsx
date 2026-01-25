@@ -17,7 +17,7 @@ import Button from '@/components/common/Button';
 import { Table as TableType } from '@/types/database';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, HeadingLevel, AlignmentType } from 'docx';
+import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, HeadingLevel, AlignmentType, ImageRun } from 'docx';
 import { saveAs } from 'file-saver';
 
 interface ExportModalProps {
@@ -261,6 +261,63 @@ export default function ExportModal({
               spacing: { after: 400 },
             })
           );
+
+          // Add workflow image to Word document
+          if (canvas) {
+            try {
+              // Convert canvas to blob and then to base64
+              const imageBlob = await new Promise<Blob | null>((resolve) => {
+                canvas.toBlob((blob) => resolve(blob), 'image/png');
+              });
+              
+              if (imageBlob) {
+                const imageBuffer = await imageBlob.arrayBuffer();
+                const imageBytes = new Uint8Array(imageBuffer);
+                
+                // Calculate image dimensions to fit page width (600px)
+                const maxWidth = 600;
+                const aspectRatio = canvas.height / canvas.width;
+                const imageWidth = Math.min(canvas.width, maxWidth);
+                const imageHeight = imageWidth * aspectRatio;
+                
+                docChildren.push(
+                  new Paragraph({
+                    children: [
+                      new ImageRun({
+                        data: imageBytes,
+                        transformation: {
+                          width: imageWidth,
+                          height: imageHeight,
+                        },
+                        type: 'png',
+                      }),
+                    ],
+                    spacing: { after: 400 },
+                  })
+                );
+              }
+            } catch (error) {
+              console.error('Error adding image to Word document:', error);
+              docChildren.push(
+                new Paragraph({
+                  children: [
+                    new TextRun({ text: '(Workflow visualization unavailable)', italics: true, color: '888888' }),
+                  ],
+                  spacing: { after: 400 },
+                })
+              );
+            }
+          } else {
+            // If canvas capture failed, add a note
+            docChildren.push(
+              new Paragraph({
+                children: [
+                  new TextRun({ text: '(Workflow visualization unavailable)', italics: true, color: '888888' }),
+                ],
+                spacing: { after: 400 },
+              })
+            );
+          }
 
           // Add each table's info
           tables.forEach((table) => {

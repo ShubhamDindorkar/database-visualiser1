@@ -1049,6 +1049,14 @@ export default function DashboardPage() {
               query: trimmedCommand,
             });
           }
+          
+          // If it's a DESCRIBE query and has results, also show in panel
+          if ((upperCommand.startsWith('DESCRIBE') || upperCommand.startsWith('DESC ')) && result.results && Array.isArray(result.results) && result.results.length > 0) {
+            setQueryResults({
+              results: result.results,
+              query: trimmedCommand,
+            });
+          }
 
           // Handle schema-changing queries to update UI immediately
           if (upperCommand.startsWith('CREATE TABLE') && selectedDatabaseId) {
@@ -1145,8 +1153,8 @@ export default function DashboardPage() {
                   // Add table to Firebase
                   const tableId = uuidv4();
                   const existingTables = tables.filter((t) => t.databaseId === selectedDatabaseId);
-                  const xOffset = (existingTables.length % 3) * 350;
-                  const yOffset = Math.floor(existingTables.length / 3) * 300;
+                  const xOffset = (existingTables.length % 3) * 450;
+                  const yOffset = Math.floor(existingTables.length / 3) * 400;
 
                   await setDoc(doc(db, 'tables', tableId), {
                     name: tableName,
@@ -1474,7 +1482,7 @@ export default function DashboardPage() {
                   variant={BackgroundVariant.Dots}
                   gap={20}
                   size={1}
-                  color="#CBD5E1"
+                  color="#000000"
                 />
                 <Controls
                   className="bg-white border border-gray-200 rounded-lg shadow-lg"

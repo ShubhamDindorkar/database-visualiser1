@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
-import { onAuthChange, signInWithGoogle, signOut } from '@/lib/auth';
+import { onAuthChange, signInWithGoogle, signInWithGithub, signOut } from '@/lib/auth';
 import { User } from '@/types/database';
 
 interface UseAuthReturn {
@@ -10,6 +10,7 @@ interface UseAuthReturn {
   loading: boolean;
   error: string | null;
   signIn: () => Promise<void>;
+  signInGithub: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -48,6 +49,18 @@ export function useAuth(): UseAuthReturn {
     }
   }, []);
 
+  const signInGithub = useCallback(async () => {
+    try {
+      setError(null);
+      setLoading(true);
+      await signInWithGithub();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to sign in with GitHub');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       setError(null);
@@ -57,5 +70,5 @@ export function useAuth(): UseAuthReturn {
     }
   }, []);
 
-  return { user, loading, error, signIn, logout };
+  return { user, loading, error, signIn, signInGithub, logout };
 }

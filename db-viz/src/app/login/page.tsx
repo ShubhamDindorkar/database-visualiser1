@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Database, Shield, Zap, Users } from 'lucide-react';
 import GoogleLoginButton from '@/components/auth/GoogleLoginButton';
+import GitHubLoginButton from '@/components/auth/GitHubLoginButton';
 import { useAuth } from '@/hooks/useAuth';
 
 const benefits = [
@@ -32,7 +33,10 @@ const benefits = [
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, loading, signIn } = useAuth();
+  const { user, loading, signIn, signInGithub } = useAuth();
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isGithubLoading, setIsGithubLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user && !loading) {
@@ -42,9 +46,27 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     try {
+      setAuthError(null);
+      setIsGoogleLoading(true);
       await signIn();
     } catch (error) {
       console.error('Sign in error:', error);
+      setAuthError('Failed to sign in with Google. Please try again.');
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
+  const handleGithubSignIn = async () => {
+    try {
+      setAuthError(null);
+      setIsGithubLoading(true);
+      await signInGithub();
+    } catch (error) {
+      console.error('GitHub sign in error:', error);
+      setAuthError('Failed to sign in with GitHub. Please try again.');
+    } finally {
+      setIsGithubLoading(false);
     }
   };
 
@@ -144,7 +166,28 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <GoogleLoginButton onClick={handleGoogleSignIn} isLoading={loading} />
+            <GoogleLoginButton onClick={handleGoogleSignIn} isLoading={isGoogleLoading} />
+
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">or</span>
+              </div>
+            </div>
+
+            <GitHubLoginButton onClick={handleGithubSignIn} isLoading={isGithubLoading} />
+
+            {authError && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg"
+              >
+                <p className="text-sm text-red-600 text-center">{authError}</p>
+              </motion.div>
+            )}
 
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
