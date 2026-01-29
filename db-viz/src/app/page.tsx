@@ -676,13 +676,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Terminal Cards Section */}
-      <section className="py-24 px-4 bg-white">
-        <div className="mx-auto max-w-7xl">
-         
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="py-24 px-4 bg-black relative overflow-hidden">
         {/* Subtle gradient */}
