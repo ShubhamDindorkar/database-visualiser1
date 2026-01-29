@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Database, Table, GitBranch, Terminal, Sparkles, ArrowRight, Check, X, Layers, Zap, Shield } from 'lucide-react';
@@ -59,38 +59,95 @@ const capabilities = [
 export default function LandingPage() {
   const router = useRouter();
   const [selectedFeature, setSelectedFeature] = useState<typeof features[0] | null>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // Calculate scroll progress from 0 to 1 (0 at top, 1 at ~400px which is past the button)
+      const maxScroll = 400;
+      const progress = Math.min(window.scrollY / maxScroll, 1);
+      setScrollProgress(progress);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Glass Navigation */}
-      <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
-        <div className="bg-white/80 backdrop-blur-2xl border border-gray-200/50 rounded-full px-8 py-2.5 shadow-lg shadow-black/5">
-          <div className="flex items-center gap-10">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 bg-black rounded-lg flex items-center justify-center">
-                <Database className="w-3.5 h-3.5 text-white" />
+      {/* Glass Navigation - Expands on Scroll */}
+      <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4">
+        <div 
+          className="bg-white/70 backdrop-blur-2xl border border-white/50 rounded-full shadow-lg shadow-black/5 transition-all duration-300 ease-out"
+          style={{
+            padding: `${8 + (scrollProgress * 4)}px ${16 + (scrollProgress * 16)}px`,
+            backgroundColor: `rgba(255, 255, 255, ${0.75 + (scrollProgress * 0.1)})`,
+          }}
+        >
+          <div className="flex items-center justify-between transition-all duration-300"
+            style={{
+              gap: `${20 + (scrollProgress * 40)}px`,
+            }}
+          >
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <div 
+                className="bg-black rounded-lg flex items-center justify-center transition-all duration-300"
+                style={{
+                  width: `${26 + (scrollProgress * 6)}px`,
+                  height: `${26 + (scrollProgress * 6)}px`,
+                }}
+              >
+                <Database 
+                  className="text-white transition-all duration-300"
+                  style={{
+                    width: `${13 + (scrollProgress * 3)}px`,
+                    height: `${13 + (scrollProgress * 3)}px`,
+                  }}
+                />
               </div>
-              <span className="text-sm font-semibold text-gray-900">
+              <span 
+                className="font-semibold text-gray-900 whitespace-nowrap transition-all duration-300"
+                style={{
+                  fontSize: `${13 + (scrollProgress * 3)}px`,
+                }}
+              >
                 DB Visualiser
               </span>
             </div>
             
-            <div className="hidden sm:flex items-center gap-6">
+            <div 
+              className="hidden sm:flex items-center transition-all duration-300"
+              style={{
+                gap: `${12 + (scrollProgress * 12)}px`,
+              }}
+            >
               <button
                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="text-sm text-gray-600 hover:text-black transition-colors"
+                className="text-gray-600 hover:text-black transition-colors whitespace-nowrap"
+                style={{
+                  fontSize: `${12 + (scrollProgress * 2)}px`,
+                }}
               >
                 Home
               </button>
               <button
                 onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-                className="text-sm text-gray-600 hover:text-black transition-colors"
+                className="text-gray-600 hover:text-black transition-colors whitespace-nowrap"
+                style={{
+                  fontSize: `${12 + (scrollProgress * 2)}px`,
+                }}
               >
                 Features
               </button>
               <button
                 onClick={() => router.push('/login')}
-                className="text-sm text-gray-600 hover:text-black transition-colors"
+                className="transition-all duration-300 whitespace-nowrap rounded-full hover:opacity-80"
+                style={{
+                  fontSize: `${12 + (scrollProgress * 2)}px`,
+                  backgroundColor: 'black',
+                  color: 'white',
+                  padding: `${4 + (scrollProgress * 2)}px ${10 + (scrollProgress * 6)}px`,
+                }}
               >
                 Sign In
               </button>
