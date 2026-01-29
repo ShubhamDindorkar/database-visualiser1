@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { Database, Table, GitBranch, Terminal, Sparkles, ArrowRight, Check, X, Layers, Zap, Shield } from 'lucide-react';
+import { Database, Table, GitBranch, Terminal, Sparkles, ArrowRight, Check, X } from 'lucide-react';
 import Button from '@/components/common/Button';
 import { LayoutTextFlip } from '@/components/ui/layout-text-flip';
 import { RotatingTerminal } from '@/components/ui/rotating-terminal';
@@ -138,7 +138,7 @@ export default function LandingPage() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex items-center justify-center gap-4"
+              className="flex items-center justify-center"
             >
               <Button
                 variant="primary"
@@ -148,33 +148,6 @@ export default function LandingPage() {
               >
                 Start Building
               </Button>
-              <button
-                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-                className="px-6 py-3 text-gray-600 hover:text-black transition-colors font-medium text-sm"
-              >
-                Learn more
-              </button>
-            </motion.div>
-
-            {/* Trust indicators */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="mt-12 flex items-center justify-center gap-8 text-sm text-gray-400"
-            >
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4" />
-                <span>Secure by default</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4" />
-                <span>Real-time sync</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4" />
-                <span>Cloud storage</span>
-              </div>
             </motion.div>
           </div>
 

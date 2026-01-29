@@ -77,6 +77,9 @@ const edgeTypes = {
 export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading, logout } = useAuth();
+  
+  // Track intentional logout to prevent redirect to login
+  const isLoggingOut = useRef(false);
 
   // UI State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -111,13 +114,14 @@ export default function DashboardPage() {
 
   // Handle logout with redirect to home
   const handleLogout = useCallback(async () => {
+    isLoggingOut.current = true;
     await logout();
     router.push('/');
   }, [logout, router]);
 
   // Auth redirect (only if not logged in initially, not after logout)
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading && !user && !isLoggingOut.current) {
       router.push('/login');
     }
   }, [user, authLoading, router]);
