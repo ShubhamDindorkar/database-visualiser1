@@ -91,10 +91,10 @@ export default function Sidebar({
     <motion.aside
       initial={{ x: -20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      className="w-72 bg-white border-r border-gray-200 flex flex-col h-full"
+      className="w-72 bg-white/70 backdrop-blur-xl border-r border-gray-200/50 flex flex-col h-full"
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200/50 bg-white/50">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
             Databases
@@ -103,7 +103,7 @@ export default function Sidebar({
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={onCreateDatabase}
-            className="p-1.5 rounded-lg bg-black hover:bg-gray-900 text-white transition-colors"
+            className="p-1.5 rounded-xl bg-gradient-to-br from-gray-900 to-black hover:from-gray-800 hover:to-gray-900 text-white transition-all shadow-md"
             title="Create Database"
           >
             <FolderPlus className="w-4 h-4" />
@@ -118,7 +118,7 @@ export default function Sidebar({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => onQuickSQL(type)}
-              className={`${color} text-white text-xs py-2.5 px-3 rounded-full flex items-center justify-center gap-1.5 transition-colors shadow-sm font-medium`}
+              className={`${color} text-white text-xs py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md font-medium backdrop-blur-sm`}
               title={type}
             >
               <Icon className="w-3.5 h-3.5" />
@@ -132,7 +132,7 @@ export default function Sidebar({
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-3 pt-3 border-t border-gray-200"
+            className="mt-3 pt-3 border-t border-gray-200/50"
           >
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
               Relationships
@@ -141,7 +141,7 @@ export default function Sidebar({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onManageForeignKeys}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-lg font-medium text-sm transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-purple-100/80 hover:bg-purple-200/80 text-purple-700 rounded-xl font-medium text-sm transition-all backdrop-blur-sm border border-purple-200/50 shadow-sm"
             >
               <Link className="w-4 h-4" />
               <span>Manage Foreign Keys</span>
@@ -178,8 +178,8 @@ export default function Sidebar({
                   <motion.div
                     initial={false}
                     className={`
-                      flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer group
-                      ${isSelected ? 'bg-gray-200' : 'hover:bg-gray-100'}
+                      flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer group transition-all
+                      ${isSelected ? 'bg-gray-900/10 backdrop-blur-sm shadow-sm' : 'hover:bg-gray-100/70'}
                     `}
                     onClick={() => {
                       onSelectDatabase(db.id);
@@ -192,11 +192,11 @@ export default function Sidebar({
                     >
                       <ChevronRight className="w-4 h-4 text-gray-500" />
                     </motion.div>
-                    <Database className={`w-4 h-4 ${isSelected ? 'text-black' : 'text-gray-600'}`} />
-                    <span className={`flex-1 text-sm font-medium truncate ${isSelected ? 'text-black' : 'text-gray-800'}`}>
+                    <Database className={`w-4 h-4 ${isSelected ? 'text-gray-900' : 'text-gray-600'}`} />
+                    <span className={`flex-1 text-sm font-medium truncate ${isSelected ? 'text-gray-900' : 'text-gray-800'}`}>
                       {db.name}
                     </span>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-500 bg-gray-100/80 px-1.5 py-0.5 rounded-md">
                       {tableCountsByDatabase[db.id] || 0}
                     </span>
                     <motion.button
@@ -221,7 +221,7 @@ export default function Sidebar({
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="ml-4 pl-4 border-l border-gray-200 overflow-hidden"
+                        className="ml-4 pl-4 border-l border-gray-200/50 overflow-hidden"
                       >
                         {dbTables.length === 0 ? (
                           <div className="py-2 text-xs text-gray-500">
@@ -235,16 +235,16 @@ export default function Sidebar({
                                 key={table.id}
                                 whileHover={{ x: 2 }}
                                 className={`
-                                  flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer group
-                                  ${isTableSelected ? 'bg-gray-200' : 'hover:bg-gray-100'}
+                                  flex items-center gap-2 px-3 py-1.5 rounded-xl cursor-pointer group transition-all
+                                  ${isTableSelected ? 'bg-gray-900/10 backdrop-blur-sm shadow-sm' : 'hover:bg-gray-100/70'}
                                 `}
                                 onClick={() => onSelectTable(table.id)}
                               >
-                                <Table className={`w-3.5 h-3.5 ${isTableSelected ? 'text-gray-800' : 'text-gray-500'}`} />
-                                <span className={`flex-1 text-sm truncate ${isTableSelected ? 'text-black' : 'text-gray-700'}`}>
+                                <Table className={`w-3.5 h-3.5 ${isTableSelected ? 'text-gray-900' : 'text-gray-500'}`} />
+                                <span className={`flex-1 text-sm truncate ${isTableSelected ? 'text-gray-900' : 'text-gray-700'}`}>
                                   {table.name}
                                 </span>
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs text-gray-500 bg-gray-100/80 px-1.5 py-0.5 rounded-md">
                                   {table.columns.length} cols
                                 </span>
                                 <motion.button
@@ -282,7 +282,7 @@ export default function Sidebar({
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={onCreateTable}
-                            className="flex items-center gap-2 w-full px-3 py-1.5 mt-1 rounded-lg text-gray-800 hover:bg-gray-100 transition-colors"
+                            className="flex items-center gap-2 w-full px-3 py-1.5 mt-1 rounded-xl text-gray-700 hover:bg-gray-100/70 transition-all border border-dashed border-gray-300/50"
                           >
                             <Plus className="w-3.5 h-3.5" />
                             <span className="text-sm">Add Table</span>

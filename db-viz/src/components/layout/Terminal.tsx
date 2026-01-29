@@ -87,15 +87,22 @@ export default function Terminal({
     <motion.div
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="bg-[#0F172A] border-t border-gray-800 flex flex-col"
+      className="bg-gray-900/95 backdrop-blur-xl border-t border-gray-700/50 flex flex-col shadow-2xl"
       style={{ height: isMinimized ? '40px' : '200px' }}
     >
       {/* Terminal Header */}
-      <div className="flex items-center justify-between px-4 py-2 bg-[#1E293B] border-b border-gray-800">
+      <div className="flex items-center justify-between px-4 py-2 bg-gray-800/80 backdrop-blur-sm border-b border-gray-700/50">
         <div className="flex items-center gap-2">
-          <TerminalIcon className="w-4 h-4 text-gray-500" />
-          <span className="text-sm font-medium text-gray-400">SQL Terminal</span>
-          <span className="text-xs text-gray-600">MySQL 8.0</span>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-red-500/80" />
+            <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+            <div className="w-3 h-3 rounded-full bg-green-500/80" />
+          </div>
+          <div className="ml-3 flex items-center gap-2">
+            <TerminalIcon className="w-4 h-4 text-gray-400" />
+            <span className="text-sm font-medium text-gray-300">SQL Terminal</span>
+            <span className="text-xs text-gray-500 bg-gray-700/50 px-2 py-0.5 rounded-full">MySQL 8.0</span>
+          </div>
         </div>
         <div className="flex items-center gap-1">
           <motion.button

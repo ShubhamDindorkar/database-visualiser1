@@ -21,11 +21,11 @@ export default function Navbar({
     <motion.nav
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="h-16 bg-white border-b border-gray-200 px-4 flex items-center justify-between shadow-sm z-50"
+      className="h-16 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 px-4 flex items-center justify-between shadow-sm z-50"
     >
       {/* Logo and App Name */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
+        <div className="w-10 h-10 bg-gradient-to-br from-gray-900 to-black rounded-xl flex items-center justify-center shadow-lg">
           <svg
             className="w-6 h-6 text-white"
             fill="none"
@@ -41,10 +41,10 @@ export default function Navbar({
           </svg>
         </div>
         <div>
-          <h1 className="text-xl font-bold text-black">
+          <h1 className="text-xl font-bold text-gray-900">
             DB Visualiser
           </h1>
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-gray-500">
             {/* MySQL Workbench */}
           </p>
         </div>
@@ -57,7 +57,7 @@ export default function Navbar({
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={onOpenSettings}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          className="p-2 rounded-xl bg-white/50 hover:bg-white/80 border border-gray-200/50 shadow-sm transition-all"
           aria-label="Settings"
         >
           <SettingsIcon className="w-5 h-5 text-gray-700" />
@@ -65,12 +65,12 @@ export default function Navbar({
 
         {/* User Profile */}
         {user && (
-          <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
+          <div className="flex items-center gap-3 pl-4 border-l border-gray-200/50">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium text-black">
+              <p className="text-sm font-medium text-gray-900">
                 {user.displayName}
               </p>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-gray-500">
                 {user.email}
               </p>
             </div>
@@ -80,10 +80,10 @@ export default function Navbar({
                 alt={user.displayName || 'User'}
                 width={40}
                 height={40}
-                className="w-10 h-10 rounded-full border-2 border-gray-200"
+                className="w-10 h-10 rounded-full border-2 border-white shadow-md"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-900 to-black flex items-center justify-center shadow-md">
                 <User className="w-5 h-5 text-white" />
               </div>
             )}
@@ -91,7 +91,7 @@ export default function Navbar({
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={onLogout}
-              className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
+              className="p-2 rounded-xl bg-red-50/80 hover:bg-red-100 text-red-600 transition-all border border-red-200/50"
               aria-label="Logout"
             >
               <LogOut className="w-5 h-5" />

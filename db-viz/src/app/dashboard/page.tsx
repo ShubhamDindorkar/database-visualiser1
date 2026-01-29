@@ -1416,11 +1416,11 @@ export default function DashboardPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="w-12 h-12 border-4 border-black border-t-transparent rounded-full"
+          className="w-12 h-12 border-4 border-gray-900 border-t-transparent rounded-full"
         />
       </div>
     );
@@ -1431,7 +1431,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-white">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-gray-50 via-white to-gray-100">
       {/* Navbar */}
       <Navbar
         user={user}
@@ -1476,26 +1476,26 @@ export default function DashboardPage() {
                 }}
                 defaultViewport={{ x: 0, y: 0, zoom: 0.75 }}
                 proOptions={{ hideAttribution: true }}
-                className="bg-gray-50"
+                className="bg-gradient-to-br from-slate-50 to-gray-100"
               >
                 <Background
                   variant={BackgroundVariant.Dots}
                   gap={20}
                   size={1}
-                  color="#000000"
+                  color="#94a3b8"
                 />
                 <Controls
-                  className="bg-white border border-gray-200 rounded-lg shadow-lg"
+                  className="bg-white/90 backdrop-blur-sm border border-gray-200/50 rounded-xl shadow-lg"
                 />
               </ReactFlow>
             ) : (
-              <div className="h-full flex items-center justify-center bg-gray-50">
+              <div className="h-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-gray-100">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="text-center"
                 >
-                  <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-20 h-20 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                     <svg
                       className="w-10 h-10 text-gray-500"
                       fill="none"
@@ -1518,7 +1518,7 @@ export default function DashboardPage() {
                   </p>
                   <button
                     onClick={() => setIsCreateDbModalOpen(true)}
-                    className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors"
+                    className="px-6 py-2.5 bg-gradient-to-r from-gray-900 to-black text-white rounded-xl hover:from-gray-800 hover:to-gray-900 transition-all shadow-lg"
                   >
                     Create Database
                   </button>
@@ -1532,10 +1532,10 @@ export default function DashboardPage() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white px-4 py-2 rounded-lg shadow-lg border border-gray-200"
+                  className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200/50"
                 >
                   <p className="text-sm text-gray-700">
-                    <span className="font-semibold text-black">
+                    <span className="font-semibold text-gray-900">
                       {selectedDatabaseName}
                     </span>{' '}
                     • {tablesForSelectedDb.length} table{tablesForSelectedDb.length !== 1 ? 's' : ''}
@@ -1549,7 +1549,7 @@ export default function DashboardPage() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setIsExportModalOpen(true)}
-                  className="w-full bg-black hover:bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg font-medium text-sm flex items-center justify-center gap-2 transition-all"
+                  className="w-full bg-gradient-to-r from-gray-900 to-black hover:from-gray-800 hover:to-gray-900 text-white px-4 py-2.5 rounded-xl shadow-lg font-medium text-sm flex items-center justify-center gap-2 transition-all"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

@@ -38,18 +38,18 @@ export default function Settings({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed right-0 top-0 h-full w-80 bg-white shadow-2xl z-50 flex flex-col"
+            className="fixed right-0 top-0 h-full w-80 bg-white/90 backdrop-blur-2xl shadow-2xl z-50 flex flex-col border-l border-gray-200/50"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-black">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200/50 bg-white/50">
+              <h2 className="text-lg font-semibold text-gray-900">
                 Settings
               </h2>
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={onClose}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-xl bg-gray-100/80 hover:bg-gray-200/80 transition-all"
               >
                 <X className="w-5 h-5 text-gray-600" />
               </motion.button>
@@ -61,26 +61,26 @@ export default function Settings({
               {user && (
                 <div>
                   <div className="flex items-center gap-2 mb-4">
-                    <UserIcon className="w-5 h-5 text-gray-800" />
-                    <h3 className="text-sm font-semibold text-gray-800 uppercase tracking-wider">
+                    <UserIcon className="w-5 h-5 text-gray-700" />
+                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
                       Profile
                     </h3>
                   </div>
 
                   <div className="space-y-3">
-                    <div className="p-3 rounded-lg bg-gray-50 flex items-center gap-3">
+                    <div className="p-4 rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-200/50 shadow-sm flex items-center gap-3">
                       {user.photoURL && (
                         <img 
                           src={user.photoURL} 
                           alt={user.displayName || 'User'}
-                          className="w-12 h-12 rounded-full border-2 border-gray-200"
+                          className="w-12 h-12 rounded-full border-2 border-white shadow-md"
                         />
                       )}
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-black mb-1">
+                        <p className="text-sm font-medium text-gray-900 mb-1">
                           {user.displayName || 'User'}
                         </p>
-                        <p className="text-xs text-gray-600">
+                        <p className="text-xs text-gray-500">
                           {user.email}
                         </p>
                       </div>
@@ -90,7 +90,7 @@ export default function Settings({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={onLogout}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-medium"
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl transition-all font-medium shadow-lg shadow-red-500/25"
                     >
                       <LogOut className="w-4 h-4" />
                       Sign Out
@@ -102,27 +102,27 @@ export default function Settings({
               {/* Database Section */}
               <div>
                 <div className="flex items-center gap-2 mb-4">
-                  <Database className="w-5 h-5 text-gray-800" />
-                  <h3 className="text-sm font-semibold text-gray-800 uppercase tracking-wider">
+                  <Database className="w-5 h-5 text-gray-700" />
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
                     Database
                   </h3>
                 </div>
 
                 <div className="space-y-3">
-                  <div className="p-3 rounded-lg bg-gray-50">
-                    <p className="text-sm font-medium text-black mb-1">
+                  <div className="p-4 rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-200/50 shadow-sm">
+                    <p className="text-sm font-medium text-gray-900 mb-1">
                       Connection Status
                     </p>
                     <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 bg-gray-800 rounded-full animate-pulse" />
+                      <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                       <span className="text-xs text-gray-600">
                         Simulation Mode Active
                       </span>
                     </div>
                   </div>
 
-                  <div className="p-3 rounded-lg bg-gray-50">
-                    <p className="text-sm font-medium text-black mb-1">
+                  <div className="p-4 rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-200/50 shadow-sm">
+                    <p className="text-sm font-medium text-gray-900 mb-1">
                       SQL Engine
                     </p>
                     <p className="text-xs text-gray-600">
@@ -135,17 +135,17 @@ export default function Settings({
               {/* About Section */}
               <div>
                 <div className="flex items-center gap-2 mb-4">
-                  <Info className="w-5 h-5 text-gray-800" />
-                  <h3 className="text-sm font-semibold text-gray-800 uppercase tracking-wider">
+                  <Info className="w-5 h-5 text-gray-700" />
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
                     About
                   </h3>
                 </div>
 
-                <div className="p-3 rounded-lg bg-gray-50">
-                  <p className="text-sm font-medium text-black">
+                <div className="p-4 rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-200/50 shadow-sm">
+                  <p className="text-sm font-medium text-gray-900">
                     DB Visualiser
                   </p>
-                  <p className="text-xs text-gray-600 mt-1">
+                  <p className="text-xs text-gray-500 mt-1">
                     Version 1.0.0
                   </p>
                   <p className="text-xs text-gray-600 mt-2">
