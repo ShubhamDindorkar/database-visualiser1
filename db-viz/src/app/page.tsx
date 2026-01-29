@@ -3,9 +3,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { Database, Table, GitBranch, Terminal, Sparkles, ArrowRight, Check, X } from 'lucide-react';
+import { Database, Table, GitBranch, Terminal, Sparkles, ArrowRight, Check, X, Layers, Zap, Shield } from 'lucide-react';
 import Button from '@/components/common/Button';
 import { LayoutTextFlip } from '@/components/ui/layout-text-flip';
+import { RotatingTerminal } from '@/components/ui/rotating-terminal';
 
 const features = [
   {
@@ -61,56 +62,57 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <motion.div
-                initial={{ rotate: -180, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                className="w-10 h-10 bg-black rounded-xl flex items-center justify-center"
-              >
-                <Database className="w-5 h-5 text-white" />
-              </motion.div>
-              <span className="text-xl font-bold text-black">
+      {/* Glass Navigation */}
+      <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+        <div className="bg-white/80 backdrop-blur-2xl border border-gray-200/50 rounded-full px-8 py-2.5 shadow-lg shadow-black/5">
+          <div className="flex items-center gap-10">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 bg-black rounded-lg flex items-center justify-center">
+                <Database className="w-3.5 h-3.5 text-white" />
+              </div>
+              <span className="text-sm font-semibold text-gray-900">
                 DB Visualiser
               </span>
             </div>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => router.push('/login')}
-            >
-              Sign In
-            </Button>
+            
+            <div className="hidden sm:flex items-center gap-6">
+              <button
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="text-sm text-gray-600 hover:text-black transition-colors"
+              >
+                Home
+              </button>
+              <button
+                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+                className="text-sm text-gray-600 hover:text-black transition-colors"
+              >
+                Features
+              </button>
+              <button
+                onClick={() => router.push('/login')}
+                className="text-sm text-gray-600 hover:text-black transition-colors"
+              >
+                Sign In
+              </button>
+            </div>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 bg-gradient-to-b from-white to-gray-50">
-        <div className="max-w-7xl mx-auto">
+      <section className="pt-28 pb-16 px-4 relative overflow-hidden">
+        {/* Subtle gradient background */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(0,0,0,0.03),transparent)]" />
+        
+        <div className="max-w-6xl mx-auto relative z-10">
           <div className="text-center">
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              {/* <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-6">
-                <Sparkles className="w-4 h-4" />
-                Visual Database Design Tool
-              </span> */}
-            </motion.div>
-
             <motion.h1
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.1 }}
               className="mb-6 text-center"
             >
-              <div className="text-5xl sm:text-6xl lg:text-7xl font-bold text-black mb-2">
+              <div className="text-5xl sm:text-6xl lg:text-7xl font-normal text-black mb-2" style={{ fontFamily: 'var(--font-geist-sans)' }}>
                 Build Your
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3">
@@ -126,26 +128,53 @@ export default function LandingPage() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-xl text-gray-700 max-w-3xl mx-auto mb-10"
+              className="text-lg text-gray-500 max-w-2xl mx-auto mb-8"
             >
-              Create, manage, and visualize your SQL databases with an intuitive drag-and-drop interface.
-              Design tables, define relationships, and see your schema come to life.
+              Design, visualize, and manage your MySQL databases with an intuitive 
+              drag-and-drop interface. No SQL expertise required.
             </motion.p>
 
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex items-center justify-center"
+              className="flex items-center justify-center gap-4"
             >
               <Button
                 variant="primary"
                 size="lg"
                 onClick={() => router.push('/login')}
-                rightIcon={<ArrowRight className="w-5 h-5" />}
+                rightIcon={<ArrowRight className="w-4 h-4" />}
               >
-                Get Started Free
+                Start Building
               </Button>
+              <button
+                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+                className="px-6 py-3 text-gray-600 hover:text-black transition-colors font-medium text-sm"
+              >
+                Learn more
+              </button>
+            </motion.div>
+
+            {/* Trust indicators */}
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="mt-12 flex items-center justify-center gap-8 text-sm text-gray-400"
+            >
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                <span>Secure by default</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4" />
+                <span>Real-time sync</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4" />
+                <span>Cloud storage</span>
+              </div>
             </motion.div>
           </div>
 
@@ -153,12 +182,24 @@ export default function LandingPage() {
           <motion.div
             initial={{ y: 40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.7, delay: 0.4 }}
+            transition={{ duration: 0.7, delay: 0.5 }}
             className="mt-16 relative"
           >
-            <div className="bg-gray-100 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 p-8 min-h-[400px]">
-              {/* Floating Database Schema Visualization */}
-              <div className="relative w-full h-[350px] flex items-center justify-center">
+            {/* Browser-like frame */}
+            <div className="bg-gray-950 rounded-xl overflow-hidden shadow-2xl border border-gray-800">
+              {/* Browser header */}
+              <div className="flex items-center gap-2 px-4 py-3 bg-gray-900 border-b border-gray-800">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 bg-red-500 rounded-full" />
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full" />
+                  <div className="w-3 h-3 bg-green-500 rounded-full" />
+                </div>
+              </div>
+              
+              {/* Content area */}
+              <div className="bg-gray-100 p-6 min-h-[380px]">
+                {/* Floating Database Schema Visualization */}
+                <div className="relative w-full h-[340px] flex items-center justify-center">
                 
                 {/* Background Grid */}
                 <div className="absolute inset-0 opacity-20">
@@ -340,52 +381,32 @@ export default function LandingPage() {
                   </motion.div>
 
                 </div>
-
-                {/* Floating glow effects */}
-                <motion.div
-                  animate={{ opacity: [0.3, 0.5, 0.3] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                  className="absolute left-[10%] top-[30%] w-32 h-32 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"
-                />
-                <motion.div
-                  animate={{ opacity: [0.2, 0.4, 0.2] }}
-                  transition={{ duration: 4, repeat: Infinity, delay: 1 }}
-                  className="absolute right-[10%] top-[25%] w-28 h-28 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"
-                />
-                <motion.div
-                  animate={{ opacity: [0.25, 0.45, 0.25] }}
-                  transition={{ duration: 3.5, repeat: Infinity, delay: 0.5 }}
-                  className="absolute left-[45%] top-[40%] w-24 h-24 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"
-                />
               </div>
             </div>
-
-            {/* Decorative Elements */}
-            <div className="absolute -top-4 -left-4 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl" />
-            <div className="absolute -bottom-4 -right-4 w-40 h-40 bg-purple-500/10 rounded-full blur-2xl" />
-            <div className="absolute top-1/2 -left-8 w-20 h-20 bg-emerald-500/10 rounded-full blur-xl" />
+            </div>
           </motion.div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 px-4 bg-white">
-        <div className="max-w-7xl mx-auto">
+      <section id="features" className="py-24 px-4 bg-gray-50/50">
+        <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             whileInView={{ y: 0, opacity: 1 }}
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl sm:text-4xl font-bold text-black mb-4">
-              Powerful Features for Database Design
+            <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">Features</span>
+            <h2 className="text-3xl sm:text-4xl font-bold text-black mt-3 mb-4">
+              Everything you need
             </h2>
-            <p className="text-lg text-gray-700 max-w-2xl mx-auto">
-              Everything you need to design, visualize, and manage your MySQL databases
+            <p className="text-gray-500 max-w-2xl mx-auto">
+              Powerful tools to design, visualize, and manage your databases
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
             {features.map((feature, index) => (
               <motion.div
                 key={feature.title}
@@ -393,19 +414,29 @@ export default function LandingPage() {
                 whileInView={{ y: 0, opacity: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -5 }}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
                 onClick={() => setSelectedFeature(feature)}
-                className="p-6 bg-gray-50 rounded-xl border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer"
+                className="group relative p-6 bg-gradient-to-b from-white to-gray-50/50 rounded-2xl border border-gray-200/80 hover:border-gray-300 hover:shadow-2xl hover:shadow-gray-200/50 transition-all duration-300 cursor-pointer overflow-hidden"
               >
-                <div className={`w-12 h-12 ${feature.bg} rounded-xl flex items-center justify-center mb-4`}>
-                  <feature.icon className={`w-6 h-6 ${feature.color}`} />
+                {/* Subtle gradient overlay on hover */}
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-100/0 to-gray-100/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                
+                <div className="relative z-10">
+                  <div className="w-12 h-12 bg-white group-hover:bg-black rounded-2xl flex items-center justify-center mb-5 transition-all duration-300 shadow-sm group-hover:shadow-lg border border-gray-100 group-hover:border-black">
+                    <feature.icon className="w-5 h-5 text-gray-700 group-hover:text-white transition-colors duration-300" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-black mb-2">
+                    {feature.title}
+                  </h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    {feature.description}
+                  </p>
                 </div>
-                <h3 className="text-lg font-semibold text-black mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-700">
-                  {feature.description}
-                </p>
+                
+                {/* Arrow indicator */}
+                <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                  <ArrowRight className="w-4 h-4 text-gray-400" />
+                </div>
               </motion.div>
             ))}
           </div>
@@ -413,34 +444,35 @@ export default function LandingPage() {
       </section>
 
       {/* Capabilities Section */}
-      <section className="py-20 px-4 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <section className="py-24 px-4 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
             <motion.div
               initial={{ x: -20, opacity: 0 }}
               whileInView={{ x: 0, opacity: 1 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-3xl sm:text-4xl font-bold text-black mb-6">
-                Everything You Need to Design Professional Databases
+              <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">Why choose us</span>
+              <h2 className="text-3xl sm:text-4xl font-bold text-black mt-3 mb-6">
+                Professional database design made simple
               </h2>
-              <p className="text-lg text-gray-800 mb-8">
-                Our visual tool provides all the features you need to create robust, well-designed MySQL database schemas.
+              <p className="text-gray-500 mb-8">
+                Our visual tool provides everything you need to create robust, well-designed MySQL database schemas without writing a single line of SQL.
               </p>
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid sm:grid-cols-2 gap-3">
                 {capabilities.map((capability, index) => (
                   <motion.div
                     key={capability}
                     initial={{ x: -10, opacity: 0 }}
                     whileInView={{ x: 0, opacity: 1 }}
                     viewport={{ once: true }}
-                    transition={{ delay: index * 0.1 }}
+                    transition={{ delay: index * 0.05 }}
                     className="flex items-center gap-3"
                   >
-                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Check className="w-3 h-3 text-green-600" />
+                    <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center flex-shrink-0">
+                      <Check className="w-3 h-3 text-white" />
                     </div>
-                    <span className="text-gray-900">{capability}</span>
+                    <span className="text-sm text-gray-600">{capability}</span>
                   </motion.div>
                 ))}
               </div>
@@ -452,76 +484,65 @@ export default function LandingPage() {
               viewport={{ once: true }}
               className="relative"
             >
-              <div className="bg-[#0F172A] rounded-xl p-4 shadow-2xl border border-gray-800">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-3 h-3 bg-red-500 rounded-full" />
-                  <div className="w-3 h-3 bg-yellow-500 rounded-full" />
-                  <div className="w-3 h-3 bg-green-500 rounded-full" />
-                </div>
-                <div className="font-mono text-sm">
-                  <p className="text-gray-500">mysql&gt; <span className="text-gray-200">CREATE TABLE users (</span></p>
-                  <p className="text-gray-200 pl-4">id INT PRIMARY KEY AUTO_INCREMENT,</p>
-                  <p className="text-gray-200 pl-4">name VARCHAR(255) NOT NULL,</p>
-                  <p className="text-gray-200 pl-4">email VARCHAR(255) UNIQUE</p>
-                  <p className="text-gray-200">);</p>
-                  <p className="text-gray-600 mt-2">Query OK, 0 rows affected (0.02 sec)</p>
-                </div>
-              </div>
+              <RotatingTerminal />
             </motion.div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 bg-black">
-        <div className="max-w-4xl mx-auto text-center">
+      <section className="py-24 px-4 bg-black relative overflow-hidden">
+        {/* Subtle gradient */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_120%,rgba(255,255,255,0.1),transparent)]" />
+        
+        <div className="max-w-3xl mx-auto text-center relative z-10">
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             whileInView={{ y: 0, opacity: 1 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
-              Build Databases with Clarity and Control.
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Ready to build your database?
             </h2>
-            <p className="text-xl text-gray-400 mb-8">
-              {/* Start creating beautiful, well-structured databases today. */}
+            <p className="text-gray-400 mb-8">
+              Join thousands of developers who design their databases visually.
             </p>
             <Button
               variant="secondary"
               size="lg"
               onClick={() => router.push('/login')}
-              rightIcon={<ArrowRight className="w-5 h-5" />}
+              rightIcon={<ArrowRight className="w-4 h-4" />}
               className="bg-white text-black hover:bg-gray-100"
             >
-              Get Started for Free
+              Get Started Free
             </Button>
           </motion.div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-4 bg-[#000000] text-gray-500">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <footer className="py-6 px-4 bg-black border-t border-gray-800">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Database className="w-5 h-5 text-white" />
-            <span className="text-white font-semibold">DB Visualiser</span>
-          </div>
-          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-            <p className="text-sm">© 2026 DB Visualiser. All rights reserved.</p>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push('/terms-of-service')}
-                className="text-sm text-gray-400 hover:text-white transition-colors"
-              >
-                Terms of Service
-              </button>
-              <button
-                onClick={() => router.push('/privacy-policy')}
-                className="text-sm text-gray-400 hover:text-white transition-colors"
-              >
-                Privacy Policy
-              </button>
+            <div className="w-6 h-6 bg-white rounded-md flex items-center justify-center">
+              <Database className="w-3 h-3 text-black" />
             </div>
+            <span className="text-sm text-white font-medium">DB Visualiser</span>
+          </div>
+          <div className="flex items-center gap-6">
+            <button
+              onClick={() => router.push('/terms-of-service')}
+              className="text-xs text-gray-500 hover:text-white transition-colors"
+            >
+              Terms
+            </button>
+            <button
+              onClick={() => router.push('/privacy-policy')}
+              className="text-xs text-gray-500 hover:text-white transition-colors"
+            >
+              Privacy
+            </button>
+            <span className="text-xs text-gray-500">© 2026</span>
           </div>
         </div>
       </footer>

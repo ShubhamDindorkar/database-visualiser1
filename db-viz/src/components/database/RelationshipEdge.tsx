@@ -37,8 +37,9 @@ export default function RelationshipEdge({
         path={edgePath}
         style={{
           ...style,
-          strokeWidth: 2,
-          stroke: '#374151',
+          strokeWidth: 3,
+          stroke: '#000000',
+          strokeDasharray: 'none',
         }}
         markerEnd={markerEnd}
       />

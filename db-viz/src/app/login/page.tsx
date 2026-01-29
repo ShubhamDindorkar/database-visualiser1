@@ -3,33 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { Database, Shield, Zap, Users } from 'lucide-react';
+import { Database } from 'lucide-react';
 import GoogleLoginButton from '@/components/auth/GoogleLoginButton';
 import GitHubLoginButton from '@/components/auth/GitHubLoginButton';
 import { useAuth } from '@/hooks/useAuth';
-
-const benefits = [
-  {
-    icon: Database,
-    title: 'Visual Design',
-    description: 'Create database schemas with drag-and-drop ease',
-  },
-  {
-    icon: Shield,
-    title: 'Secure Storage',
-    description: 'Your data is safely stored in the cloud',
-  },
-  {
-    icon: Zap,
-    title: 'Real-time Sync',
-    description: 'Changes sync instantly across devices',
-  },
-  {
-    icon: Users,
-    title: 'Collaboration',
-    description: 'Share and collaborate on database designs',
-  },
-];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -83,150 +60,105 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-white">
-      {/* Left Side - Benefits with BLACK background */}
-      <div className="hidden lg:flex lg:w-1/2 bg-black p-12 flex-col justify-between">
-        <div>
-          <motion.div
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            className="flex items-center gap-3"
-          >
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/30">
-              <Database className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-white">DB Visualiser</span>
-          </motion.div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-gray-200/40 to-transparent rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-gray-200/40 to-transparent rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-gray-100/20 via-white/10 to-gray-100/20 rounded-full blur-3xl" />
+      </div>
+
+      {/* Grid pattern */}
+      <div className="absolute inset-0 opacity-[0.02]">
+        <svg width="100%" height="100%">
+          <defs>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="1" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)" />
+        </svg>
+      </div>
+
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.1 }}
+        className="w-full max-w-md px-4 relative z-10"
+      >
+        {/* Logo */}
+        <div className="flex items-center justify-center gap-3 mb-8">
+          <div className="w-12 h-12 bg-black rounded-2xl flex items-center justify-center shadow-lg">
+            <Database className="w-6 h-6 text-white" />
+          </div>
+          <span className="text-2xl font-bold text-black">
+            DB Visualiser
+          </span>
         </div>
 
-        <div className="space-y-8">
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            <h1 className="text-4xl font-bold text-white mb-4">
-              Design databases the visual way
-            </h1>
-            <p className="text-xl text-gray-400">
-              Create, manage, and visualize your MySQL databases with our intuitive interface.
+        {/* Glass Card */}
+        <div className="bg-white/70 backdrop-blur-2xl rounded-3xl shadow-2xl shadow-gray-200/50 p-8 border border-white/50">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-black mb-2">
+              Welcome back
+            </h2>
+            <p className="text-gray-500 text-sm">
+              Sign in to continue to your dashboard
             </p>
-          </motion.div>
+          </div>
 
-          <div className="grid grid-cols-2 gap-6">
-            {benefits.map((benefit, index) => (
-              <motion.div
-                key={benefit.title}
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 + index * 0.1 }}
-                className="p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
-                <benefit.icon className="w-8 h-8 text-white mb-3" />
-                <h3 className="text-white font-semibold mb-1">{benefit.title}</h3>
-                <p className="text-gray-500 text-sm">{benefit.description}</p>
-              </motion.div>
-            ))}
+          <div className="space-y-3">
+            <GoogleLoginButton onClick={handleGoogleSignIn} isLoading={isGoogleLoading} />
+            <GitHubLoginButton onClick={handleGithubSignIn} isLoading={isGithubLoading} />
+          </div>
+
+          {authError && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 p-3 bg-red-50/80 backdrop-blur-sm border border-red-200/50 rounded-xl"
+            >
+              <p className="text-sm text-red-600 text-center">{authError}</p>
+            </motion.div>
+          )}
+
+          <div className="mt-8 pt-6 border-t border-gray-200/50">
+            <p className="text-xs text-gray-400 text-center">
+              By signing in, you agree to our{' '}
+              <button
+                onClick={() => router.push('/terms-of-service')}
+                className="text-gray-600 hover:text-black transition-colors"
+              >
+                Terms
+              </button>{' '}
+              and{' '}
+              <button
+                onClick={() => router.push('/privacy-policy')}
+                className="text-gray-600 hover:text-black transition-colors"
+              >
+                Privacy Policy
+              </button>
+            </p>
           </div>
         </div>
 
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="text-white text-sm">
-          Trusted by developers worldwide
-        </motion.p>
-      </div>
-
-      {/* Right Side - Login Form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="w-full max-w-md"
+          transition={{ delay: 0.4 }}
+          className="mt-6 text-center"
         >
-          {/* Mobile Logo */}
-          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center">
-              <Database className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-black">
-              DB Visualiser
-            </span>
-          </div>
-
-          <div className="bg-white backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-gray-200">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-black mb-2">
-                Welcome back
-              </h2>
-              <p className="text-gray-700">
-                Sign in to continue to your dashboard
-              </p>
-            </div>
-
-            <GoogleLoginButton onClick={handleGoogleSignIn} isLoading={isGoogleLoading} />
-
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">or</span>
-              </div>
-            </div>
-
-            <GitHubLoginButton onClick={handleGithubSignIn} isLoading={isGithubLoading} />
-
-            {authError && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg"
-              >
-                <p className="text-sm text-red-600 text-center">{authError}</p>
-              </motion.div>
-            )}
-
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
-                By signing in, you agree to our{' '}
-                <button
-                  onClick={() => router.push('/terms-of-service')}
-                  className="text-black hover:text-gray-800 underline"
-                >
-                  Terms of Service
-                </button>{' '}
-                and{' '}
-                <button
-                  onClick={() => router.push('/privacy-policy')}
-                  className="text-black hover:text-gray-800 underline"
-                >
-                  Privacy Policy
-                </button>
-              </p>
-            </div>
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="mt-8 text-center"
+          <button
+            onClick={() => router.push('/')}
+            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-black transition-colors"
           >
-            <button
-              onClick={() => router.push('/')}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-200 transition-all duration-200 font-medium"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 12H5M12 19l-7-7 7-7"/>
-              </svg>
-              Back to Home
-            </button>
-          </motion.div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back to Home
+          </button>
         </motion.div>
-      </div>
+      </motion.div>
     </div>
   );
 }

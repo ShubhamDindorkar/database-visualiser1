@@ -25,14 +25,16 @@ export const LayoutTextFlip = ({
     <>
       <motion.span
         layoutId="subtext"
-        className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight drop-shadow-lg"
+        className="text-5xl sm:text-6xl lg:text-7xl tracking-tight drop-shadow-lg italic"
+        style={{ fontFamily: 'var(--font-instrument-serif)' }}
       >
         {text}
       </motion.span>
 
       <motion.span
         layout
-        className="relative w-fit overflow-visible text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-black inline-block py-3"
+        className="relative w-fit overflow-visible text-5xl sm:text-6xl lg:text-7xl font-normal tracking-tight text-black inline-block py-3"
+        style={{ fontFamily: 'var(--font-geist-sans)' }}
       >
         <AnimatePresence mode="popLayout">
           <motion.span
