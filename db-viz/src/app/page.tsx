@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { Database, Table, GitBranch, Terminal, Sparkles, ArrowRight, Check, X } from 'lucide-react';
+import { Database, Table, GitBranch, Terminal, ArrowRight, X } from 'lucide-react';
 import Button from '@/components/common/Button';
 import { LayoutTextFlip } from '@/components/ui/layout-text-flip';
-import { RotatingTerminal } from '@/components/ui/rotating-terminal';
+
 
 const features = [
   {
@@ -47,13 +47,273 @@ const features = [
   },
 ];
 
-const capabilities = [
-  'Drag-and-drop table positioning',
-  'Real-time relationship visualization',
-  'SQL constraint validation',
-  'Dark and light theme support',
-  'Cloud sync with Firebase',
-  'Export schema diagrams',
+const databaseTables = [
+  {
+    id: 1,
+    name: "Users",
+    color: "#3b82f6",
+    columns: [
+      { name: "id", type: "INT", isPrimary: true },
+      { name: "name", type: "VARCHAR(255)" },
+      { name: "email", type: "VARCHAR(255)" },
+      { name: "created_at", type: "TIMESTAMP" },
+    ],
+  },
+  {
+    id: 2,
+    name: "Orders",
+    color: "#8b5cf6",
+    columns: [
+      { name: "id", type: "INT", isPrimary: true },
+      { name: "user_id", type: "INT", isForeign: true },
+      { name: "total", type: "DECIMAL(10,2)" },
+      { name: "status", type: "ENUM" },
+    ],
+  },
+  {
+    id: 3,
+    name: "Products",
+    color: "#10b981",
+    columns: [
+      { name: "id", type: "INT", isPrimary: true },
+      { name: "name", type: "VARCHAR(255)" },
+      { name: "price", type: "DECIMAL(10,2)" },
+      { name: "stock", type: "INT" },
+    ],
+  },
+  {
+    id: 4,
+    name: "Categories",
+    color: "#f59e0b",
+    columns: [
+      { name: "id", type: "INT", isPrimary: true },
+      { name: "name", type: "VARCHAR(100)" },
+      { name: "parent_id", type: "INT", isForeign: true },
+    ],
+  },
+  {
+    id: 5,
+    name: "Reviews",
+    color: "#ef4444",
+    columns: [
+      { name: "id", type: "INT", isPrimary: true },
+      { name: "product_id", type: "INT", isForeign: true },
+      { name: "user_id", type: "INT", isForeign: true },
+      { name: "rating", type: "TINYINT" },
+      { name: "comment", type: "TEXT" },
+    ],
+  },
+  {
+    id: 6,
+    name: "Inventory",
+    color: "#06b6d4",
+    columns: [
+      { name: "id", type: "INT", isPrimary: true },
+      { name: "product_id", type: "INT", isForeign: true },
+      { name: "quantity", type: "INT" },
+      { name: "warehouse", type: "VARCHAR(50)" },
+    ],
+  },
+  {
+    id: 7,
+    name: "Payments",
+    color: "#ec4899",
+    columns: [
+      { name: "id", type: "INT", isPrimary: true },
+      { name: "order_id", type: "INT", isForeign: true },
+      { name: "amount", type: "DECIMAL(10,2)" },
+      { name: "method", type: "VARCHAR(50)" },
+    ],
+  },
+  {
+    id: 8,
+    name: "Addresses",
+    color: "#84cc16",
+    columns: [
+      { name: "id", type: "INT", isPrimary: true },
+      { name: "user_id", type: "INT", isForeign: true },
+      { name: "street", type: "VARCHAR(255)" },
+      { name: "city", type: "VARCHAR(100)" },
+      { name: "zip", type: "VARCHAR(20)" },
+    ],
+  },
+  {
+    id: 9,
+    name: "Sessions",
+    color: "#6366f1",
+    columns: [
+      { name: "id", type: "INT", isPrimary: true },
+      { name: "user_id", type: "INT", isForeign: true },
+      { name: "token", type: "VARCHAR(255)" },
+      { name: "expires_at", type: "DATETIME" },
+    ],
+  },
+  {
+    id: 10,
+    name: "Logs",
+    color: "#78716c",
+    columns: [
+      { name: "id", type: "INT", isPrimary: true },
+      { name: "action", type: "VARCHAR(100)" },
+      { name: "user_id", type: "INT", isForeign: true },
+      { name: "timestamp", type: "TIMESTAMP" },
+    ],
+  },
+  {
+    id: 11,
+    name: "Settings",
+    color: "#0ea5e9",
+    columns: [
+      { name: "id", type: "INT", isPrimary: true },
+      { name: "key", type: "VARCHAR(100)" },
+      { name: "value", type: "TEXT" },
+    ],
+  },
+  {
+    id: 12,
+    name: "Tags",
+    color: "#a855f7",
+    columns: [
+      { name: "id", type: "INT", isPrimary: true },
+      { name: "name", type: "VARCHAR(50)" },
+      { name: "color", type: "VARCHAR(7)" },
+    ],
+  },
+];
+
+const terminalQueries = [
+  {
+    id: 1,
+    command: "CREATE TABLE users",
+    lines: [
+      { prefix: "mysql>", text: "CREATE TABLE users (", color: "text-gray-200" },
+      { prefix: "", text: "  id INT PRIMARY KEY AUTO_INCREMENT,", color: "text-gray-200" },
+      { prefix: "", text: "  name VARCHAR(255) NOT NULL,", color: "text-gray-200" },
+      { prefix: "", text: "  email VARCHAR(255) UNIQUE", color: "text-gray-200" },
+      { prefix: "", text: ");", color: "text-gray-200" },
+      { prefix: "", text: "Query OK, 0 rows affected (0.02 sec)", color: "text-green-500" },
+    ],
+  },
+  {
+    id: 2,
+    command: "SELECT * FROM users",
+    lines: [
+      { prefix: "mysql>", text: "SELECT * FROM users WHERE status = 'active';", color: "text-gray-200" },
+      { prefix: "", text: "+----+----------+------------------+--------+", color: "text-gray-400" },
+      { prefix: "", text: "| id | name     | email            | status |", color: "text-gray-400" },
+      { prefix: "", text: "+----+----------+------------------+--------+", color: "text-gray-400" },
+      { prefix: "", text: "|  1 | John Doe | john@example.com | active |", color: "text-gray-200" },
+      { prefix: "", text: "+----+----------+------------------+--------+", color: "text-gray-400" },
+      { prefix: "", text: "1 row in set (0.00 sec)", color: "text-green-500" },
+    ],
+  },
+  {
+    id: 3,
+    command: "INSERT INTO orders",
+    lines: [
+      { prefix: "mysql>", text: "INSERT INTO orders (user_id, product_id, total)", color: "text-gray-200" },
+      { prefix: "", text: "VALUES (1, 42, 299.99);", color: "text-gray-200" },
+      { prefix: "", text: "", color: "text-gray-200" },
+      { prefix: "", text: "Query OK, 1 row affected (0.01 sec)", color: "text-green-500" },
+    ],
+  },
+  {
+    id: 4,
+    command: "ALTER TABLE products",
+    lines: [
+      { prefix: "mysql>", text: "ALTER TABLE products", color: "text-gray-200" },
+      { prefix: "", text: "ADD COLUMN stock INT DEFAULT 0,", color: "text-gray-200" },
+      { prefix: "", text: "ADD INDEX idx_stock (stock);", color: "text-gray-200" },
+      { prefix: "", text: "", color: "text-gray-200" },
+      { prefix: "", text: "Query OK, 0 rows affected (0.05 sec)", color: "text-green-500" },
+    ],
+  },
+  {
+    id: 5,
+    command: "JOIN query",
+    lines: [
+      { prefix: "mysql>", text: "SELECT u.name, COUNT(o.id) as orders", color: "text-gray-200" },
+      { prefix: "", text: "FROM users u", color: "text-gray-200" },
+      { prefix: "", text: "LEFT JOIN orders o ON u.id = o.user_id", color: "text-gray-200" },
+      { prefix: "", text: "GROUP BY u.id;", color: "text-gray-200" },
+      { prefix: "", text: "3 rows in set (0.01 sec)", color: "text-green-500" },
+    ],
+  },
+  {
+    id: 6,
+    command: "CREATE INDEX",
+    lines: [
+      { prefix: "mysql>", text: "CREATE INDEX idx_email", color: "text-gray-200" },
+      { prefix: "", text: "ON users (email);", color: "text-gray-200" },
+      { prefix: "", text: "", color: "text-gray-200" },
+      { prefix: "", text: "Query OK, 0 rows affected (0.03 sec)", color: "text-green-500" },
+    ],
+  },
+  {
+    id: 7,
+    command: "UPDATE records",
+    lines: [
+      { prefix: "mysql>", text: "UPDATE products SET", color: "text-gray-200" },
+      { prefix: "", text: "price = price * 1.1", color: "text-gray-200" },
+      { prefix: "", text: "WHERE category = 'electronics';", color: "text-gray-200" },
+      { prefix: "", text: "Query OK, 23 rows affected (0.04 sec)", color: "text-green-500" },
+    ],
+  },
+  {
+    id: 8,
+    command: "DESCRIBE table",
+    lines: [
+      { prefix: "mysql>", text: "DESCRIBE orders;", color: "text-gray-200" },
+      { prefix: "", text: "+----------+--------------+------+-----+", color: "text-gray-400" },
+      { prefix: "", text: "| Field    | Type         | Null | Key |", color: "text-gray-400" },
+      { prefix: "", text: "+----------+--------------+------+-----+", color: "text-gray-400" },
+      { prefix: "", text: "| id       | int          | NO   | PRI |", color: "text-gray-200" },
+      { prefix: "", text: "+----------+--------------+------+-----+", color: "text-gray-400" },
+    ],
+  },
+  {
+    id: 9,
+    command: "DELETE query",
+    lines: [
+      { prefix: "mysql>", text: "DELETE FROM sessions", color: "text-gray-200" },
+      { prefix: "", text: "WHERE expires_at < NOW();", color: "text-gray-200" },
+      { prefix: "", text: "", color: "text-gray-200" },
+      { prefix: "", text: "Query OK, 156 rows affected (0.08 sec)", color: "text-green-500" },
+    ],
+  },
+  {
+    id: 10,
+    command: "FOREIGN KEY",
+    lines: [
+      { prefix: "mysql>", text: "ALTER TABLE orders ADD CONSTRAINT", color: "text-gray-200" },
+      { prefix: "", text: "fk_user FOREIGN KEY (user_id)", color: "text-gray-200" },
+      { prefix: "", text: "REFERENCES users(id);", color: "text-gray-200" },
+      { prefix: "", text: "Query OK, 0 rows affected (0.06 sec)", color: "text-green-500" },
+    ],
+  },
+  {
+    id: 11,
+    command: "SHOW TABLES",
+    lines: [
+      { prefix: "mysql>", text: "SHOW TABLES;", color: "text-gray-200" },
+      { prefix: "", text: "+------------------+", color: "text-gray-400" },
+      { prefix: "", text: "| Tables_in_mydb   |", color: "text-gray-400" },
+      { prefix: "", text: "+------------------+", color: "text-gray-400" },
+      { prefix: "", text: "| users            |", color: "text-gray-200" },
+      { prefix: "", text: "| orders           |", color: "text-gray-200" },
+      { prefix: "", text: "+------------------+", color: "text-gray-400" },
+    ],
+  },
+  {
+    id: 12,
+    command: "COUNT query",
+    lines: [
+      { prefix: "mysql>", text: "SELECT COUNT(*) as total,", color: "text-gray-200" },
+      { prefix: "", text: "status FROM orders", color: "text-gray-200" },
+      { prefix: "", text: "GROUP BY status;", color: "text-gray-200" },
+      { prefix: "", text: "3 rows in set (0.01 sec)", color: "text-green-500" },
+    ],
+  },
 ];
 
 export default function LandingPage() {
@@ -416,50 +676,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Capabilities Section */}
+      {/* Terminal Cards Section */}
       <section className="py-24 px-4 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <motion.div
-              initial={{ x: -20, opacity: 0 }}
-              whileInView={{ x: 0, opacity: 1 }}
-              viewport={{ once: true }}
-            >
-              <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">Why choose us</span>
-              <h2 className="text-3xl sm:text-4xl font-bold text-black mt-3 mb-6">
-                Professional database design made simple
-              </h2>
-              <p className="text-gray-500 mb-8">
-                Our visual tool provides everything you need to create robust, well-designed MySQL database schemas without writing a single line of SQL.
-              </p>
-              <div className="grid sm:grid-cols-2 gap-3">
-                {capabilities.map((capability, index) => (
-                  <motion.div
-                    key={capability}
-                    initial={{ x: -10, opacity: 0 }}
-                    whileInView={{ x: 0, opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.05 }}
-                    className="flex items-center gap-3"
-                  >
-                    <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center flex-shrink-0">
-                      <Check className="w-3 h-3 text-white" />
-                    </div>
-                    <span className="text-sm text-gray-600">{capability}</span>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ x: 20, opacity: 0 }}
-              whileInView={{ x: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              className="relative"
-            >
-              <RotatingTerminal />
-            </motion.div>
-          </div>
+        <div className="mx-auto max-w-7xl">
+         
         </div>
       </section>
 
