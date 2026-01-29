@@ -192,29 +192,31 @@ export default function InsertDataModal({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden"
+              className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-hidden mx-4"
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between p-5 border-b border-gray-200">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                    <Plus className="w-5 h-5 text-green-600" />
+                  <div className="w-11 h-11 bg-green-600 rounded-xl flex items-center justify-center">
+                    <Plus className="w-5 h-5 text-white" />
                   </div>
                   <div>
                     <h2 className="text-xl font-semibold text-gray-900">Insert Data</h2>
                     <p className="text-sm text-gray-500">Add rows to a table</p>
                   </div>
                 </div>
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={handleClose}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-all"
                 >
                   <X className="w-5 h-5 text-gray-500" />
-                </button>
+                </motion.button>
               </div>
 
               {/* Content */}
-              <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[60vh]">
+              <form onSubmit={handleSubmit} className="p-5 overflow-y-auto max-h-[60vh]">
                 {/* Database Selection */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -227,7 +229,7 @@ export default function InsertDataModal({
                       setSelectedDatabase(e.target.value);
                       setSelectedTable('');
                     }}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   >
                     <option value="">Select a database</option>
                     {databases.map((db) => (
@@ -248,7 +250,7 @@ export default function InsertDataModal({
                     value={selectedTable}
                     onChange={(e) => setSelectedTable(e.target.value)}
                     disabled={!selectedDatabase}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50 disabled:bg-gray-50"
                   >
                     <option value="">Select a table</option>
                     {tablesForDatabase.map((table) => (
@@ -270,36 +272,38 @@ export default function InsertDataModal({
                 {/* Column Inputs - Multiple Rows */}
                 {columns.length > 0 && !isFetchingColumns && (
                   <div className="space-y-6 mt-6">
-                    <div className="flex items-center justify-between border-b pb-2">
+                    <div className="flex items-center justify-between border-b border-gray-200 pb-2">
                       <h3 className="text-sm font-medium text-gray-700">
                         Row Values ({rows.length} row{rows.length !== 1 ? 's' : ''})
                       </h3>
                     </div>
                     
                     {rows.map((rowValues, rowIndex) => (
-                      <div key={rowIndex} className="border border-gray-200 rounded-lg p-4 space-y-3 relative">
+                      <div key={rowIndex} className="bg-gray-50 rounded-xl p-4 space-y-3 relative border border-gray-200">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-medium text-gray-500">Row {rowIndex + 1}</span>
+                          <span className="text-xs font-medium text-gray-500 bg-gray-200 px-2 py-1 rounded-md">Row {rowIndex + 1}</span>
                           {rows.length > 1 && (
-                            <button
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
                               type="button"
                               onClick={() => removeRow(rowIndex)}
-                              className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded"
+                              className="p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200 transition-all"
                               title="Remove row"
                             >
                               <X className="w-4 h-4" />
-                            </button>
+                            </motion.button>
                           )}
                         </div>
                         {columns.map((col) => (
                           <div key={col.Field}>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
                               {col.Field}
                               <span className="text-gray-400 font-normal ml-2">
                                 ({col.Type})
                               </span>
                               {col.Key === 'PRI' && (
-                                <span className="ml-2 text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">
+                                <span className="ml-2 text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-md">
                                   PK
                                 </span>
                               )}
@@ -313,7 +317,7 @@ export default function InsertDataModal({
                               onChange={(e) => updateRowValue(rowIndex, col.Field, e.target.value)}
                               placeholder={getPlaceholder(col)}
                               disabled={col.Extra === 'auto_increment'}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400"
+                              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50 disabled:bg-gray-100"
                             />
                           </div>
                         ))}
@@ -321,26 +325,28 @@ export default function InsertDataModal({
                     ))}
                     
                     {/* Add Row Button - Below all rows */}
-                    <button
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       type="button"
                       onClick={addNewRow}
-                      className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-green-300 rounded-lg text-green-600 hover:text-green-700 hover:border-green-400 hover:bg-green-50 font-medium transition-colors"
+                      className="w-full flex items-center justify-center gap-2 py-3 bg-gray-50 rounded-xl border-2 border-dashed border-green-300 text-green-600 hover:border-green-400 hover:bg-green-50 font-medium transition-all"
                     >
                       <Plus className="w-5 h-5" />
                       Add Another Row
-                    </button>
+                    </motion.button>
                   </div>
                 )}
 
                 {/* Error */}
                 {error && (
-                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
                     {error}
                   </div>
                 )}
 
                 {/* Actions */}
-                <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+                <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
                   <Button variant="secondary" onClick={handleClose} type="button">
                     Cancel
                   </Button>

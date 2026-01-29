@@ -103,13 +103,13 @@ export default function SelectDataModal({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden"
+              className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] overflow-hidden mx-4"
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between p-5 border-b border-gray-200">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-blue-600" />
+                  <div className="w-11 h-11 bg-blue-600 rounded-xl flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-white" />
                   </div>
                   <div>
                     <h2 className="text-xl font-semibold text-gray-900">Select Data</h2>
@@ -118,16 +118,18 @@ export default function SelectDataModal({
                     </p>
                   </div>
                 </div>
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={handleClose}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-all"
                 >
                   <X className="w-5 h-5 text-gray-500" />
-                </button>
+                </motion.button>
               </div>
 
               {/* Content */}
-              <div className="p-6">
+              <div className="p-5">
                 {/* Selection Row */}
                 <div className="flex gap-4 mb-6">
                   <div className="flex-1">
@@ -141,7 +143,7 @@ export default function SelectDataModal({
                         setSelectedDatabase(e.target.value);
                         setSelectedTable('');
                       }}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">Select database</option>
                       {databases.map((db) => (
@@ -162,7 +164,7 @@ export default function SelectDataModal({
                         setSelectedTable(e.target.value);
                       }}
                       disabled={!selectedDatabase}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:bg-gray-50"
                     >
                       <option value="">Select table</option>
                       {tablesForDatabase.map((table) => (
@@ -183,20 +185,22 @@ export default function SelectDataModal({
                 )}
                 
                 {error && (
-                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
                     {error}
                   </div>
                 )}
 
                 {!isLoading && !error && !selectedTable && (
                   <div className="py-16 text-center text-gray-500">
-                    <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <FileText className="w-8 h-8 text-gray-400" />
+                    </div>
                     <p>Select a database and table to view data in the workflow area</p>
                   </div>
                 )}
 
                 {/* Actions */}
-                <div className="flex justify-end mt-6 pt-4 border-t">
+                <div className="flex justify-end mt-6 pt-4 border-t border-white/20">
                   <Button variant="secondary" onClick={handleClose}>
                     Close
                   </Button>

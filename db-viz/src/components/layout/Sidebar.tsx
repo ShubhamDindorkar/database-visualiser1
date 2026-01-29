@@ -79,22 +79,22 @@ export default function Sidebar({
   };
 
   const sqlButtons = [
-    { type: 'CREATE' as const, color: 'bg-green-500 hover:bg-green-600', icon: Plus },
-    { type: 'INSERT' as const, color: 'bg-emerald-500 hover:bg-emerald-600', icon: PlusCircle },
-    { type: 'SELECT' as const, color: 'bg-blue-500 hover:bg-blue-600', icon: FileText },
+    { type: 'CREATE' as const, color: 'bg-green-600 hover:bg-green-700', icon: Plus },
+    { type: 'INSERT' as const, color: 'bg-emerald-600 hover:bg-emerald-700', icon: PlusCircle },
+    { type: 'SELECT' as const, color: 'bg-blue-600 hover:bg-blue-700', icon: FileText },
     { type: 'UPDATE' as const, color: 'bg-yellow-500 hover:bg-yellow-600', icon: Edit3 },
-    { type: 'DELETE' as const, color: 'bg-orange-500 hover:bg-orange-600', icon: Trash2 },
-    { type: 'DROP' as const, color: 'bg-red-500 hover:bg-red-600', icon: XCircle },
+    { type: 'DELETE' as const, color: 'bg-orange-600 hover:bg-orange-700', icon: Trash2 },
+    { type: 'DROP' as const, color: 'bg-red-600 hover:bg-red-700', icon: XCircle },
   ];
 
   return (
     <motion.aside
       initial={{ x: -20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      className="w-72 bg-white/70 backdrop-blur-xl border-r border-gray-200/50 flex flex-col h-full"
+      className="w-72 bg-white border-r border-gray-200 flex flex-col h-full"
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-200/50 bg-white/50">
+      <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
             Databases
@@ -103,7 +103,7 @@ export default function Sidebar({
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={onCreateDatabase}
-            className="p-1.5 rounded-xl bg-gradient-to-br from-gray-900 to-black hover:from-gray-800 hover:to-gray-900 text-white transition-all shadow-md"
+            className="p-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 shadow-sm"
             title="Create Database"
           >
             <FolderPlus className="w-4 h-4" />
@@ -118,7 +118,7 @@ export default function Sidebar({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => onQuickSQL(type)}
-              className={`${color} text-white text-xs py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md font-medium backdrop-blur-sm`}
+              className={`${color} text-white text-xs py-2 px-2 rounded-lg flex items-center justify-center gap-1 font-medium`}
               title={type}
             >
               <Icon className="w-3.5 h-3.5" />
@@ -132,7 +132,7 @@ export default function Sidebar({
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-3 pt-3 border-t border-gray-200/50"
+            className="mt-3 pt-3 border-t border-gray-200"
           >
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
               Relationships
@@ -141,7 +141,7 @@ export default function Sidebar({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onManageForeignKeys}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-purple-100/80 hover:bg-purple-200/80 text-purple-700 rounded-xl font-medium text-sm transition-all backdrop-blur-sm border border-purple-200/50 shadow-sm"
+              className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium text-sm"
             >
               <Link className="w-4 h-4" />
               <span>Manage Foreign Keys</span>
@@ -154,13 +154,15 @@ export default function Sidebar({
       <div className="flex-1 overflow-y-auto p-2">
         {databases.length === 0 ? (
           <div className="text-center py-8">
-            <Database className="w-12 h-12 mx-auto text-gray-400 mb-3" />
-            <p className="text-sm text-gray-600">
+            <div className="w-16 h-16 mx-auto bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
+              <Database className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="text-sm text-gray-600 mb-3">
               No databases yet
             </p>
             <button
               onClick={onCreateDatabase}
-              className="mt-2 text-sm text-gray-800 hover:text-black font-medium underline"
+              className="text-sm bg-gray-900 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-800"
             >
               Create your first database
             </button>
@@ -178,8 +180,8 @@ export default function Sidebar({
                   <motion.div
                     initial={false}
                     className={`
-                      flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer group transition-all
-                      ${isSelected ? 'bg-gray-900/10 backdrop-blur-sm shadow-sm' : 'hover:bg-gray-100/70'}
+                      flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer group transition-all duration-200
+                      ${isSelected ? 'bg-gray-100' : 'hover:bg-gray-50'}
                     `}
                     onClick={() => {
                       onSelectDatabase(db.id);
@@ -196,7 +198,7 @@ export default function Sidebar({
                     <span className={`flex-1 text-sm font-medium truncate ${isSelected ? 'text-gray-900' : 'text-gray-800'}`}>
                       {db.name}
                     </span>
-                    <span className="text-xs text-gray-500 bg-gray-100/80 px-1.5 py-0.5 rounded-md">
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">
                       {tableCountsByDatabase[db.id] || 0}
                     </span>
                     <motion.button
@@ -206,7 +208,7 @@ export default function Sidebar({
                         e.stopPropagation();
                         onDeleteDatabase(db.id);
                       }}
-                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 text-red-500 transition-all"
+                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200 transition-all"
                       title="Delete Database"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -221,7 +223,7 @@ export default function Sidebar({
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="ml-4 pl-4 border-l border-gray-200/50 overflow-hidden"
+                        className="ml-4 pl-4 border-l border-gray-200 overflow-hidden"
                       >
                         {dbTables.length === 0 ? (
                           <div className="py-2 text-xs text-gray-500">
@@ -235,8 +237,8 @@ export default function Sidebar({
                                 key={table.id}
                                 whileHover={{ x: 2 }}
                                 className={`
-                                  flex items-center gap-2 px-3 py-1.5 rounded-xl cursor-pointer group transition-all
-                                  ${isTableSelected ? 'bg-gray-900/10 backdrop-blur-sm shadow-sm' : 'hover:bg-gray-100/70'}
+                                  flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer group transition-all duration-200
+                                  ${isTableSelected ? 'bg-gray-100' : 'hover:bg-gray-50'}
                                 `}
                                 onClick={() => onSelectTable(table.id)}
                               >
@@ -244,7 +246,7 @@ export default function Sidebar({
                                 <span className={`flex-1 text-sm truncate ${isTableSelected ? 'text-gray-900' : 'text-gray-700'}`}>
                                   {table.name}
                                 </span>
-                                <span className="text-xs text-gray-500 bg-gray-100/80 px-1.5 py-0.5 rounded-md">
+                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">
                                   {table.columns.length} cols
                                 </span>
                                 <motion.button
@@ -254,7 +256,7 @@ export default function Sidebar({
                                     e.stopPropagation();
                                     onEditTable(table.id);
                                   }}
-                                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-blue-100 text-blue-500 transition-all"
+                                  className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all"
                                   title="Edit Table"
                                 >
                                   <Edit3 className="w-3 h-3" />
@@ -266,7 +268,7 @@ export default function Sidebar({
                                     e.stopPropagation();
                                     onDeleteTable(table.id);
                                   }}
-                                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 text-red-500 transition-all"
+                                  className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200 transition-all"
                                   title="Delete Table"
                                 >
                                   <Trash2 className="w-3 h-3" />
@@ -282,10 +284,10 @@ export default function Sidebar({
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={onCreateTable}
-                            className="flex items-center gap-2 w-full px-3 py-1.5 mt-1 rounded-xl text-gray-700 hover:bg-gray-100/70 transition-all border border-dashed border-gray-300/50"
+                            className="flex items-center gap-2 w-full px-3 py-2 mt-1 rounded-lg text-gray-600 hover:bg-gray-50 transition-all border border-dashed border-gray-300"
                           >
                             <Plus className="w-3.5 h-3.5" />
-                            <span className="text-sm">Add Table</span>
+                            <span className="text-sm font-medium">Add Table</span>
                           </motion.button>
                         )}
                       </motion.div>

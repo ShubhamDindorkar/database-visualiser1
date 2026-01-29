@@ -174,13 +174,13 @@ export default function UpdateDataModal({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden"
+              className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-hidden"
             >
               {/* Header */}
               <div className="flex items-center justify-between p-6 border-b border-gray-200">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center">
-                    <Edit3 className="w-5 h-5 text-yellow-600" />
+                  <div className="w-10 h-10 bg-yellow-500 rounded-xl flex items-center justify-center">
+                    <Edit3 className="w-5 h-5 text-white" />
                   </div>
                   <div>
                     <h2 className="text-xl font-semibold text-gray-900">Update Data</h2>
@@ -206,7 +206,7 @@ export default function UpdateDataModal({
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => setMode('rows')}
-                        className="p-6 border-2 border-gray-200 rounded-xl hover:border-yellow-500 hover:bg-yellow-50 transition-all"
+                        className="p-6 bg-gray-50 border-2 border-gray-200 rounded-xl hover:border-yellow-400 hover:bg-yellow-50 transition-all"
                       >
                         <Rows className="w-8 h-8 mx-auto mb-3 text-yellow-600" />
                         <h3 className="font-medium text-gray-900">Table Data</h3>
@@ -216,7 +216,7 @@ export default function UpdateDataModal({
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => setMode('columns')}
-                        className="p-6 border-2 border-gray-200 rounded-xl hover:border-yellow-500 hover:bg-yellow-50 transition-all"
+                        className="p-6 bg-gray-50 border-2 border-gray-200 rounded-xl hover:border-yellow-400 hover:bg-yellow-50 transition-all"
                       >
                         <Columns className="w-8 h-8 mx-auto mb-3 text-yellow-600" />
                         <h3 className="font-medium text-gray-900">Table Structure</h3>
@@ -241,7 +241,7 @@ export default function UpdateDataModal({
                           setSelectedDatabase(e.target.value);
                           setSelectedTable('');
                         }}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                       >
                         <option value="">Select a database</option>
                         {databases.map((db) => (
@@ -262,7 +262,7 @@ export default function UpdateDataModal({
                         value={selectedTable}
                         onChange={(e) => setSelectedTable(e.target.value)}
                         disabled={!selectedDatabase}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:bg-gray-100"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50 disabled:bg-gray-50"
                       >
                         <option value="">Select a table</option>
                         {tablesForDatabase.map((table) => (
@@ -275,7 +275,7 @@ export default function UpdateDataModal({
 
                     {/* Row Update Fields */}
                     {mode === 'rows' && selectedTable && (
-                      <div className="space-y-4 mt-6 p-4 bg-gray-50 rounded-lg">
+                      <div className="space-y-4 mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             SET Clause <span className="text-red-500">*</span>
@@ -285,7 +285,7 @@ export default function UpdateDataModal({
                             value={setClause}
                             onChange={(e) => setSetClause(e.target.value)}
                             placeholder="column1 = 'value1', column2 = 'value2'"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                           />
                           <p className="text-xs text-gray-500 mt-1">
                             Example: name = &apos;John&apos;, age = 25
@@ -300,9 +300,9 @@ export default function UpdateDataModal({
                             value={whereClause}
                             onChange={(e) => setWhereClause(e.target.value)}
                             placeholder="id = 1"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                           />
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
                             ⚠️ Without WHERE, all rows will be updated
                           </p>
                         </div>
@@ -319,7 +319,7 @@ export default function UpdateDataModal({
                               key={action}
                               type="button"
                               onClick={() => setColumnAction(action)}
-                              className={`flex-1 py-2 px-4 rounded-lg font-medium capitalize transition-all ${
+                              className={`flex-1 py-2.5 px-4 rounded-xl font-medium capitalize transition-all ${
                                 columnAction === action
                                   ? 'bg-yellow-500 text-white'
                                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -330,7 +330,7 @@ export default function UpdateDataModal({
                           ))}
                         </div>
 
-                        <div className="p-4 bg-gray-50 rounded-lg space-y-4">
+                        <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
                           {/* Column Name */}
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -340,7 +340,7 @@ export default function UpdateDataModal({
                               <select
                                 value={columnName}
                                 onChange={(e) => setColumnName(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                               >
                                 <option value="">Select column to drop</option>
                                 {selectedTableInfo?.columns.map((col) => (
@@ -355,7 +355,7 @@ export default function UpdateDataModal({
                                 value={columnName}
                                 onChange={(e) => setColumnName(e.target.value)}
                                 placeholder="Enter column name"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                               />
                             )}
                           </div>
@@ -371,7 +371,7 @@ export default function UpdateDataModal({
                                 value={newColumnName}
                                 onChange={(e) => setNewColumnName(e.target.value)}
                                 placeholder="Enter new column name"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                               />
                             </div>
                           )}
@@ -385,7 +385,7 @@ export default function UpdateDataModal({
                               <select
                                 value={columnType}
                                 onChange={(e) => setColumnType(e.target.value as DataType)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                               >
                                 {DATA_TYPES.map((type) => (
                                   <option key={type} value={type}>
@@ -410,7 +410,7 @@ export default function UpdateDataModal({
                                         notNull: e.target.checked,
                                       }))
                                     }
-                                    className="rounded border-gray-300"
+                                    className="rounded border-gray-300 text-yellow-500 focus:ring-yellow-500"
                                   />
                                   <span className="text-sm text-gray-700">NOT NULL</span>
                                 </label>
@@ -424,7 +424,7 @@ export default function UpdateDataModal({
                                         unique: e.target.checked,
                                       }))
                                     }
-                                    className="rounded border-gray-300"
+                                    className="rounded border-gray-300 text-yellow-500 focus:ring-yellow-500"
                                   />
                                   <span className="text-sm text-gray-700">UNIQUE</span>
                                 </label>
@@ -443,7 +443,7 @@ export default function UpdateDataModal({
                                     }))
                                   }
                                   placeholder="Enter default value"
-                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                                 />
                               </div>
                             </>
@@ -454,18 +454,18 @@ export default function UpdateDataModal({
 
                     {/* Error/Success Messages */}
                     {error && (
-                      <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                      <div className="mt-4 bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">
                         {error}
                       </div>
                     )}
                     {success && (
-                      <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+                      <div className="mt-4 bg-green-50 border border-green-200 rounded-xl p-4 text-green-700 text-sm">
                         {success}
                       </div>
                     )}
 
                     {/* Actions */}
-                    <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+                    <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
                       <Button
                         variant="secondary"
                         onClick={() => (mode ? setMode(null) : handleClose())}
@@ -478,6 +478,7 @@ export default function UpdateDataModal({
                           type="submit"
                           disabled={!selectedDatabase || !selectedTable || isLoading}
                           isLoading={isLoading}
+                          className="bg-yellow-500 hover:bg-yellow-600 text-white"
                         >
                           Execute Update
                         </Button>

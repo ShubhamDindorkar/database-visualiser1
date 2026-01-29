@@ -102,20 +102,20 @@ export default function CreateDatabaseModal({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden"
+              className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <div className="flex items-center justify-between p-5 border-b border-gray-200">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <Database className="w-5 h-5 text-gray-800" />
+                  <div className="w-11 h-11 bg-blue-600 rounded-xl flex items-center justify-center">
+                    <Database className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-black">
+                    <h2 className="text-lg font-semibold text-gray-900">
                       Create Database
                     </h2>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-500">
                       Create a new MySQL database
                     </p>
                   </div>
@@ -124,14 +124,14 @@ export default function CreateDatabaseModal({
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={handleClose}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-all"
                 >
-                  <X className="w-5 h-5 text-gray-600" />
+                  <X className="w-5 h-5 text-gray-500" />
                 </motion.button>
               </div>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="p-4 space-y-4">
+              <form onSubmit={handleSubmit} className="p-5 space-y-4">
                 <Input
                   label="Database Name"
                   placeholder="my_database"
@@ -180,9 +180,9 @@ export default function CreateDatabaseModal({
                 />
 
                 {/* Info Box */}
-                <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <AlertCircle className="w-4 h-4 text-gray-700 mt-0.5" />
-                  <p className="text-xs text-gray-700">
+                <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                  <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-gray-700">
                     The password will be securely hashed and stored. Make sure to remember it for future access.
                   </p>
                 </div>
