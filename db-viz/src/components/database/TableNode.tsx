@@ -11,6 +11,7 @@ interface TableNodeData {
   onDelete: (tableId: string) => void;
   onViewData: (tableId: string, tableName: string) => void;
   isSelected: boolean;
+  theme?: any;
 }
 
 const getTypeIcon = (dataType: DataType) => {
@@ -33,7 +34,7 @@ const getTypeIcon = (dataType: DataType) => {
 };
 
 function TableNode({ data, selected }: NodeProps<TableNodeData>) {
-  const { table, onDelete, onViewData, isSelected } = data;
+  const { table, onDelete, onViewData, isSelected, theme } = data;
 
   return (
     <motion.div
@@ -41,9 +42,9 @@ function TableNode({ data, selected }: NodeProps<TableNodeData>) {
       animate={{ scale: 1, opacity: 1 }}
       whileHover={{ scale: 1.02 }}
       className={`
-        relative bg-white rounded-xl overflow-visible
+        relative ${theme?.modal || 'bg-white'} rounded-xl overflow-visible
         shadow-lg hover:shadow-xl transition-shadow duration-300
-        border-2 ${selected || isSelected ? 'border-black' : 'border-gray-200'}
+        border-2 ${selected || isSelected ? (theme?.text?.includes('white') ? 'border-white' : 'border-black') : (theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200')}
         min-w-[220px]
       `}
       style={{
@@ -58,7 +59,7 @@ function TableNode({ data, selected }: NodeProps<TableNodeData>) {
       />
 
       {/* Table Header */}
-      <div className="bg-black px-4 py-3 flex items-center justify-between group rounded-t-xl">
+      <div className={`${theme?.button || 'bg-black'} px-4 py-3 flex items-center justify-between group rounded-t-xl`}>
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-white rounded-full opacity-80" />
           <h3 className="text-white font-semibold text-sm tracking-wide">
@@ -79,11 +80,11 @@ function TableNode({ data, selected }: NodeProps<TableNodeData>) {
       </div>
 
       {/* Columns */}
-      <div className="divide-y divide-gray-100 overflow-hidden">
+      <div className={`divide-y ${theme?.navbar?.includes('slate') ? 'divide-slate-700' : 'divide-gray-100'} overflow-hidden`}>
         {table.columns.map((column, index) => (
           <div
             key={column.id}
-            className="relative px-4 py-2 flex items-center gap-3 hover:bg-gray-50 transition-colors"
+            className={`relative px-4 py-2 flex items-center gap-3 ${theme?.navbar?.includes('slate') ? 'hover:bg-slate-700' : 'hover:bg-gray-50'} transition-colors`}
           >
             {/* Source Handle for FK */}
             {column.isForeignKey && (
@@ -102,15 +103,15 @@ function TableNode({ data, selected }: NodeProps<TableNodeData>) {
                 <Key className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
               )}
               {column.isForeignKey && (
-                <Link className="w-3.5 h-3.5 text-gray-700 flex-shrink-0" />
+                <Link className={`w-3.5 h-3.5 ${theme?.text || 'text-gray-700'} flex-shrink-0`} />
               )}
-              <span className="text-sm text-gray-900 truncate font-medium">
+              <span className={`text-sm ${theme?.text || 'text-gray-900'} truncate font-medium`}>
                 {column.name}
               </span>
             </div>
 
             {/* Data Type */}
-            <div className="flex items-center gap-1.5 text-gray-600">
+            <div className={`flex items-center gap-1.5 ${theme?.textSecondary || 'text-gray-600'}`}>
               {getTypeIcon(column.dataType)}
               <span className="text-xs font-mono">{column.dataType}</span>
             </div>
@@ -118,12 +119,12 @@ function TableNode({ data, selected }: NodeProps<TableNodeData>) {
             {/* Constraints Badges */}
             <div className="flex gap-1">
               {column.isNotNull && (
-                <span className="text-[10px] px-1 py-0.5 bg-gray-200 text-gray-800 rounded font-medium">
+                <span className={`text-[10px] px-1 py-0.5 ${theme?.buttonSecondary || 'bg-gray-200 text-gray-800'} rounded font-medium`}>
                   NN
                 </span>
               )}
               {column.isUnique && !column.isPrimaryKey && (
-                <span className="text-[10px] px-1 py-0.5 bg-gray-400 text-gray-800 rounded font-medium">
+                <span className={`text-[10px] px-1 py-0.5 ${theme?.navbar?.includes('slate') ? 'bg-slate-600 text-white' : 'bg-gray-400 text-gray-800'} rounded font-medium`}>
                   UQ
                 </span>
               )}
@@ -144,8 +145,8 @@ function TableNode({ data, selected }: NodeProps<TableNodeData>) {
       </div>
 
       {/* Table Footer */}
-      <div className="px-4 py-2 bg-gray-50 border-t border-gray-100 rounded-b-xl">
-        <div className="flex items-center justify-between text-xs text-gray-600">
+      <div className={`px-4 py-2 ${theme?.navbar?.includes('slate') ? 'bg-slate-800 border-slate-700' : 'bg-gray-50 border-gray-100'} border-t rounded-b-xl`}>
+        <div className={`flex items-center justify-between text-xs ${theme?.textSecondary || 'text-gray-600'}`}>
           <span>{table.columns.length} columns</span>
           <span className="flex items-center gap-1">
             {table.columns.filter((c) => c.isPrimaryKey).length > 0 && (
@@ -156,7 +157,7 @@ function TableNode({ data, selected }: NodeProps<TableNodeData>) {
             )}
             {table.columns.filter((c) => c.isForeignKey).length > 0 && (
               <span className="flex items-center gap-0.5 ml-2">
-                <Link className="w-3 h-3 text-gray-700" />
+                <Link className={`w-3 h-3 ${theme?.text || 'text-gray-700'}`} />
                 {table.columns.filter((c) => c.isForeignKey).length}
               </span>
             )}
@@ -172,7 +173,7 @@ function TableNode({ data, selected }: NodeProps<TableNodeData>) {
           e.stopPropagation();
           onViewData(table.id, table.name);
         }}
-        className="absolute -right-5 top-1/2 -translate-y-1/2 w-8 h-8 bg-black hover:bg-gray-800 text-white rounded-full shadow-lg flex items-center justify-center transition-colors z-20"
+        className={`absolute -right-5 top-1/2 -translate-y-1/2 w-8 h-8 ${theme?.button || 'bg-black hover:bg-gray-800 text-white'} rounded-full shadow-lg flex items-center justify-center transition-colors z-20`}
         title="View table data"
       >
         <ChevronRight className="w-4 h-4" />

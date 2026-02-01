@@ -34,6 +34,7 @@ interface SidebarProps {
   onQuickSQL: (type: 'CREATE' | 'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE' | 'DROP') => void;
   onEditTable: (tableId: string) => void;
   onManageForeignKeys: () => void;
+  theme?: any;
 }
 
 export default function Sidebar({
@@ -50,6 +51,7 @@ export default function Sidebar({
   onQuickSQL,
   onEditTable,
   onManageForeignKeys,
+  theme,
 }: SidebarProps) {
   const [expandedDatabases, setExpandedDatabases] = useState<Set<string>>(new Set());
 
@@ -91,19 +93,19 @@ export default function Sidebar({
     <motion.aside
       initial={{ x: -20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      className="w-72 bg-white border-r border-gray-200 flex flex-col h-full"
+      className={`w-72 ${theme?.sidebar || 'bg-white border-gray-200'} border-r flex flex-col h-full`}
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className={`p-4 border-b ${theme?.navbar?.includes('slate') ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-gray-50'}`}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+          <h2 className={`text-sm font-bold ${theme?.text || 'text-gray-800'} uppercase tracking-wider`}>
             Databases
           </h2>
           <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={onCreateDatabase}
-            className="p-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 shadow-sm"
+            className={`p-2 rounded-lg ${theme?.button || 'bg-slate-800 text-white hover:bg-slate-900'} shadow-md transition-all`}
             title="Create Database"
           >
             <FolderPlus className="w-4 h-4" />
@@ -132,16 +134,16 @@ export default function Sidebar({
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-3 pt-3 border-t border-gray-200"
+            className={`mt-3 pt-3 border-t ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'}`}
           >
-            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+            <label className={`block text-xs font-semibold ${theme?.textSecondary || 'text-gray-600'} uppercase tracking-wider mb-2`}>
               Relationships
             </label>
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onManageForeignKeys}
-              className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium text-sm"
+              className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 ${theme?.buttonSecondary || 'bg-slate-700 hover:bg-slate-800 text-white'} rounded-lg font-medium text-sm shadow-sm transition-colors`}
             >
               <Link className="w-4 h-4" />
               <span>Manage Foreign Keys</span>
@@ -154,15 +156,15 @@ export default function Sidebar({
       <div className="flex-1 overflow-y-auto p-2">
         {databases.length === 0 ? (
           <div className="text-center py-8">
-            <div className="w-16 h-16 mx-auto bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-              <Database className="w-8 h-8 text-gray-400" />
+            <div className={`w-16 h-16 mx-auto ${theme?.buttonSecondary || 'bg-gray-100'} rounded-2xl flex items-center justify-center mb-4`}>
+              <Database className={`w-8 h-8 ${theme?.textSecondary || 'text-gray-400'}`} />
             </div>
-            <p className="text-sm text-gray-600 mb-3">
+            <p className={`text-sm ${theme?.textSecondary || 'text-gray-600'} mb-3`}>
               No databases yet
             </p>
             <button
               onClick={onCreateDatabase}
-              className="text-sm bg-gray-900 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-800"
+              className={`text-sm ${theme?.button || 'bg-gray-900 text-white hover:bg-gray-800'} px-4 py-2 rounded-lg font-medium`}
             >
               Create your first database
             </button>
@@ -181,7 +183,7 @@ export default function Sidebar({
                     initial={false}
                     className={`
                       flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer group transition-all duration-200
-                      ${isSelected ? 'bg-gray-100' : 'hover:bg-gray-50'}
+                      ${isSelected ? (theme?.buttonSecondary || 'bg-gray-100') : (theme?.navbar?.includes('slate') ? 'hover:bg-slate-800' : 'hover:bg-gray-50')}
                     `}
                     onClick={() => {
                       onSelectDatabase(db.id);
@@ -192,13 +194,13 @@ export default function Sidebar({
                       animate={{ rotate: isExpanded ? 90 : 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <ChevronRight className="w-4 h-4 text-gray-500" />
+                      <ChevronRight className={`w-4 h-4 ${theme?.textSecondary || 'text-gray-500'}`} />
                     </motion.div>
-                    <Database className={`w-4 h-4 ${isSelected ? 'text-gray-900' : 'text-gray-600'}`} />
-                    <span className={`flex-1 text-sm font-medium truncate ${isSelected ? 'text-gray-900' : 'text-gray-800'}`}>
+                    <Database className={`w-4 h-4 ${isSelected ? (theme?.text || 'text-gray-900') : (theme?.textSecondary || 'text-gray-600')}`} />
+                    <span className={`flex-1 text-sm font-medium truncate ${isSelected ? (theme?.text || 'text-gray-900') : (theme?.text || 'text-gray-800')}`}>
                       {db.name}
                     </span>
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">
+                    <span className={`text-xs ${theme?.textSecondary || 'text-gray-500'} ${theme?.buttonSecondary || 'bg-gray-100'} px-2 py-0.5 rounded-md`}>
                       {tableCountsByDatabase[db.id] || 0}
                     </span>
                     <motion.button
@@ -223,10 +225,10 @@ export default function Sidebar({
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="ml-4 pl-4 border-l border-gray-200 overflow-hidden"
+                        className={`ml-4 pl-4 border-l ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'} overflow-hidden`}
                       >
                         {dbTables.length === 0 ? (
-                          <div className="py-2 text-xs text-gray-500">
+                          <div className={`py-2 text-xs ${theme?.textSecondary || 'text-gray-500'}`}>
                             No tables
                           </div>
                         ) : (
@@ -238,15 +240,15 @@ export default function Sidebar({
                                 whileHover={{ x: 2 }}
                                 className={`
                                   flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer group transition-all duration-200
-                                  ${isTableSelected ? 'bg-gray-100' : 'hover:bg-gray-50'}
+                                  ${isTableSelected ? (theme?.buttonSecondary || 'bg-gray-100') : (theme?.navbar?.includes('slate') ? 'hover:bg-slate-800' : 'hover:bg-gray-50')}
                                 `}
                                 onClick={() => onSelectTable(table.id)}
                               >
-                                <Table className={`w-3.5 h-3.5 ${isTableSelected ? 'text-gray-900' : 'text-gray-500'}`} />
-                                <span className={`flex-1 text-sm truncate ${isTableSelected ? 'text-gray-900' : 'text-gray-700'}`}>
+                                <Table className={`w-3.5 h-3.5 ${isTableSelected ? (theme?.text || 'text-gray-900') : (theme?.textSecondary || 'text-gray-500')}`} />
+                                <span className={`flex-1 text-sm truncate ${isTableSelected ? (theme?.text || 'text-gray-900') : (theme?.text || 'text-gray-700')}`}>
                                   {table.name}
                                 </span>
-                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">
+                                <span className={`text-xs ${theme?.textSecondary || 'text-gray-500'} ${theme?.buttonSecondary || 'bg-gray-100'} px-2 py-0.5 rounded-md`}>
                                   {table.columns.length} cols
                                 </span>
                                 <motion.button

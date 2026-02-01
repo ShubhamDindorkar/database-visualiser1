@@ -18,6 +18,7 @@ interface ForeignKeyModalProps {
   ) => Promise<void>;
   onRemoveForeignKey: (tableId: string, columnId: string) => Promise<void>;
   databaseName: string;
+  theme?: any;
 }
 
 type Mode = 'add' | 'remove';
@@ -29,6 +30,7 @@ export default function ForeignKeyModal({
   onAddForeignKey,
   onRemoveForeignKey,
   databaseName,
+  theme,
 }: ForeignKeyModalProps) {
   const [mode, setMode] = useState<Mode>('add');
   const [sourceTableId, setSourceTableId] = useState('');
@@ -219,34 +221,34 @@ export default function ForeignKeyModal({
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden"
+            className={`${theme?.modal || 'bg-white'} rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <div className={`flex items-center justify-between p-4 border-b ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'}`}>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <div className={`w-10 h-10 ${theme?.buttonSecondary || 'bg-purple-100'} rounded-lg flex items-center justify-center`}>
                   <Link className="w-5 h-5 text-purple-600" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-black">
+                  <h2 className={`text-lg font-semibold ${theme?.text || 'text-black'}`}>
                     Manage Foreign Keys
                   </h2>
-                  <p className="text-sm text-gray-600">in {databaseName}</p>
+                  <p className={`text-sm ${theme?.textSecondary || 'text-gray-600'}`}>in {databaseName}</p>
                 </div>
               </div>
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={handleClose}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className={`p-2 rounded-lg ${theme?.buttonSecondary || 'hover:bg-gray-100'} transition-colors`}
               >
-                <X className="w-5 h-5 text-gray-600" />
+                <X className={`w-5 h-5 ${theme?.textSecondary || 'text-gray-600'}`} />
               </motion.button>
             </div>
 
             {/* Mode Toggle */}
-            <div className="p-4 border-b border-gray-200">
+            <div className={`p-4 border-b ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'}`}>
               <div className="flex gap-2">
                 <button
                   onClick={() => {
@@ -328,7 +330,7 @@ export default function ForeignKeyModal({
                 <>
                   {/* Source Table Selection */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className={`block text-sm font-medium ${theme?.text || 'text-gray-700'} mb-2`}>
                       Source Table (where FK will be added)
                     </label>
                     <select
@@ -573,7 +575,7 @@ export default function ForeignKeyModal({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 bg-gray-50">
+            <div className={`flex items-center justify-end gap-3 p-4 border-t ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'} ${theme?.buttonSecondary || 'bg-gray-50'}`}>
               <Button variant="secondary" onClick={handleClose}>
                 Cancel
               </Button>

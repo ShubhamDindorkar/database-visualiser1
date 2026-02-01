@@ -15,6 +15,7 @@ interface DropModalProps {
   selectedDatabaseId: string | null;
   onDropDatabase: (databaseId: string) => Promise<void>;
   onDropTable: (database: string, tableName: string) => Promise<void>;
+  theme?: any;
 }
 
 type DropMode = 'database' | 'table';
@@ -27,6 +28,7 @@ export default function DropModal({
   selectedDatabaseId,
   onDropDatabase,
   onDropTable,
+  theme,
 }: DropModalProps) {
   const [mode, setMode] = useState<DropMode | null>(null);
   const [selectedDatabase, setSelectedDatabase] = useState<string>('');
@@ -137,16 +139,16 @@ export default function DropModal({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-hidden mx-4"
+              className={`${theme?.modal || 'bg-white'} rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-hidden mx-4`}
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-5 border-b border-gray-200 bg-red-50">
+              <div className={`flex items-center justify-between p-5 border-b ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'} bg-red-50`}>
                 <div className="flex items-center gap-3">
                   <div className="w-11 h-11 bg-red-600 rounded-xl flex items-center justify-center">
                     <Trash2 className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">Drop</h2>
+                    <h2 className={`text-xl font-semibold ${theme?.text || 'text-gray-900'}`}>Drop</h2>
                     <p className="text-sm text-red-600 font-medium">⚠️ This action cannot be undone</p>
                   </div>
                 </div>
@@ -154,9 +156,9 @@ export default function DropModal({
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={handleClose}
-                  className="p-2 rounded-lg hover:bg-red-100 transition-all"
+                  className={`p-2 rounded-lg ${theme?.buttonSecondary || 'hover:bg-red-100'} transition-all`}
                 >
-                  <X className="w-5 h-5 text-gray-500" />
+                  <X className={`w-5 h-5 ${theme?.textSecondary || 'text-gray-500'}`} />
                 </motion.button>
               </div>
 
@@ -200,7 +202,7 @@ export default function DropModal({
                   <form onSubmit={handleSubmit}>
                     {/* Database Selection */}
                     <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className={`block text-sm font-medium ${theme?.text || 'text-gray-700'} mb-2`}>
                         <Database className="w-4 h-4 inline mr-2" />
                         {mode === 'database' ? 'Database to Drop' : 'Database'}
                       </label>
@@ -226,7 +228,7 @@ export default function DropModal({
                     {/* Table Selection (for table mode) */}
                     {mode === 'table' && (
                       <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className={`block text-sm font-medium ${theme?.text || 'text-gray-700'} mb-2`}>
                           <Table className="w-4 h-4 inline mr-2" />
                           Table to Drop
                         </label>
@@ -252,7 +254,7 @@ export default function DropModal({
                     {/* Password for database drop */}
                     {mode === 'database' && selectedDatabase && (
                       <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className={`block text-sm font-medium ${theme?.text || 'text-gray-700'} mb-2`}>
                           <Lock className="w-4 h-4 inline mr-2" />
                           Database Password
                         </label>
@@ -319,7 +321,7 @@ export default function DropModal({
                     )}
 
                     {/* Actions */}
-                    <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+                    <div className={`flex justify-end gap-3 mt-6 pt-4 border-t ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'}`}>
                       <Button
                         variant="secondary"
                         onClick={() => {

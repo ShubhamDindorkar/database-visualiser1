@@ -11,6 +11,7 @@ interface CreateDatabaseModalProps {
   onClose: () => void;
   onCreate: (name: string, password: string) => void;
   existingNames: string[];
+  theme?: any;
 }
 
 export default function CreateDatabaseModal({
@@ -18,6 +19,7 @@ export default function CreateDatabaseModal({
   onClose,
   onCreate,
   existingNames,
+  theme,
 }: CreateDatabaseModalProps) {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
@@ -102,20 +104,20 @@ export default function CreateDatabaseModal({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden"
+              className={`${theme?.modal || 'bg-white'} rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden`}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-5 border-b border-gray-200">
+              <div className={`flex items-center justify-between p-5 border-b ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'}`}>
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 bg-blue-600 rounded-xl flex items-center justify-center">
+                  <div className={`w-11 h-11 ${theme?.button || 'bg-blue-600'} rounded-xl flex items-center justify-center`}>
                     <Database className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-900">
+                    <h2 className={`text-lg font-semibold ${theme?.text || 'text-gray-900'}`}>
                       Create Database
                     </h2>
-                    <p className="text-sm text-gray-500">
+                    <p className={`text-sm ${theme?.textSecondary || 'text-gray-500'}`}>
                       Create a new MySQL database
                     </p>
                   </div>
@@ -124,9 +126,9 @@ export default function CreateDatabaseModal({
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={handleClose}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-all"
+                  className={`p-2 rounded-lg ${theme?.buttonSecondary || 'hover:bg-gray-100'} transition-all`}
                 >
-                  <X className="w-5 h-5 text-gray-500" />
+                  <X className={`w-5 h-5 ${theme?.textSecondary || 'text-gray-500'}`} />
                 </motion.button>
               </div>
 
@@ -180,9 +182,9 @@ export default function CreateDatabaseModal({
                 />
 
                 {/* Info Box */}
-                <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                  <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-gray-700">
+                <div className={`flex items-start gap-3 p-4 ${theme?.buttonSecondary || 'bg-blue-50 border-blue-200'} border rounded-xl`}>
+                  <AlertCircle className={`w-5 h-5 ${theme?.button?.includes('blue') ? 'text-blue-600' : theme?.text || 'text-blue-600'} mt-0.5 flex-shrink-0`} />
+                  <p className={`text-sm ${theme?.text || 'text-gray-700'}`}>
                     The password will be securely hashed and stored. Make sure to remember it for future access.
                   </p>
                 </div>

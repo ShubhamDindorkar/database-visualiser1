@@ -26,6 +26,7 @@ interface ExportModalProps {
   databaseName: string;
   tables: TableType[];
   workflowRef: React.RefObject<HTMLDivElement | null>;
+  theme?: any;
 }
 
 type ExportType = 'pdf' | 'word' | 'png' | 'whatsapp' | 'save';
@@ -36,6 +37,7 @@ export default function ExportModal({
   databaseName,
   tables,
   workflowRef,
+  theme,
 }: ExportModalProps) {
   const [isExporting, setIsExporting] = useState<ExportType | null>(null);
   const [exportSuccess, setExportSuccess] = useState<ExportType | null>(null);
@@ -451,33 +453,33 @@ export default function ExportModal({
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden"
+            className={`${theme?.modal || 'bg-white'} rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <div className={`flex items-center justify-between p-4 border-b ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'}`}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
                   <Download className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-black">Export Data</h2>
-                  <p className="text-sm text-gray-600">{databaseName}</p>
+                  <h2 className={`text-lg font-semibold ${theme?.text || 'text-black'}`}>Export Data</h2>
+                  <p className={`text-sm ${theme?.textSecondary || 'text-gray-600'}`}>{databaseName}</p>
                 </div>
               </div>
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={handleClose}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className={`p-2 rounded-lg ${theme?.buttonSecondary || 'hover:bg-gray-100'} transition-colors`}
               >
-                <X className="w-5 h-5 text-gray-600" />
+                <X className={`w-5 h-5 ${theme?.textSecondary || 'text-gray-600'}`} />
               </motion.button>
             </div>
 
             {/* Content */}
             <div className="p-4 space-y-3">
-              <p className="text-sm text-gray-600 mb-4">
+              <p className={`text-sm ${theme?.textSecondary || 'text-gray-600'} mb-4`}>
                 Export your database schema with {tables.length} table{tables.length !== 1 ? 's' : ''} and workflow visualization.
               </p>
 
@@ -505,7 +507,7 @@ export default function ExportModal({
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-gray-200 bg-gray-50">
+            <div className={`p-4 border-t ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'} ${theme?.buttonSecondary || 'bg-gray-50'}`}>
               <p className="text-xs text-gray-500 text-center">
                 Exports include workflow images, table structures, and column details.
               </p>

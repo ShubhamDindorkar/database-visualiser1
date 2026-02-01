@@ -13,6 +13,7 @@ interface EditTableModalProps {
   table: TableType | null;
   onUpdate: (tableId: string, columns: Column[]) => void;
   existingTables: TableType[];
+  theme?: any;
 }
 
 const dataTypes = [
@@ -41,6 +42,7 @@ export default function EditTableModal({
   table,
   onUpdate,
   existingTables,
+  theme,
 }: EditTableModalProps) {
   const [columns, setColumns] = useState<Column[]>([]);
 
@@ -120,13 +122,13 @@ export default function EditTableModal({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl max-h-[90vh] bg-white rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden"
+            className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl max-h-[90vh] ${theme?.modal || 'bg-white'} rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden`}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div className={`flex items-center justify-between p-6 border-b ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'}`}>
               <div>
-                <h2 className="text-2xl font-bold text-black">Edit Table</h2>
-                <p className="text-sm text-gray-600 mt-1">
+                <h2 className={`text-2xl font-bold ${theme?.text || 'text-black'}`}>Edit Table</h2>
+                <p className={`text-sm ${theme?.textSecondary || 'text-gray-600'} mt-1`}>
                   Modify columns for <span className="font-semibold">{table.name}</span>
                 </p>
               </div>
@@ -134,9 +136,9 @@ export default function EditTableModal({
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={onClose}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className={`p-2 rounded-lg ${theme?.buttonSecondary || 'hover:bg-gray-100'} transition-colors`}
               >
-                <X className="w-5 h-5 text-gray-600" />
+                <X className={`w-5 h-5 ${theme?.textSecondary || 'text-gray-600'}`} />
               </motion.button>
             </div>
 
@@ -285,7 +287,7 @@ export default function EditTableModal({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
+            <div className={`flex items-center justify-end gap-3 p-6 border-t ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'}`}>
               <Button variant="secondary" onClick={onClose}>
                 Cancel
               </Button>

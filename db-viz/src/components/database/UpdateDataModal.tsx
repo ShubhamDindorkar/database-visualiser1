@@ -13,6 +13,7 @@ interface UpdateDataModalProps {
   tables: TableType[];
   selectedDatabaseId: string | null;
   onExecuteQuery: (database: string, query: string) => Promise<{ success: boolean; error?: string }>;
+  theme?: any;
 }
 
 type UpdateMode = 'rows' | 'columns';
@@ -25,6 +26,7 @@ export default function UpdateDataModal({
   tables,
   selectedDatabaseId,
   onExecuteQuery,
+  theme,
 }: UpdateDataModalProps) {
   const [mode, setMode] = useState<UpdateMode | null>(null);
   const [selectedDatabase, setSelectedDatabase] = useState<string>('');
@@ -174,24 +176,24 @@ export default function UpdateDataModal({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-hidden"
+              className={`${theme?.modal || 'bg-white'} rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-hidden`}
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className={`flex items-center justify-between p-6 border-b ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'}`}>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-yellow-500 rounded-xl flex items-center justify-center">
                     <Edit3 className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">Update Data</h2>
-                    <p className="text-sm text-gray-500">Modify table data or structure</p>
+                    <h2 className={`text-xl font-semibold ${theme?.text || 'text-gray-900'}`}>Update Data</h2>
+                    <p className={`text-sm ${theme?.textSecondary || 'text-gray-500'}`}>Modify table data or structure</p>
                   </div>
                 </div>
                 <button
                   onClick={handleClose}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className={`p-2 rounded-lg ${theme?.buttonSecondary || 'hover:bg-gray-100'} transition-colors`}
                 >
-                  <X className="w-5 h-5 text-gray-500" />
+                  <X className={`w-5 h-5 ${theme?.textSecondary || 'text-gray-500'}`} />
                 </button>
               </div>
 
@@ -231,7 +233,7 @@ export default function UpdateDataModal({
                   <form onSubmit={handleSubmit}>
                     {/* Database Selection */}
                     <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className={`block text-sm font-medium ${theme?.text || 'text-gray-700'} mb-2`}>
                         <Database className="w-4 h-4 inline mr-2" />
                         Database
                       </label>
@@ -254,7 +256,7 @@ export default function UpdateDataModal({
 
                     {/* Table Selection */}
                     <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className={`block text-sm font-medium ${theme?.text || 'text-gray-700'} mb-2`}>
                         <Table className="w-4 h-4 inline mr-2" />
                         Table
                       </label>
@@ -465,7 +467,7 @@ export default function UpdateDataModal({
                     )}
 
                     {/* Actions */}
-                    <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+                    <div className={`flex justify-end gap-3 mt-6 pt-4 border-t ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'}`}>
                       <Button
                         variant="secondary"
                         onClick={() => (mode ? setMode(null) : handleClose())}

@@ -37,8 +37,8 @@ export default function RelationshipEdge({
         path={edgePath}
         style={{
           ...style,
-          strokeWidth: 3,
-          stroke: '#000000',
+          strokeWidth: 2.5,
+          stroke: '#475569',
           strokeDasharray: 'none',
         }}
         markerEnd={markerEnd}
@@ -52,7 +52,7 @@ export default function RelationshipEdge({
           }}
           className="nodrag nopan"
         >
-          <div className="bg-gray-200 text-gray-800 text-[10px] px-2 py-1 rounded-full font-medium shadow-sm border border-gray-400">
+          <div className="bg-slate-100 text-slate-700 text-[10px] px-2.5 py-1 rounded-full font-semibold shadow-sm border border-slate-300">
             FK
           </div>
         </div>

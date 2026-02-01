@@ -14,6 +14,7 @@ interface SelectDataModalProps {
   selectedDatabaseId: string | null;
   onExecuteQuery: (database: string, query: string) => Promise<{ success: boolean; results?: unknown[]; error?: string }>;
   onShowResults: (results: unknown[], query: string) => void;
+  theme?: any;
 }
 
 export default function SelectDataModal({
@@ -24,6 +25,7 @@ export default function SelectDataModal({
   selectedDatabaseId,
   onExecuteQuery,
   onShowResults,
+  theme,
 }: SelectDataModalProps) {
   const [selectedDatabase, setSelectedDatabase] = useState<string>('');
   const [selectedTable, setSelectedTable] = useState<string>('');
@@ -103,17 +105,17 @@ export default function SelectDataModal({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] overflow-hidden mx-4"
+              className={`${theme?.modal || 'bg-white'} rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] overflow-hidden mx-4`}
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-5 border-b border-gray-200">
+              <div className={`flex items-center justify-between p-5 border-b ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'}`}>
                 <div className="flex items-center gap-3">
                   <div className="w-11 h-11 bg-blue-600 rounded-xl flex items-center justify-center">
                     <FileText className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">Select Data</h2>
-                    <p className="text-sm text-gray-500">
+                    <h2 className={`text-xl font-semibold ${theme?.text || 'text-gray-900'}`}>Select Data</h2>
+                    <p className={`text-sm ${theme?.textSecondary || 'text-gray-500'}`}>
                       Choose a table to view its data in the workflow area
                     </p>
                   </div>
@@ -122,9 +124,9 @@ export default function SelectDataModal({
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={handleClose}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-all"
+                  className={`p-2 rounded-lg ${theme?.buttonSecondary || 'hover:bg-gray-100'} transition-all`}
                 >
-                  <X className="w-5 h-5 text-gray-500" />
+                  <X className={`w-5 h-5 ${theme?.textSecondary || 'text-gray-500'}`} />
                 </motion.button>
               </div>
 
@@ -133,7 +135,7 @@ export default function SelectDataModal({
                 {/* Selection Row */}
                 <div className="flex gap-4 mb-6">
                   <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className={`block text-sm font-medium ${theme?.text || 'text-gray-700'} mb-2`}>
                       <Database className="w-4 h-4 inline mr-2" />
                       Database
                     </label>
@@ -154,7 +156,7 @@ export default function SelectDataModal({
                     </select>
                   </div>
                   <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className={`block text-sm font-medium ${theme?.text || 'text-gray-700'} mb-2`}>
                       <Table className="w-4 h-4 inline mr-2" />
                       Table
                     </label>

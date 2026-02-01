@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Database, Info, User as UserIcon, LogOut } from 'lucide-react';
+import { X, User as UserIcon, LogOut, Palette, Check } from 'lucide-react';
 import Button from '@/components/common/Button';
 import { User } from '@/types/database';
 
@@ -11,13 +11,70 @@ interface SettingsProps {
   onClose: () => void;
   user: User | null;
   onLogout: () => void;
+  onThemeChange: (theme: string) => void;
+  currentTheme: string;
 }
+
+const THEMES = [
+  {
+    id: 'light',
+    name: 'Light',
+    description: 'Clean and bright interface',
+    colors: {
+      primary: 'from-gray-50 via-white to-gray-100',
+      accent: 'bg-gray-900',
+      preview: ['#f9fafb', '#ffffff', '#f3f4f6']
+    }
+  },
+  {
+    id: 'dark',
+    name: 'Dark',
+    description: 'Sleek dark interface',
+    colors: {
+      primary: 'from-slate-900 via-slate-800 to-slate-900',
+      accent: 'bg-slate-100',
+      preview: ['#0f172a', '#1e293b', '#0f172a']
+    }
+  },
+  {
+    id: 'blue',
+    name: 'Ocean Blue',
+    description: 'Calming blue tones',
+    colors: {
+      primary: 'from-blue-50 via-blue-100 to-cyan-50',
+      accent: 'bg-blue-600',
+      preview: ['#eff6ff', '#dbeafe', '#ecfeff']
+    }
+  },
+  {
+    id: 'purple',
+    name: 'Royal Purple',
+    description: 'Elegant purple shades',
+    colors: {
+      primary: 'from-purple-50 via-purple-100 to-pink-50',
+      accent: 'bg-purple-600',
+      preview: ['#faf5ff', '#f3e8ff', '#fdf2f8']
+    }
+  },
+  {
+    id: 'green',
+    name: 'Forest Green',
+    description: 'Natural green hues',
+    colors: {
+      primary: 'from-green-50 via-emerald-50 to-teal-50',
+      accent: 'bg-green-600',
+      preview: ['#f0fdf4', '#ecfdf5', '#f0fdfa']
+    }
+  }
+];
 
 export default function Settings({
   isOpen,
   onClose,
   user,
   onLogout,
+  onThemeChange,
+  currentTheme,
 }: SettingsProps) {
   return (
     <AnimatePresence>
@@ -63,7 +120,7 @@ export default function Settings({
                   <div className="flex items-center gap-2 mb-4">
                     <UserIcon className="w-5 h-5 text-gray-700" />
                     <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                      Profile
+                      Account
                     </h3>
                   </div>
 
@@ -99,58 +156,63 @@ export default function Settings({
                 </div>
               )}
 
-              {/* Database Section */}
+              {/* Theme Section */}
               <div>
                 <div className="flex items-center gap-2 mb-4">
-                  <Database className="w-5 h-5 text-gray-700" />
+                  <Palette className="w-5 h-5 text-gray-700" />
                   <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                    Database
+                    Theme
                   </h3>
                 </div>
 
                 <div className="space-y-3">
-                  <div className="p-4 rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-200/50 shadow-sm">
-                    <p className="text-sm font-medium text-gray-900 mb-1">
-                      Connection Status
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                      <span className="text-xs text-gray-600">
-                        Simulation Mode Active
-                      </span>
-                    </div>
-                  </div>
+                  {THEMES.map((theme) => (
+                    <motion.button
+                      key={theme.id}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => onThemeChange(theme.id)}
+                      className={`w-full p-4 rounded-2xl border-2 transition-all ${
+                        currentTheme === theme.id
+                          ? 'border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/20'
+                          : 'border-gray-200 bg-white/80 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {/* Theme Color Preview */}
+                        <div className="flex gap-1">
+                          {theme.colors.preview.map((color, i) => (
+                            <div
+                              key={i}
+                              className="w-6 h-6 rounded-lg border border-gray-200 shadow-sm"
+                              style={{ backgroundColor: color }}
+                            />
+                          ))}
+                        </div>
+                        
+                        {/* Theme Info */}
+                        <div className="flex-1 text-left">
+                          <p className="text-sm font-semibold text-gray-900">
+                            {theme.name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {theme.description}
+                          </p>
+                        </div>
 
-                  <div className="p-4 rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-200/50 shadow-sm">
-                    <p className="text-sm font-medium text-gray-900 mb-1">
-                      SQL Engine
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      MySQL 8.0 (Simulated)
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* About Section */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <Info className="w-5 h-5 text-gray-700" />
-                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                    About
-                  </h3>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-200/50 shadow-sm">
-                  <p className="text-sm font-medium text-gray-900">
-                    DB Visualiser
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Version 1.0.0
-                  </p>
-                  <p className="text-xs text-gray-600 mt-2">
-                    A visual SQL database management tool for creating and managing databases, tables, and relationships.
-                  </p>
+                        {/* Check Mark */}
+                        {currentTheme === theme.id && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center"
+                          >
+                            <Check className="w-4 h-4 text-white" />
+                          </motion.div>
+                        )}
+                      </div>
+                    </motion.button>
+                  ))}
                 </div>
               </div>
             </div>

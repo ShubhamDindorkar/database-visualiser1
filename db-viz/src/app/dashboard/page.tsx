@@ -74,12 +74,79 @@ const edgeTypes = {
   relationshipEdge: RelationshipEdge,
 };
 
+// Comprehensive theme definitions (moved outside component to prevent re-creation)
+const THEMES = {
+  light: {
+    bg: 'bg-gradient-to-br from-gray-50 via-white to-gray-100',
+    navbar: 'bg-white/95 border-gray-200',
+    sidebar: 'bg-white border-gray-200',
+    text: 'text-gray-900',
+    textSecondary: 'text-gray-600',
+    button: 'bg-gray-900 hover:bg-gray-800 text-white',
+    buttonSecondary: 'bg-gray-100 hover:bg-gray-200 text-gray-900',
+    modal: 'bg-white',
+    input: 'bg-white border-gray-300 text-gray-900',
+    dots: '#000000',
+  },
+  dark: {
+    bg: 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900',
+    navbar: 'bg-slate-900/95 border-slate-700',
+    sidebar: 'bg-slate-900 border-slate-700',
+    text: 'text-white',
+    textSecondary: 'text-slate-300',
+    button: 'bg-slate-100 hover:bg-white text-slate-900',
+    buttonSecondary: 'bg-slate-700 hover:bg-slate-600 text-white',
+    modal: 'bg-slate-800',
+    input: 'bg-slate-900 border-slate-600 text-white',
+    dots: '#ffffff',
+  },
+  blue: {
+    bg: 'bg-gradient-to-br from-blue-50 via-blue-100 to-cyan-50',
+    navbar: 'bg-blue-50/95 border-blue-200',
+    sidebar: 'bg-blue-50 border-blue-200',
+    text: 'text-blue-900',
+    textSecondary: 'text-blue-700',
+    button: 'bg-blue-600 hover:bg-blue-700 text-white',
+    buttonSecondary: 'bg-blue-100 hover:bg-blue-200 text-blue-900',
+    modal: 'bg-white',
+    input: 'bg-white border-blue-300 text-blue-900',
+    dots: '#000000',
+  },
+  purple: {
+    bg: 'bg-gradient-to-br from-purple-50 via-purple-100 to-pink-50',
+    navbar: 'bg-purple-50/95 border-purple-200',
+    sidebar: 'bg-purple-50 border-purple-200',
+    text: 'text-purple-900',
+    textSecondary: 'text-purple-700',
+    button: 'bg-purple-600 hover:bg-purple-700 text-white',
+    buttonSecondary: 'bg-purple-100 hover:bg-purple-200 text-purple-900',
+    modal: 'bg-white',
+    input: 'bg-white border-purple-300 text-purple-900',
+    dots: '#000000',
+  },
+  green: {
+    bg: 'bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100',
+    navbar: 'bg-emerald-50/95 border-emerald-200',
+    sidebar: 'bg-emerald-50 border-emerald-200',
+    text: 'text-emerald-900',
+    textSecondary: 'text-emerald-700',
+    button: 'bg-emerald-600 hover:bg-emerald-700 text-white',
+    buttonSecondary: 'bg-emerald-100 hover:bg-emerald-200 text-emerald-900',
+    modal: 'bg-white',
+    input: 'bg-white border-emerald-300 text-emerald-900',
+    dots: '#000000',
+  },
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading, logout } = useAuth();
   
   // Track intentional logout to prevent redirect to login
   const isLoggingOut = useRef(false);
+
+  // Theme State
+  const [currentTheme, setCurrentTheme] = useState<string>('light');
 
   // UI State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -111,6 +178,20 @@ export default function DashboardPage() {
   // React Flow state
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
+
+  // Load theme from localStorage on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('dbviz-theme');
+    if (savedTheme && THEMES[savedTheme as keyof typeof THEMES]) {
+      setCurrentTheme(savedTheme);
+    }
+  }, []);
+
+  // Theme change handler
+  const handleThemeChange = useCallback((themeId: string) => {
+    setCurrentTheme(themeId);
+    localStorage.setItem('dbviz-theme', themeId);
+  }, []);
 
   // Handle logout with redirect to home
   const handleLogout = useCallback(async () => {
@@ -148,13 +229,16 @@ export default function DashboardPage() {
       setDatabases(dbs);
       
       // Auto-select first database if no database is selected and databases exist
-      if (dbs.length > 0 && !selectedDatabaseId) {
-        setSelectedDatabaseId(dbs[0].id);
-      }
+      setSelectedDatabaseId((current) => {
+        if (!current && dbs.length > 0) {
+          return dbs[0].id;
+        }
+        return current;
+      });
     });
 
     return () => unsubscribe();
-  }, [user, selectedDatabaseId]);
+  }, [user]);
 
   // Firebase: Subscribe to tables for selected database
   useEffect(() => {
@@ -204,10 +288,12 @@ export default function DashboardPage() {
               sourceHandle: `${column.id}-source`,
               targetHandle: `${targetColumn.id}-target`,
               type: 'relationshipEdge',
-              animated: true,
+              animated: false,
               markerEnd: {
                 type: MarkerType.ArrowClosed,
-                color: '#374151',
+                color: '#475569',
+                width: 20,
+                height: 20,
               },
               data: {
                 sourceColumn: column.name,
@@ -671,6 +757,18 @@ export default function DashboardPage() {
           updatedAt: Timestamp.now(),
         });
 
+        // Auto-position source table to the right of target table for straight FK line
+        // Position 400px to the right and align vertically
+        const newPosition = {
+          x: targetTable.position.x + 400,
+          y: targetTable.position.y,
+        };
+
+        await updateDoc(doc(db, 'tables', sourceTableId), {
+          position: newPosition,
+          updatedAt: Timestamp.now(),
+        });
+
         addLog(
           'success',
           `Foreign key added: ${sourceTable.name}.${sourceColumn.name} → ${targetTable.name}.${targetColumn.name}`
@@ -804,10 +902,11 @@ export default function DashboardPage() {
         onDelete: handleDeleteTable,
         onViewData: handleViewData,
         isSelected: selectedTableId === table.id,
+        theme: THEMES[currentTheme as keyof typeof THEMES] || THEMES.light,
       },
     }));
     setNodes(newNodes);
-  }, [tables, selectedTableId, handleViewData, handleDeleteTable, setNodes]);
+  }, [tables, selectedTableId, handleViewData, handleDeleteTable, currentTheme]);
 
   // Handle INSERT data
   const handleInsertData = useCallback(
@@ -1435,12 +1534,24 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-gray-50 via-white to-gray-100">
+    <div className={`h-screen flex flex-col ${THEMES[currentTheme as keyof typeof THEMES]?.bg || THEMES.light.bg}`}>
       {/* Navbar */}
       <Navbar
         user={user}
         onLogout={handleLogout}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onPresentationMode={() => {
+          if (selectedDatabaseId) {
+            router.push(`/presentation?db=${selectedDatabaseId}&theme=${currentTheme}`);
+          }
+        }}
+        onTerminalMode={() => {
+          if (selectedDatabaseId) {
+            router.push(`/terminal-mode?db=${selectedDatabaseId}`);
+          }
+        }}
+        showModeButtons={!!selectedDatabaseId}
+        theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
       />
 
       {/* Main Content */}
@@ -1460,6 +1571,7 @@ export default function DashboardPage() {
           onQuickSQL={handleQuickSQL}
           onEditTable={handleEditTable}
           onManageForeignKeys={() => setIsForeignKeyModalOpen(true)}
+          theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
         />
 
         {/* Canvas Area */}
@@ -1480,20 +1592,20 @@ export default function DashboardPage() {
                 }}
                 defaultViewport={{ x: 0, y: 0, zoom: 0.75 }}
                 proOptions={{ hideAttribution: true }}
-                className="bg-gradient-to-br from-slate-50 to-gray-100"
+                className={THEMES[currentTheme as keyof typeof THEMES]?.bg || THEMES.light.bg}
               >
                 <Background
                   variant={BackgroundVariant.Dots}
                   gap={20}
                   size={1}
-                  color="#94a3b8"
+                  color={THEMES[currentTheme as keyof typeof THEMES]?.dots || THEMES.light.dots}
                 />
                 <Controls
                   className="bg-white/90 backdrop-blur-sm border border-gray-200/50 rounded-xl shadow-lg"
                 />
               </ReactFlow>
             ) : (
-              <div className="h-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-gray-100">
+              <div className={`h-full flex items-center justify-center ${THEMES[currentTheme as keyof typeof THEMES]?.bg || THEMES.light.bg}`}>
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1589,6 +1701,8 @@ export default function DashboardPage() {
         onClose={() => setIsSettingsOpen(false)}
         user={user}
         onLogout={handleLogout}
+        currentTheme={currentTheme}
+        onThemeChange={handleThemeChange}
       />
 
       {/* Create Choice Modal */}
@@ -1603,6 +1717,7 @@ export default function DashboardPage() {
           }
         }}
         hasSelectedDatabase={!!selectedDatabaseId}
+        theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
       />
 
       {/* Create Database Modal */}
@@ -1611,6 +1726,7 @@ export default function DashboardPage() {
         onClose={() => setIsCreateDbModalOpen(false)}
         onCreate={handleCreateDatabase}
         existingNames={databases.map((d) => d.name)}
+        theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
       />
 
       {/* Create Table Modal */}
@@ -1622,6 +1738,7 @@ export default function DashboardPage() {
         databaseName={selectedDatabaseName}
         onInsertData={handleInsertData}
         mysqlDatabaseName={databases.find((d) => d.id === selectedDatabaseId)?.mysqlName || selectedDatabaseName}
+        theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
       />
 
       {/* Edit Table Modal */}
@@ -1634,6 +1751,7 @@ export default function DashboardPage() {
         table={tables.find((t) => t.id === editingTableId) || null}
         onUpdate={handleUpdateTable}
         existingTables={tablesForSelectedDb}
+        theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
       />
 
       {/* Insert Data Modal */}
@@ -1644,6 +1762,7 @@ export default function DashboardPage() {
         tables={tables}
         selectedDatabaseId={selectedDatabaseId}
         onInsert={handleInsertData}
+        theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
       />
 
       {/* Update Data Modal */}
@@ -1654,6 +1773,7 @@ export default function DashboardPage() {
         tables={tables}
         selectedDatabaseId={selectedDatabaseId}
         onExecuteQuery={executeQuery}
+        theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
       />
 
       {/* Delete Data Modal */}
@@ -1664,6 +1784,7 @@ export default function DashboardPage() {
         tables={tables}
         selectedDatabaseId={selectedDatabaseId}
         onExecuteQuery={executeQuery}
+        theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
       />
 
       {/* Select Data Modal */}
@@ -1677,6 +1798,7 @@ export default function DashboardPage() {
         onShowResults={(results, query) => {
           setQueryResults({ results, query });
         }}
+        theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
       />
 
       {/* Drop Modal */}
@@ -1688,6 +1810,7 @@ export default function DashboardPage() {
         selectedDatabaseId={selectedDatabaseId}
         onDropDatabase={handleDeleteDatabase}
         onDropTable={handleDropTable}
+        theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
       />
 
       {/* Foreign Key Modal */}
@@ -1698,6 +1821,7 @@ export default function DashboardPage() {
         onAddForeignKey={handleAddForeignKey}
         onRemoveForeignKey={handleRemoveForeignKey}
         databaseName={selectedDatabaseName}
+        theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
       />
 
       {/* Export Modal */}
@@ -1707,6 +1831,7 @@ export default function DashboardPage() {
         databaseName={selectedDatabaseName}
         tables={tablesForSelectedDb}
         workflowRef={workflowRef}
+        theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
       />
     </div>
   );
