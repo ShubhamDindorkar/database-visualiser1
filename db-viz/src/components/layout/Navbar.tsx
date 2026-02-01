@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { LogOut, Settings as SettingsIcon, User } from 'lucide-react';
 import Image from 'next/image';
@@ -17,11 +17,41 @@ export default function Navbar({
   onLogout,
   onOpenSettings,
 }: NavbarProps) {
-  return (
+  const initialHeight = 64; // px (h-16)
+  const maxExtra = 24; // max extra px to expand
+  const expandScrollRange = 300; // px of scroll after which nav reaches full expansion
+
+  const [height, setHeight] = useState<number>(initialHeight);
+  const rafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    function onScroll() {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        const y = window.scrollY || window.pageYOffset;
+        const extra = Math.min(y, expandScrollRange) / expandScrollRange * maxExtra;
+        setHeight(Math.round(initialHeight + extra));
+      });
+    }
+
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
+    const extra = Math.max(0, height - initialHeight);
+    const basePaddingTop = 12; // px
+    const paddingTop = Math.round(basePaddingTop + extra * 0.6);
+
+    return (
     <motion.nav
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="h-16 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 px-4 flex items-center justify-between shadow-sm z-50"
+      style={{ height: `${height}px`, paddingTop: `${paddingTop}px`, paddingBottom: `12px` }}
+      className="bg-white/80 backdrop-blur-xl border-b border-gray-200/50 px-4 flex items-start justify-between shadow-sm z-50 transition-[height,padding] duration-200 ease-out"
     >
       {/* Logo and App Name */}
       <div className="flex items-center gap-3">

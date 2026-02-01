@@ -372,7 +372,7 @@ export default function LandingPage() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="mb-6 text-center"
             >
-              <div className="text-5xl sm:text-6xl lg:text-7xl font-normal text-black mb-2" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+              <div className="text-5xl sm:text-6xl lg:text-7xl font-light text-black mb-2" style={{ fontFamily: 'var(--font-geist-sans)' }}>
                 Build Your
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3">
