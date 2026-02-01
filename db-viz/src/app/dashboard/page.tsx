@@ -74,7 +74,7 @@ const edgeTypes = {
   relationshipEdge: RelationshipEdge,
 };
 
-// Comprehensive theme definitions (moved outside component to prevent re-creation)
+// Theme definitions (moved outside component to prevent re-creation)
 const THEMES = {
   light: {
     bg: 'bg-gradient-to-br from-gray-50 via-white to-gray-100',
@@ -99,42 +99,6 @@ const THEMES = {
     modal: 'bg-slate-800',
     input: 'bg-slate-900 border-slate-600 text-white',
     dots: '#ffffff',
-  },
-  blue: {
-    bg: 'bg-gradient-to-br from-blue-50 via-blue-100 to-cyan-50',
-    navbar: 'bg-blue-50/95 border-blue-200',
-    sidebar: 'bg-blue-50 border-blue-200',
-    text: 'text-blue-900',
-    textSecondary: 'text-blue-700',
-    button: 'bg-blue-600 hover:bg-blue-700 text-white',
-    buttonSecondary: 'bg-blue-100 hover:bg-blue-200 text-blue-900',
-    modal: 'bg-white',
-    input: 'bg-white border-blue-300 text-blue-900',
-    dots: '#000000',
-  },
-  purple: {
-    bg: 'bg-gradient-to-br from-purple-50 via-purple-100 to-pink-50',
-    navbar: 'bg-purple-50/95 border-purple-200',
-    sidebar: 'bg-purple-50 border-purple-200',
-    text: 'text-purple-900',
-    textSecondary: 'text-purple-700',
-    button: 'bg-purple-600 hover:bg-purple-700 text-white',
-    buttonSecondary: 'bg-purple-100 hover:bg-purple-200 text-purple-900',
-    modal: 'bg-white',
-    input: 'bg-white border-purple-300 text-purple-900',
-    dots: '#000000',
-  },
-  green: {
-    bg: 'bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100',
-    navbar: 'bg-emerald-50/95 border-emerald-200',
-    sidebar: 'bg-emerald-50 border-emerald-200',
-    text: 'text-emerald-900',
-    textSecondary: 'text-emerald-700',
-    button: 'bg-emerald-600 hover:bg-emerald-700 text-white',
-    buttonSecondary: 'bg-emerald-100 hover:bg-emerald-200 text-emerald-900',
-    modal: 'bg-white',
-    input: 'bg-white border-emerald-300 text-emerald-900',
-    dots: '#000000',
   },
 };
 

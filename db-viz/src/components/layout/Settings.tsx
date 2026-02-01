@@ -36,36 +36,6 @@ const THEMES = [
       preview: ['#0f172a', '#1e293b', '#0f172a']
     }
   },
-  {
-    id: 'blue',
-    name: 'Ocean Blue',
-    description: 'Calming blue tones',
-    colors: {
-      primary: 'from-blue-50 via-blue-100 to-cyan-50',
-      accent: 'bg-blue-600',
-      preview: ['#eff6ff', '#dbeafe', '#ecfeff']
-    }
-  },
-  {
-    id: 'purple',
-    name: 'Royal Purple',
-    description: 'Elegant purple shades',
-    colors: {
-      primary: 'from-purple-50 via-purple-100 to-pink-50',
-      accent: 'bg-purple-600',
-      preview: ['#faf5ff', '#f3e8ff', '#fdf2f8']
-    }
-  },
-  {
-    id: 'green',
-    name: 'Forest Green',
-    description: 'Natural green hues',
-    colors: {
-      primary: 'from-green-50 via-emerald-50 to-teal-50',
-      accent: 'bg-green-600',
-      preview: ['#f0fdf4', '#ecfdf5', '#f0fdfa']
-    }
-  }
 ];
 
 export default function Settings({
