@@ -182,24 +182,25 @@ export default function TerminalModePage() {
   // Transition Screen
   if (isTransitioning) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center overflow-hidden">
+      <div className="min-h-screen bg-white flex items-center justify-center overflow-hidden">
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
+          initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
           className="text-center"
         >
           {/* Terminal Animation */}
           <motion.div
-            initial={{ y: 50, opacity: 0 }}
+            initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
             className="relative mb-8"
           >
             {/* Terminal Window */}
             <motion.div
               initial={{ scaleY: 0 }}
               animate={{ scaleY: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
               className="w-[450px] bg-slate-900 rounded-lg border border-slate-700 shadow-2xl overflow-hidden"
             >
               {/* Terminal Header */}
@@ -215,10 +216,26 @@ export default function TerminalModePage() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.8 }}
+                  transition={{ delay: 0.6 }}
                   className="text-green-400 mb-2"
                 >
                   mysql&gt; <span className="text-white">SELECT * FROM users;</span>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.8 }}
+                  className="text-slate-400"
+                >
+                  +----+----------+------------------+
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.0 }}
+                  className="text-slate-400"
+                >
+                  | id | name     | email            |
                 </motion.div>
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -232,22 +249,6 @@ export default function TerminalModePage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1.4 }}
-                  className="text-slate-400"
-                >
-                  | id | name     | email            |
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1.6 }}
-                  className="text-slate-400"
-                >
-                  +----+----------+------------------+
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1.8 }}
                   className="text-cyan-400"
                 >
                   3 rows in set (0.02 sec)
@@ -255,7 +256,7 @@ export default function TerminalModePage() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: [0, 1, 0] }}
-                  transition={{ repeat: Infinity, duration: 1, delay: 2 }}
+                  transition={{ repeat: Infinity, duration: 1, delay: 1.6 }}
                   className="text-green-400 mt-2"
                 >
                   mysql&gt; <span className="bg-green-400 text-slate-900 px-0.5">_</span>
@@ -268,22 +269,23 @@ export default function TerminalModePage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.3 }}
             className="space-y-4"
           >
             <div className="flex items-center justify-center gap-3">
-              <Terminal className="w-6 h-6 text-green-400" />
-              <h2 className="text-2xl font-semibold text-white">
+              <Terminal className="w-6 h-6 text-black" />
+              <h2 className="text-4xl font-light text-black" style={{ fontFamily: 'var(--font-geist-sans)' }}>
                 Switching to Terminal Mode
               </h2>
             </div>
             
             {/* Progress Bar */}
-            <div className="w-64 h-2 bg-slate-800 rounded-full mx-auto overflow-hidden">
+            <div className="w-64 h-2 bg-gray-200 rounded-full mx-auto overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${transitionProgress}%` }}
-                className="h-full bg-gradient-to-r from-green-500 to-emerald-400 rounded-full"
+                transition={{ duration: 0.3 }}
+                className="h-full bg-black rounded-full"
               />
             </div>
             
@@ -291,7 +293,7 @@ export default function TerminalModePage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: [0, 1, 0] }}
               transition={{ repeat: Infinity, duration: 2 }}
-              className="text-slate-400 text-sm"
+              className="text-gray-500 text-sm font-light"
             >
               Initializing terminal...
             </motion.p>
@@ -302,32 +304,40 @@ export default function TerminalModePage() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-slate-950">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, y: 10 }}
+      transition={{ duration: 0.3 }}
+      className="h-screen flex flex-col bg-slate-950"
+    >
       {/* Header */}
       <motion.header
-        initial={{ y: -50, opacity: 0 }}
+        initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="h-14 bg-slate-900/80 backdrop-blur-sm border-b border-slate-800 flex items-center justify-between px-6 z-50"
+        transition={{ duration: 0.4 }}
+        className="h-16 bg-slate-900/80 backdrop-blur-2xl border-b border-slate-800 flex items-center justify-between px-6 z-50 shadow-sm"
       >
         <div className="flex items-center gap-4">
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ duration: 0.2 }}
             onClick={handleBack}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-all duration-200"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-medium">Back to Dashboard</span>
+            <span className="text-sm font-light">Back to Dashboard</span>
           </motion.button>
         </div>
 
         <div className="flex items-center gap-3">
           <Terminal className="w-5 h-5 text-green-400" />
-          <h1 className="text-lg font-semibold text-white">
+          <h1 className="text-2xl font-light text-white" style={{ fontFamily: 'var(--font-geist-sans)' }}>
             Terminal Mode
           </h1>
           {database && (
-            <span className="text-slate-400 text-sm flex items-center gap-2">
+            <span className="text-slate-400 text-sm font-light flex items-center gap-2">
               — <Database className="w-4 h-4" /> {database.name}
             </span>
           )}
@@ -574,6 +584,6 @@ export default function TerminalModePage() {
           </div>
         </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }

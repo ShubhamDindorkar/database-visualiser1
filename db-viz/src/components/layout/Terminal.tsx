@@ -87,29 +87,42 @@ export default function Terminal({
     <motion.div
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="bg-gray-900/95 backdrop-blur-xl border-t border-gray-700/50 flex flex-col shadow-2xl"
-      style={{ height: isMinimized ? '40px' : '200px' }}
+      transition={{ duration: 0.4, delay: 0.15 }}
+      className="bg-gray-900/95 backdrop-blur-2xl border-t border-gray-700/50 flex flex-col shadow-2xl shadow-gray-900/20"
+      style={{ height: isMinimized ? '48px' : '220px' }}
     >
       {/* Terminal Header */}
-      <div className="flex items-center justify-between px-4 py-2 bg-gray-800/80 backdrop-blur-sm border-b border-gray-700/50">
-        <div className="flex items-center gap-2">
+      <motion.div 
+        className="flex items-center justify-between px-4 py-2.5 bg-gray-800/90 backdrop-blur-xl border-b border-gray-700/50"
+        whileHover={{ backgroundColor: 'rgba(31, 41, 55, 0.95)' }}
+      >
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-500/80" />
-            <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-            <div className="w-3 h-3 rounded-full bg-green-500/80" />
+            <motion.div 
+              whileHover={{ scale: 1.2 }}
+              className="w-3 h-3 rounded-full bg-red-500"
+            />
+            <motion.div 
+              whileHover={{ scale: 1.2 }}
+              className="w-3 h-3 rounded-full bg-yellow-500"
+            />
+            <motion.div 
+              whileHover={{ scale: 1.2 }}
+              className="w-3 h-3 rounded-full bg-green-500"
+            />
           </div>
           <div className="ml-3 flex items-center gap-2">
             <TerminalIcon className="w-4 h-4 text-gray-400" />
             <span className="text-sm font-medium text-gray-300">SQL Terminal</span>
-            <span className="text-xs text-gray-500 bg-gray-700/50 px-2 py-0.5 rounded-full">MySQL 8.0</span>
+            <span className="text-xs text-gray-400 bg-gray-700/60 px-2.5 py-1 rounded-lg font-medium">MySQL 8.0</span>
           </div>
         </div>
         <div className="flex items-center gap-1">
           <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.1, backgroundColor: 'rgba(55, 65, 81, 0.8)' }}
+            whileTap={{ scale: 0.95 }}
             onClick={onToggleMinimize}
-            className="p-1 rounded hover:bg-gray-800 text-gray-500 hover:text-white transition-colors"
+            className="p-2 rounded-lg text-gray-400 hover:text-white transition-colors"
           >
             {isMinimized ? (
               <ChevronUp className="w-4 h-4" />
@@ -118,7 +131,7 @@ export default function Terminal({
             )}
           </motion.button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Terminal Content */}
       <AnimatePresence>
@@ -127,40 +140,52 @@ export default function Terminal({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
             className="flex-1 overflow-hidden flex flex-col"
           >
             {/* Logs Area */}
             <div
-              className="flex-1 overflow-y-auto p-3 font-mono text-sm"
+              className="flex-1 overflow-y-auto p-4 font-mono text-sm"
               onClick={() => inputRef.current?.focus()}
             >
               {/* Welcome Message */}
-              <div className="text-white mb-2">
-                <p>Welcome to MySQL Terminal (Connected to Local MySQL)</p>
-                <p>Type SQL commands or &apos;help&apos; for assistance.</p>
-                <p className="text-white">---</p>
-              </div>
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.1 }}
+                className="text-white mb-3"
+              >
+                <p className="text-gray-300">Welcome to MySQL Terminal (Connected to Local MySQL)</p>
+                <p className="text-gray-400 text-xs mt-1">Type SQL commands or &apos;help&apos; for assistance.</p>
+                <p className="text-gray-600 mt-2">---</p>
+              </motion.div>
 
               {/* Logs */}
-              {logs.map((log) => (
-                <div key={log.id} className="flex gap-2 mb-1">
-                  <span className="text-gray-700">[{formatTimestamp(log.timestamp)}]</span>
+              {logs.map((log, index) => (
+                <motion.div 
+                  key={log.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.02 }}
+                  className="flex gap-2 mb-1"
+                >
+                  <span className="text-gray-600">[{formatTimestamp(log.timestamp)}]</span>
                   <span className={getLogColor(log.type)}>{log.message}</span>
-                </div>
+                </motion.div>
               ))}
               <div ref={logsEndRef} />
             </div>
 
             {/* Input Area */}
-            <form onSubmit={handleSubmit} className="flex items-center px-3 pb-3">
-              <span className="text-white font-mono">mysql&gt;</span>
+            <form onSubmit={handleSubmit} className="flex items-center px-4 pb-3 gap-2">
+              <span className="text-white font-mono font-medium">mysql&gt;</span>
               <input
                 ref={inputRef}
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="flex-1 bg-transparent border-none outline-none text-white font-mono text-sm ml-2 placeholder:text-white"
+                className="flex-1 bg-gray-800/50 border border-gray-700/50 rounded-lg px-3 py-2 outline-none text-white font-mono text-sm placeholder:text-gray-500 focus:border-gray-600 focus:bg-gray-800 transition-all"
                 placeholder="Enter SQL command..."
                 autoComplete="off"
                 spellCheck={false}

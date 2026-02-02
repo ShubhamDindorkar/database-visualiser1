@@ -1498,7 +1498,13 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className={`h-screen flex flex-col ${THEMES[currentTheme as keyof typeof THEMES]?.bg || THEMES.light.bg}`}>
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.3 }}
+      className={`h-screen flex flex-col ${THEMES[currentTheme as keyof typeof THEMES]?.bg || THEMES.light.bg}`}
+    >
       {/* Navbar */}
       <Navbar
         user={user}
@@ -1519,7 +1525,12 @@ export default function DashboardPage() {
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+        className="flex-1 flex overflow-hidden"
+      >
         {/* Sidebar */}
         <Sidebar
           databases={databases}
@@ -1539,45 +1550,58 @@ export default function DashboardPage() {
         />
 
         {/* Canvas Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden p-4">
           {/* React Flow Canvas */}
           <div className="flex-1 relative" ref={workflowRef}>
             {selectedDatabaseId ? (
-              <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                nodeTypes={nodeTypes}
-                edgeTypes={edgeTypes}
-                fitViewOptions={{
-                  padding: 0.2,
-                  maxZoom: 0.85,
-                  minZoom: 0.5,
-                }}
-                defaultViewport={{ x: 0, y: 0, zoom: 0.75 }}
-                proOptions={{ hideAttribution: true }}
-                className={THEMES[currentTheme as keyof typeof THEMES]?.bg || THEMES.light.bg}
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+                className="h-full rounded-2xl overflow-hidden shadow-2xl shadow-gray-200/50 border border-gray-200/80 bg-white"
               >
-                <Background
-                  variant={BackgroundVariant.Dots}
-                  gap={20}
-                  size={1}
-                  color={THEMES[currentTheme as keyof typeof THEMES]?.dots || THEMES.light.dots}
-                />
-                <Controls
-                  className="bg-white/90 backdrop-blur-sm border border-gray-200/50 rounded-xl shadow-lg"
-                />
-              </ReactFlow>
+                <ReactFlow
+                  nodes={nodes}
+                  edges={edges}
+                  onNodesChange={onNodesChange}
+                  nodeTypes={nodeTypes}
+                  edgeTypes={edgeTypes}
+                  fitViewOptions={{
+                    padding: 0.2,
+                    maxZoom: 0.85,
+                    minZoom: 0.5,
+                  }}
+                  defaultViewport={{ x: 0, y: 0, zoom: 0.75 }}
+                  proOptions={{ hideAttribution: true }}
+                  className={THEMES[currentTheme as keyof typeof THEMES]?.bg || THEMES.light.bg}
+                >
+                  <Background
+                    variant={BackgroundVariant.Dots}
+                    gap={20}
+                    size={1}
+                    color={THEMES[currentTheme as keyof typeof THEMES]?.dots || THEMES.light.dots}
+                  />
+                  <Controls
+                    className="bg-white/90 backdrop-blur-sm border border-gray-200/50 rounded-xl shadow-lg"
+                  />
+                </ReactFlow>
+              </motion.div>
             ) : (
-              <div className={`h-full flex items-center justify-center ${THEMES[currentTheme as keyof typeof THEMES]?.bg || THEMES.light.bg}`}>
+              <div className={`h-full flex items-center justify-center rounded-2xl ${THEMES[currentTheme as keyof typeof THEMES]?.bg || THEMES.light.bg}`}>
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.5, type: "spring", damping: 20 }}
                   className="text-center"
                 >
-                  <div className="w-20 h-20 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <motion.div 
+                    initial={{ scale: 0.8 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 0.4, delay: 0.2 }}
+                    className="w-24 h-24 bg-gradient-to-br from-white to-gray-50 backdrop-blur-sm border border-gray-200/80 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-gray-200/30"
+                  >
                     <svg
-                      className="w-10 h-10 text-gray-500"
+                      className="w-12 h-12 text-gray-600"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -1585,68 +1609,96 @@ export default function DashboardPage() {
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth={2}
+                        strokeWidth={1.5}
                         d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
                       />
                     </svg>
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                  </motion.div>
+                  <motion.h3 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                    className="text-4xl font-light text-gray-900 mb-3"
+                    style={{ fontFamily: 'var(--font-geist-sans)' }}
+                  >
                     No Database Selected
-                  </h3>
-                  <p className="text-gray-600 mb-4">
+                  </motion.h3>
+                  <motion.p 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.35 }}
+                    className="text-gray-600 mb-6 max-w-sm font-light"
+                  >
                     Select or create a database to start designing tables
-                  </p>
-                  <button
+                  </motion.p>
+                  <motion.button
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => setIsCreateDbModalOpen(true)}
-                    className="px-6 py-2.5 bg-gradient-to-r from-gray-900 to-black text-white rounded-xl hover:from-gray-800 hover:to-gray-900 transition-all shadow-lg"
+                    className="px-8 py-3.5 bg-gradient-to-r from-gray-900 to-black text-white rounded-xl hover:from-gray-800 hover:to-gray-900 transition-all shadow-xl shadow-gray-900/10 font-light"
                   >
                     Create Database
-                  </button>
+                  </motion.button>
                 </motion.div>
               </div>
             )}
 
-            {/* Table count badge */}
-            {selectedDatabaseId && (
-              <div className="absolute top-4 right-4 space-y-2">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200/50"
+            {/* Table count badge and Export Button */}
+            <AnimatePresence>
+              {selectedDatabaseId && (
+                <motion.div 
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute top-8 right-8 space-y-3 z-10"
                 >
-                  <p className="text-sm text-gray-700">
-                    <span className="font-semibold text-gray-900">
-                      {selectedDatabaseName}
-                    </span>{' '}
-                    • {tablesForSelectedDb.length} table{tablesForSelectedDb.length !== 1 ? 's' : ''}
-                  </p>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1 }}
+                    className="bg-white/95 backdrop-blur-md px-5 py-3 rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-200/80"
+                  >
+                    <p className="text-sm text-gray-700 font-light">
+                      <span className="font-light text-gray-900">
+                        {selectedDatabaseName}
+                      </span>{' '}
+                      • {tablesForSelectedDb.length} table{tablesForSelectedDb.length !== 1 ? 's' : ''}
+                    </p>
+                  </motion.div>
+                  
+                  {/* Export Button */}
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.15 }}
+                    whileHover={{ scale: 1.03, y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setIsExportModalOpen(true)}
+                    className="w-full bg-gradient-to-r from-gray-900 to-black hover:from-gray-800 hover:to-gray-900 text-white px-5 py-3 rounded-2xl shadow-xl shadow-gray-900/10 font-light text-sm flex items-center justify-center gap-2 transition-all"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Export Data
+                  </motion.button>
                 </motion.div>
-                
-                {/* Export Button */}
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setIsExportModalOpen(true)}
-                  className="w-full bg-gradient-to-r from-gray-900 to-black hover:from-gray-800 hover:to-gray-900 text-white px-4 py-2.5 rounded-xl shadow-lg font-medium text-sm flex items-center justify-center gap-2 transition-all"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Export Data
-                </motion.button>
-              </div>
-            )}
+              )}
+            </AnimatePresence>
             
             {/* Query Results Panel */}
-            {queryResults && (
-              <QueryResultsPanel
-                results={queryResults.results}
-                query={queryResults.query}
-                onClose={() => setQueryResults(null)}
-              />
-            )}
+            <AnimatePresence>
+              {queryResults && (
+                <QueryResultsPanel
+                  results={queryResults.results}
+                  query={queryResults.query}
+                  onClose={() => setQueryResults(null)}
+                />
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Terminal */}
@@ -1657,7 +1709,7 @@ export default function DashboardPage() {
             onToggleMinimize={() => setIsTerminalMinimized(!isTerminalMinimized)}
           />
         </div>
-      </div>
+      </motion.div>
 
       {/* Settings Panel */}
       <Settings
@@ -1797,6 +1849,6 @@ export default function DashboardPage() {
         workflowRef={workflowRef}
         theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
       />
-    </div>
+    </motion.div>
   );
 }

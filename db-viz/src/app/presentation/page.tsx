@@ -287,10 +287,11 @@ export default function PresentationPage() {
   // Transition Screen
   if (isTransitioning) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center overflow-hidden">
+      <div className="min-h-screen bg-white flex items-center justify-center overflow-hidden">
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
+          initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
           className="flex flex-col items-center justify-center"
         >
           {/* Presentation Screen Animation */}
@@ -350,32 +351,34 @@ export default function PresentationPage() {
 
           {/* Loading Text */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="space-y-4"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.4 }}
+            className="space-y-6"
           >
             <div className="flex items-center justify-center gap-3">
-              <Presentation className="w-6 h-6 text-blue-600" />
-              <h2 className="text-2xl font-semibold text-gray-900">
+              <Presentation className="w-6 h-6 text-black" />
+              <h2 className="text-4xl font-light text-black" style={{ fontFamily: 'var(--font-geist-sans)' }}>
                 Switching to Presentation Mode
               </h2>
             </div>
             
             {/* Progress Bar */}
-            <div className="w-64 h-2 bg-gray-200 rounded-full mx-auto overflow-hidden">
+            <div className="w-80 h-1 bg-gray-200 rounded-full mx-auto overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${transitionProgress}%` }}
-                className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full"
+                transition={{ ease: "easeOut" }}
+                className="h-full bg-black rounded-full"
               />
             </div>
             
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: [0, 1, 0] }}
-              transition={{ repeat: Infinity, duration: 2 }}
-              className="text-gray-600 text-sm"
+              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+              className="text-gray-500 text-base font-light"
+              style={{ fontFamily: 'var(--font-geist-sans)' }}
             >
               Loading tables...
             </motion.p>
@@ -386,42 +389,54 @@ export default function PresentationPage() {
   }
 
   return (
-    <div className={`h-screen flex flex-col ${THEMES[themeParam as keyof typeof THEMES]?.bg || THEMES.light.bg}`}>
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, scale: 0.98 }}
+      transition={{ duration: 0.4 }}
+      className={`h-screen flex flex-col ${THEMES[themeParam as keyof typeof THEMES]?.bg || THEMES.light.bg}`}
+    >
       {/* Header */}
       <motion.header
-        initial={{ y: -50, opacity: 0 }}
+        initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="h-14 bg-white/80 backdrop-blur-sm border-b border-gray-200 flex items-center justify-between px-6 z-50"
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="h-16 bg-white/95 backdrop-blur-2xl border-b border-gray-200/50 flex items-center justify-between px-8 z-50 shadow-sm"
       >
         <div className="flex items-center gap-4">
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.98 }}
             onClick={handleBack}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-colors shadow-sm"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-black text-white rounded-xl transition-all shadow-lg shadow-gray-900/10 font-medium"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-medium">Back to Dashboard</span>
+            <span className="text-sm">Back to Dashboard</span>
           </motion.button>
         </div>
 
         <div className="flex items-center gap-3">
-          <Presentation className="w-5 h-5 text-blue-600" />
-          <h1 className="text-lg font-semibold text-gray-900">
+          <Presentation className="w-5 h-5 text-black" />
+          <h1 className="text-2xl font-light text-black" style={{ fontFamily: 'var(--font-geist-sans)' }}>
             Presentation Mode
           </h1>
           {database && (
-            <span className="text-gray-500 text-sm">
+            <span className="text-gray-500 text-base font-light">
               — {database.name}
             </span>
           )}
         </div>
 
-        <div className="w-40" /> {/* Spacer for centering */}
+        <div className="w-48" /> {/* Spacer for centering */}
       </motion.header>
 
       {/* Workflow Area */}
-      <div className="flex-1 relative">
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="flex-1 relative"
+      >
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -447,22 +462,25 @@ export default function PresentationPage() {
         <AnimatePresence>
           {queryResults && (
             <motion.div
-              initial={{ x: 400, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 400, opacity: 0 }}
-              className="absolute top-4 right-4 w-[800px] max-h-[85vh] bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-40"
+              initial={{ x: 400, opacity: 0, scale: 0.95 }}
+              animate={{ x: 0, opacity: 1, scale: 1 }}
+              exit={{ x: 400, opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="absolute top-6 right-6 w-[800px] max-h-[85vh] bg-white rounded-2xl shadow-2xl border border-gray-200/80 overflow-hidden z-40"
             >
-              <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+              <div className="p-5 border-b border-gray-200 flex items-center justify-between bg-gray-50/50">
                 <div>
-                  <h3 className="font-semibold text-gray-900">{queryResults.tableName}</h3>
+                  <h3 className="font-semibold text-gray-900 text-lg" style={{ fontFamily: 'var(--font-geist-sans)' }}>{queryResults.tableName}</h3>
                   <p className="text-xs text-gray-500 font-mono mt-1">{queryResults.query}</p>
                 </div>
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.1, rotate: 90 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => setQueryResults(null)}
                   className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-500 hover:text-gray-900"
                 >
                   ✕
-                </button>
+                </motion.button>
               </div>
               <div className="p-4 overflow-auto max-h-[70vh]">
                 {Array.isArray(queryResults.results) && queryResults.results.length > 0 ? (
@@ -495,7 +513,7 @@ export default function PresentationPage() {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
