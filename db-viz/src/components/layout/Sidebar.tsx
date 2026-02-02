@@ -295,7 +295,7 @@ export default function Sidebar({
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={onCreateTable}
-                            className="flex items-center gap-2 w-full px-3 py-2 mt-1 rounded-lg text-gray-600 hover:bg-gray-50 transition-all border border-dashed border-gray-300"
+                            className={`flex items-center gap-2 w-full px-3 py-2 mt-1 rounded-lg ${theme?.navbar?.includes('slate') ? 'text-slate-300 hover:bg-slate-800 border-slate-600' : 'text-gray-600 hover:bg-gray-50 border-gray-300'} transition-all border border-dashed`}
                           >
                             <Plus className="w-3.5 h-3.5" />
                             <span className="text-sm font-light">Add Table</span>

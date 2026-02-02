@@ -44,7 +44,7 @@ function TableNode({ data, selected }: NodeProps<TableNodeData>) {
       className={`
         relative ${theme?.modal || 'bg-white'} rounded-xl overflow-visible
         shadow-lg hover:shadow-xl transition-shadow duration-300
-        border-2 ${selected || isSelected ? (theme?.text?.includes('white') ? 'border-white' : 'border-black') : (theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200')}
+        border-2 ${selected || isSelected ? (theme?.navbar?.includes('slate') ? 'border-blue-400' : 'border-blue-500') : (theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200')}
         min-w-[220px]
       `}
       style={{

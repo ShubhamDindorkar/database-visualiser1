@@ -1598,10 +1598,10 @@ export default function DashboardPage() {
                     initial={{ scale: 0.8 }}
                     animate={{ scale: 1 }}
                     transition={{ duration: 0.4, delay: 0.2 }}
-                    className="w-24 h-24 bg-gradient-to-br from-white to-gray-50 backdrop-blur-sm border border-gray-200/80 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-gray-200/30"
+                    className={`w-24 h-24 ${currentTheme === 'dark' ? 'bg-gradient-to-br from-slate-800 to-slate-700 border-slate-600/50 shadow-slate-900/50' : 'bg-gradient-to-br from-white to-gray-50 border-gray-200/80 shadow-gray-200/30'} backdrop-blur-sm border rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl`}
                   >
                     <svg
-                      className="w-12 h-12 text-gray-600"
+                      className={`w-12 h-12 ${THEMES[currentTheme as keyof typeof THEMES]?.textSecondary || 'text-gray-600'}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -1618,7 +1618,7 @@ export default function DashboardPage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
-                    className="text-4xl font-light text-gray-900 mb-3"
+                    className={`text-4xl font-light ${THEMES[currentTheme as keyof typeof THEMES]?.text || 'text-gray-900'} mb-3`}
                     style={{ fontFamily: 'var(--font-geist-sans)' }}
                   >
                     No Database Selected
@@ -1627,7 +1627,7 @@ export default function DashboardPage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.35 }}
-                    className="text-gray-600 mb-6 max-w-sm font-light"
+                    className={`${THEMES[currentTheme as keyof typeof THEMES]?.textSecondary || 'text-gray-600'} mb-6 max-w-sm font-light`}
                   >
                     Select or create a database to start designing tables
                   </motion.p>
@@ -1660,10 +1660,10 @@ export default function DashboardPage() {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.1 }}
-                    className="bg-white/95 backdrop-blur-md px-5 py-3 rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-200/80"
+                    className={`${currentTheme === 'dark' ? 'bg-slate-800/95 border-slate-700/80 shadow-slate-900/50' : 'bg-white/95 border-gray-200/80 shadow-gray-200/50'} backdrop-blur-md px-5 py-3 rounded-2xl shadow-xl border`}
                   >
-                    <p className="text-sm text-gray-700 font-light">
-                      <span className="font-light text-gray-900">
+                    <p className={`text-sm ${THEMES[currentTheme as keyof typeof THEMES]?.textSecondary || 'text-gray-700'} font-light`}>
+                      <span className={`font-light ${THEMES[currentTheme as keyof typeof THEMES]?.text || 'text-gray-900'}`}>
                         {selectedDatabaseName}
                       </span>{' '}
                       • {tablesForSelectedDb.length} table{tablesForSelectedDb.length !== 1 ? 's' : ''}

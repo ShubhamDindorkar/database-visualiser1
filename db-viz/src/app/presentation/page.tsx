@@ -401,14 +401,14 @@ export default function PresentationPage() {
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="h-16 bg-white/95 backdrop-blur-2xl border-b border-gray-200/50 flex items-center justify-between px-8 z-50 shadow-sm"
+        className={`h-16 ${themeParam === 'dark' ? 'bg-slate-900/95 border-slate-700/50' : 'bg-white/95 border-gray-200/50'} backdrop-blur-2xl border-b flex items-center justify-between px-8 z-50 shadow-sm`}
       >
         <div className="flex items-center gap-4">
           <motion.button
             whileHover={{ scale: 1.02, y: -1 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleBack}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-black text-white rounded-xl transition-all shadow-lg shadow-gray-900/10 font-medium"
+            className={`flex items-center gap-2 px-5 py-2.5 ${themeParam === 'dark' ? 'bg-slate-100 hover:bg-white text-slate-900' : 'bg-gray-900 hover:bg-black text-white'} rounded-xl transition-all shadow-lg ${themeParam === 'dark' ? 'shadow-black/20' : 'shadow-gray-900/10'} font-medium`}
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm">Back to Dashboard</span>
@@ -416,12 +416,12 @@ export default function PresentationPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Presentation className="w-5 h-5 text-black" />
-          <h1 className="text-2xl font-light text-black" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+          <Presentation className={`w-5 h-5 ${themeParam === 'dark' ? 'text-white' : 'text-black'}`} />
+          <h1 className={`text-2xl font-light ${themeParam === 'dark' ? 'text-white' : 'text-black'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
             Presentation Mode
           </h1>
           {database && (
-            <span className="text-gray-500 text-base font-light">
+            <span className={`text-base font-light ${themeParam === 'dark' ? 'text-slate-400' : 'text-gray-500'}`}>
               — {database.name}
             </span>
           )}
@@ -466,18 +466,18 @@ export default function PresentationPage() {
               animate={{ x: 0, opacity: 1, scale: 1 }}
               exit={{ x: 400, opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
-              className="absolute top-6 right-6 w-[800px] max-h-[85vh] bg-white rounded-2xl shadow-2xl border border-gray-200/80 overflow-hidden z-40"
+              className={`absolute top-6 right-6 w-[800px] max-h-[85vh] ${themeParam === 'dark' ? 'bg-slate-800 border-slate-700/80' : 'bg-white border-gray-200/80'} rounded-2xl shadow-2xl border overflow-hidden z-40`}
             >
-              <div className="p-5 border-b border-gray-200 flex items-center justify-between bg-gray-50/50">
+              <div className={`p-5 border-b ${themeParam === 'dark' ? 'border-slate-700 bg-slate-900/50' : 'border-gray-200 bg-gray-50/50'} flex items-center justify-between`}>
                 <div>
-                  <h3 className="font-semibold text-gray-900 text-lg" style={{ fontFamily: 'var(--font-geist-sans)' }}>{queryResults.tableName}</h3>
-                  <p className="text-xs text-gray-500 font-mono mt-1">{queryResults.query}</p>
+                  <h3 className={`font-semibold ${themeParam === 'dark' ? 'text-white' : 'text-gray-900'} text-lg`} style={{ fontFamily: 'var(--font-geist-sans)' }}>{queryResults.tableName}</h3>
+                  <p className={`text-xs ${themeParam === 'dark' ? 'text-slate-400' : 'text-gray-500'} font-mono mt-1`}>{queryResults.query}</p>
                 </div>
                 <motion.button
                   whileHover={{ scale: 1.1, rotate: 90 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setQueryResults(null)}
-                  className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-500 hover:text-gray-900"
+                  className={`p-2 ${themeParam === 'dark' ? 'hover:bg-slate-700 text-slate-400 hover:text-white' : 'hover:bg-gray-200 text-gray-500 hover:text-gray-900'} rounded-lg transition-colors`}
                 >
                   ✕
                 </motion.button>
@@ -486,9 +486,9 @@ export default function PresentationPage() {
                 {Array.isArray(queryResults.results) && queryResults.results.length > 0 ? (
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b-2 border-gray-300 bg-gray-50">
+                      <tr className={`border-b-2 ${themeParam === 'dark' ? 'border-slate-600 bg-slate-900/50' : 'border-gray-300 bg-gray-50'}`}>
                         {Object.keys(queryResults.results[0] as object).map((key) => (
-                          <th key={key} className="text-left py-3 px-4 text-gray-700 font-semibold whitespace-nowrap">
+                          <th key={key} className={`text-left py-3 px-4 ${themeParam === 'dark' ? 'text-slate-300' : 'text-gray-700'} font-semibold whitespace-nowrap`}>
                             {key}
                           </th>
                         ))}
@@ -496,9 +496,9 @@ export default function PresentationPage() {
                     </thead>
                     <tbody>
                       {queryResults.results.map((row, i) => (
-                        <tr key={i} className="border-b border-gray-200 hover:bg-gray-50">
+                        <tr key={i} className={`border-b ${themeParam === 'dark' ? 'border-slate-700 hover:bg-slate-900/30' : 'border-gray-200 hover:bg-gray-50'}`}>
                           {Object.values(row as object).map((val, j) => (
-                            <td key={j} className="py-3 px-4 text-gray-700 whitespace-nowrap">
+                            <td key={j} className={`py-3 px-4 ${themeParam === 'dark' ? 'text-slate-300' : 'text-gray-700'} whitespace-nowrap`}>
                               {String(val ?? 'NULL')}
                             </td>
                           ))}
@@ -507,7 +507,7 @@ export default function PresentationPage() {
                     </tbody>
                   </table>
                 ) : (
-                  <p className="text-gray-500 text-center py-4">No data found</p>
+                  <p className={`${themeParam === 'dark' ? 'text-slate-400' : 'text-gray-500'} text-center py-4`}>No data found</p>
                 )}
               </div>
             </motion.div>

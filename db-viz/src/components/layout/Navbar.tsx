@@ -69,7 +69,7 @@ export default function Navbar({
         transition={{ delay: 0.1 }}
         className="flex items-center gap-3"
       >
-        <div className={`w-10 h-10 ${theme?.button || 'bg-gradient-to-br from-gray-900 to-black'} rounded-xl flex items-center justify-center shadow-lg ${theme?.navbar?.includes('slate') ? 'ring-2 ring-slate-600' : ''}`}>
+        <div className="w-10 h-10 bg-gradient-to-br from-gray-900 to-black rounded-xl flex items-center justify-center shadow-lg">
           <svg
             className="w-6 h-6 text-white"
             fill="none"

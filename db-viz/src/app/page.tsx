@@ -631,10 +631,10 @@ export default function LandingPage() {
             className="text-center mb-16"
           >
             <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">Features</span>
-            <h2 className="text-3xl sm:text-4xl font-bold text-black mt-3 mb-4">
+            <h2 className="text-3xl sm:text-4xl font-light text-black mt-3 mb-4" style={{ fontFamily: 'var(--font-geist-sans)' }}>
               Everything you need
             </h2>
-            <p className="text-gray-500 max-w-2xl mx-auto">
+            <p className="text-gray-500 max-w-2xl mx-auto font-light" style={{ fontFamily: 'var(--font-geist-sans)' }}>
               Powerful tools to design, visualize, and manage your databases
             </p>
           </motion.div>
@@ -658,10 +658,10 @@ export default function LandingPage() {
                   <div className="w-12 h-12 bg-white group-hover:bg-black rounded-2xl flex items-center justify-center mb-5 transition-all duration-300 shadow-sm group-hover:shadow-lg border border-gray-100 group-hover:border-black">
                     <feature.icon className="w-5 h-5 text-gray-700 group-hover:text-white transition-colors duration-300" />
                   </div>
-                  <h3 className="text-lg font-semibold text-black mb-2">
+                  <h3 className="text-lg font-light text-black mb-2" style={{ fontFamily: 'var(--font-geist-sans)' }}>
                     {feature.title}
                   </h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">
+                  <p className="text-sm text-gray-500 leading-relaxed font-light" style={{ fontFamily: 'var(--font-geist-sans)' }}>
                     {feature.description}
                   </p>
                 </div>
@@ -687,10 +687,10 @@ export default function LandingPage() {
             whileInView={{ y: 0, opacity: 1 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl sm:text-4xl font-light text-white mb-4" style={{ fontFamily: 'var(--font-geist-sans)' }}>
               Ready to build your database?
             </h2>
-            <p className="text-gray-400 mb-8">
+            <p className="text-gray-400 mb-8 font-light" style={{ fontFamily: 'var(--font-geist-sans)' }}>
               Join thousands of developers who design their databases visually.
             </p>
             <Button
@@ -713,7 +713,7 @@ export default function LandingPage() {
             <div className="w-6 h-6 bg-white rounded-md flex items-center justify-center">
               <Database className="w-3 h-3 text-black" />
             </div>
-            <span className="text-sm text-white font-medium">DB Visualiser</span>
+            <span className="text-sm text-white font-light" style={{ fontFamily: 'var(--font-geist-sans)' }}>DB Visualiser</span>
           </div>
           <div className="flex items-center gap-6">
             <button
@@ -760,7 +760,7 @@ export default function LandingPage() {
                   <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
                     <selectedFeature.icon className="w-6 h-6 text-black" />
                   </div>
-                  <h3 className="text-xl font-bold text-black">{selectedFeature.title}</h3>
+                  <h3 className="text-xl font-light text-black" style={{ fontFamily: 'var(--font-geist-sans)' }}>{selectedFeature.title}</h3>
                 </div>
                 <motion.button
                   whileHover={{ scale: 1.1 }}
@@ -833,7 +833,7 @@ export default function LandingPage() {
                 </div>
                 
                 {/* Description */}
-                <p className="text-gray-700 leading-relaxed">
+                <p className="font-light text-gray-700 leading-relaxed" style={{ fontFamily: 'var(--font-geist-sans)' }}>
                   {selectedFeature.detailedDescription}
                 </p>
               </div>

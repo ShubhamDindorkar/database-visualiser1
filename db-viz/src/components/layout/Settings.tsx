@@ -65,20 +65,20 @@ export default function Settings({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed right-0 top-0 h-full w-80 bg-white/90 backdrop-blur-2xl shadow-2xl z-50 flex flex-col border-l border-gray-200/50"
+            className={`fixed right-0 top-0 h-full w-80 ${currentTheme === 'dark' ? 'bg-slate-900/90 border-slate-700/50' : 'bg-white/90 border-gray-200/50'} backdrop-blur-2xl shadow-2xl z-50 flex flex-col border-l`}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200/50 bg-white/50">
-              <h2 className="text-lg font-semibold text-gray-900">
+            <div className={`flex items-center justify-between p-4 border-b ${currentTheme === 'dark' ? 'border-slate-700/50 bg-slate-800/50' : 'border-gray-200/50 bg-white/50'}`}>
+              <h2 className={`text-lg font-semibold ${currentTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 Settings
               </h2>
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={onClose}
-                className="p-2 rounded-xl bg-gray-100/80 hover:bg-gray-200/80 transition-all"
+                className={`p-2 rounded-xl ${currentTheme === 'dark' ? 'bg-slate-700/80 hover:bg-slate-600/80' : 'bg-gray-100/80 hover:bg-gray-200/80'} transition-all`}
               >
-                <X className="w-5 h-5 text-gray-600" />
+                <X className={`w-5 h-5 ${currentTheme === 'dark' ? 'text-slate-300' : 'text-gray-600'}`} />
               </motion.button>
             </div>
 
@@ -88,14 +88,14 @@ export default function Settings({
               {user && (
                 <div>
                   <div className="flex items-center gap-2 mb-4">
-                    <UserIcon className="w-5 h-5 text-gray-700" />
-                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                    <UserIcon className={`w-5 h-5 ${currentTheme === 'dark' ? 'text-slate-300' : 'text-gray-700'}`} />
+                    <h3 className={`text-sm font-semibold ${currentTheme === 'dark' ? 'text-slate-300' : 'text-gray-700'} uppercase tracking-wider`}>
                       Account
                     </h3>
                   </div>
 
                   <div className="space-y-3">
-                    <div className="p-4 rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-200/50 shadow-sm flex items-center gap-3">
+                    <div className={`p-4 rounded-2xl ${currentTheme === 'dark' ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white/80 border-gray-200/50'} backdrop-blur-sm border shadow-sm flex items-center gap-3`}>
                       {user.photoURL && (
                         <img 
                           src={user.photoURL} 
@@ -104,10 +104,10 @@ export default function Settings({
                         />
                       )}
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900 mb-1">
-                          {user.displayName || 'User'}
+                        <p className={`text-sm font-medium ${currentTheme === 'dark' ? 'text-white' : 'text-gray-900'} mb-1`}>
+                          {user.displayName}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className={`text-xs ${currentTheme === 'dark' ? 'text-slate-400' : 'text-gray-500'}`}>
                           {user.email}
                         </p>
                       </div>
@@ -129,8 +129,8 @@ export default function Settings({
               {/* Theme Section */}
               <div>
                 <div className="flex items-center gap-2 mb-4">
-                  <Palette className="w-5 h-5 text-gray-700" />
-                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                  <Palette className={`w-5 h-5 ${currentTheme === 'dark' ? 'text-slate-300' : 'text-gray-700'}`} />
+                  <h3 className={`text-sm font-semibold ${currentTheme === 'dark' ? 'text-slate-300' : 'text-gray-700'} uppercase tracking-wider`}>
                     Theme
                   </h3>
                 </div>
@@ -145,6 +145,8 @@ export default function Settings({
                       className={`w-full p-4 rounded-2xl border-2 transition-all ${
                         currentTheme === theme.id
                           ? 'border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/20'
+                          : currentTheme === 'dark'
+                          ? 'border-slate-700 bg-slate-800/80 hover:border-slate-600'
                           : 'border-gray-200 bg-white/80 hover:border-gray-300'
                       }`}
                     >
@@ -154,7 +156,7 @@ export default function Settings({
                           {theme.colors.preview.map((color, i) => (
                             <div
                               key={i}
-                              className="w-6 h-6 rounded-lg border border-gray-200 shadow-sm"
+                              className={`w-6 h-6 rounded-lg border shadow-sm ${currentTheme === 'dark' ? 'border-slate-600' : 'border-gray-200'}`}
                               style={{ backgroundColor: color }}
                             />
                           ))}
@@ -162,10 +164,10 @@ export default function Settings({
                         
                         {/* Theme Info */}
                         <div className="flex-1 text-left">
-                          <p className="text-sm font-semibold text-gray-900">
+                          <p className={`text-sm font-semibold ${currentTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                             {theme.name}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className={`text-xs ${currentTheme === 'dark' ? 'text-slate-400' : 'text-gray-500'}`}>
                             {theme.description}
                           </p>
                         </div>
