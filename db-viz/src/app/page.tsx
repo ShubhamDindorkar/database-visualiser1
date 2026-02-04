@@ -1,12 +1,33 @@
 'use client';
 
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useInView, animate } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { Database, Table, GitBranch, Terminal, ArrowRight, X } from 'lucide-react';
+import { Database, Table, GitBranch, Terminal, ArrowRight, X, Presentation, FileOutput, ChevronDown } from 'lucide-react';
 import Button from '@/components/common/Button';
 import { LayoutTextFlip } from '@/components/ui/layout-text-flip';
+import { Navbar as LandingNavbar, NavBody, NavItems, NavbarButton } from '@/components/ui/landing-navbar';
+import DotGrid from '@/components/DotGrid';
+import { MacbookScroll } from '@/components/ui/macbook-scroll';
+import SmoothScroll from '@/components/SmoothScroll';
 
+function CountUp({ value, suffix = '', duration = 1.5, decimals = 0 }: { value: number; suffix?: string; duration?: number; decimals?: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true });
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+    const controls = animate(0, value, {
+      duration,
+      ease: 'easeOut',
+      onUpdate: (v) => setDisplay(decimals ? Math.round(v * 10) / 10 : Math.round(v)),
+    });
+    return () => controls.stop();
+  }, [inView, value, duration, decimals]);
+
+  return <span ref={ref}>{decimals ? display.toFixed(1) : display}{suffix}</span>;
+}
 
 const features = [
   {
@@ -44,6 +65,24 @@ const features = [
     bg: 'bg-gray-100',
     detailedDescription: 'Execute SQL commands directly with our built-in terminal. Features include syntax highlighting, command history, and real-time query results. Quick action buttons for common operations like CREATE, SELECT, UPDATE, and DELETE help you work faster.',
     image: '/terminal-feature.svg',
+  },
+  {
+    icon: Presentation,
+    title: 'Presentation Mode',
+    description: 'Share your schema in a clean, fullscreen view',
+    color: 'text-black',
+    bg: 'bg-gray-100',
+    detailedDescription: 'Present your database schema to stakeholders without distractions. Fullscreen canvas, hide UI, and focus on tables and relationships. Perfect for demos and team reviews.',
+    image: '/presentation-feature.svg',
+  },
+  {
+    icon: FileOutput,
+    title: 'Export & Docs',
+    description: 'Export schema to SQL, DOCX, or PDF',
+    color: 'text-black',
+    bg: 'bg-gray-100',
+    detailedDescription: 'Export your database structure as SQL scripts, Word documents, or PDF diagrams. Keep your team and docs in sync with one click.',
+    image: '/export-feature.svg',
   },
 ];
 
@@ -316,53 +355,83 @@ const terminalQueries = [
   },
 ];
 
+const faqItems = [
+  { q: 'Do I need to know SQL?', a: 'No. You can create databases, tables, and relationships entirely by point-and-click. SQL is optional for when you want to run custom queries or export.' },
+  { q: 'Is my data stored in DB Visualiser?', a: 'Schema and structure are stored so you can edit and sync. You connect your own MySQL for live data; we don’t store your actual database contents.' },
+  { q: 'Can I export my schema?', a: 'Yes. Export to SQL scripts, Word (DOCX), or PDF so you can use the schema in other tools or share with your team.' },
+  { q: 'What’s the difference between Dashboard and Terminal mode?', a: 'Dashboard is the visual canvas for designing. Terminal mode focuses on running SQL and viewing results—same project, different view.' },
+];
+
 export default function LandingPage() {
   const router = useRouter();
   const [selectedFeature, setSelectedFeature] = useState<typeof features[0] | null>(null);
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Glass Navigation */}
-      <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
-        <div className="bg-white/80 backdrop-blur-2xl border border-gray-200/50 rounded-full px-8 py-2.5 shadow-lg shadow-black/5">
-          <div className="flex items-center gap-10">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 bg-black rounded-lg flex items-center justify-center">
-                <Database className="w-3.5 h-3.5 text-white" />
-              </div>
-              <span className="text-sm font-semibold text-gray-900">
-                DB Visualiser
-              </span>
+    <SmoothScroll>
+      <div className="min-h-screen bg-white">
+      <LandingNavbar
+        navItems={[
+          { name: 'Home', link: '#' },
+          { name: 'Features', link: '#features' },
+          { name: 'Pricing', link: '#pricing' },
+        ]}
+        onSignIn={() => router.push('/login')}
+        logo={
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-black rounded-xl flex items-center justify-center">
+              <Database className="w-4 h-4 text-white" />
             </div>
-            
-            <div className="hidden sm:flex items-center gap-6">
-              <button
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="text-sm text-gray-600 hover:text-black transition-colors"
-              >
-                Home
-              </button>
-              <button
-                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-                className="text-sm text-gray-600 hover:text-black transition-colors"
-              >
-                Features
-              </button>
-              <button
-                onClick={() => router.push('/login')}
-                className="text-sm text-gray-600 hover:text-black transition-colors"
-              >
-                Sign In
-              </button>
-            </div>
+            <span className="text-sm font-semibold text-gray-900">
+              DB Visualiser
+            </span>
           </div>
-        </div>
-      </nav>
+        }
+      >
+        <NavBody>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-black rounded-xl flex items-center justify-center">
+              <Database className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-sm font-semibold text-gray-900">
+              DB Visualiser
+            </span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <NavItems
+              items={[
+                { name: 'Home', link: '#' },
+                { name: 'Features', link: '#features' },
+                { name: 'Pricing', link: '#pricing' },
+              ]}
+              className="max-w-xs"
+              onItemClick={() => {}}
+            />
+            <NavbarButton onClick={() => router.push('/login')}>
+              Sign In
+            </NavbarButton>
+          </div>
+        </NavBody>
+      </LandingNavbar>
 
       {/* Hero Section */}
-      <section className="pt-28 pb-16 px-4 relative overflow-hidden">
-        {/* Subtle gradient background */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(0,0,0,0.03),transparent)]" />
+      <section className="pt-24 sm:pt-28 pb-12 sm:pb-16 px-4 relative overflow-hidden">
+        {/* DotGrid background */}
+        <div className="absolute inset-0 z-0">
+          <DotGrid
+            dotSize={3}
+            gap={15}
+            baseColor="#FFFFFF"
+            activeColor="#000000"
+            proximity={120}
+            shockRadius={250}
+            shockStrength={5}
+            resistance={750}
+            returnDuration={1.5}
+            style={{ width: '100%', height: '100%' }}
+          />
+        </div>
         
         <div className="max-w-6xl mx-auto relative z-10">
           <div className="text-center">
@@ -372,7 +441,7 @@ export default function LandingPage() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="mb-6 text-center"
             >
-              <div className="text-5xl sm:text-6xl lg:text-7xl font-light text-black mb-2" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+              <div className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light text-black mb-2" style={{ fontFamily: 'var(--font-geist-sans)' }}>
                 Build Your
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3">
@@ -388,7 +457,7 @@ export default function LandingPage() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-lg text-gray-500 max-w-2xl mx-auto mb-8"
+              className="text-base sm:text-lg text-gray-500 max-w-2xl mx-auto mb-6 sm:mb-8 px-1"
             >
               Design, visualize, and manage your MySQL databases with an intuitive 
               drag-and-drop interface. No SQL expertise required.
@@ -411,235 +480,222 @@ export default function LandingPage() {
             </motion.div>
           </div>
 
-          {/* Hero Illustration - Floating Tables with Relations */}
-          <motion.div
-            initial={{ y: 40, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.7, delay: 0.5 }}
-            className="mt-16 relative"
-          >
-            {/* Browser-like frame */}
-            <div className="bg-gray-950 rounded-xl overflow-hidden shadow-2xl border border-gray-800">
-              {/* Browser header */}
-              <div className="flex items-center gap-2 px-4 py-3 bg-gray-900 border-b border-gray-800">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 bg-red-500 rounded-full" />
-                  <div className="w-3 h-3 bg-yellow-500 rounded-full" />
-                  <div className="w-3 h-3 bg-green-500 rounded-full" />
-                </div>
-              </div>
-              
-              {/* Content area */}
-              <div className="bg-gray-100 p-6 min-h-[380px]">
-                {/* Floating Database Schema Visualization */}
-                <div className="relative w-full h-[340px] flex items-center justify-center">
-                
-                {/* Background Grid */}
-                <div className="absolute inset-0 opacity-20">
-                  <svg width="100%" height="100%">
-                    <defs>
-                      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-gray-500" />
-                      </pattern>
-                    </defs>
-                    <rect width="100%" height="100%" fill="url(#grid)" />
-                  </svg>
-                </div>
-
-                {/* Container for tables and lines - uses flexbox for proper spacing */}
-                <div className="relative flex items-center justify-between w-full max-w-4xl px-4" style={{ zIndex: 2 }}>
-                  
-                  {/* Table 1: Users - Left */}
-                  <motion.div
-                    animate={{ 
-                      y: [0, -15, 0],
-                    }}
-                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                    className="relative w-[180px] bg-white rounded-xl overflow-hidden shadow-2xl border border-gray-200"
-                  >
-                    <div className="bg-blue-600 px-4 py-3 flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 bg-blue-300 rounded-full" />
-                      <span className="text-white font-semibold text-sm">Users</span>
-                    </div>
-                    <div className="p-4 space-y-2.5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-amber-400 rounded flex items-center justify-center">
-                          <span className="text-[7px] text-amber-900 font-bold">PK</span>
-                        </div>
-                        <span className="text-xs text-gray-800 font-medium">id</span>
-                        <span className="text-[10px] text-gray-500 ml-auto">INT</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-gray-200 rounded" />
-                        <span className="text-xs text-gray-700">email</span>
-                        <span className="text-[10px] text-gray-500 ml-auto">VARCHAR</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-gray-200 rounded" />
-                        <span className="text-xs text-gray-700">name</span>
-                        <span className="text-[10px] text-gray-500 ml-auto">VARCHAR</span>
-                      </div>
-                    </div>
-                    {/* Connection point - right side */}
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3 h-3 bg-blue-600 rounded-full border-2 border-white shadow-lg z-10" />
-                  </motion.div>
-
-                  {/* Relationship Line 1: Users -> Orders */}
-                  <svg className="absolute left-[180px] right-[calc(50%+90px)] top-1/2 h-4 -translate-y-1/2 overflow-visible" style={{ zIndex: 1, width: 'calc(50% - 180px - 90px)' }}>
-                    <motion.line
-                      x1="0"
-                      y1="50%"
-                      x2="100%"
-                      y2="50%"
-                      stroke="#2563EB"
-                      strokeWidth="2"
-                      initial={{ pathLength: 0 }}
-                      animate={{ pathLength: 1 }}
-                      transition={{ duration: 1, delay: 0.5 }}
-                    />
-                    {/* Animated dot flowing along the line */}
-                    <motion.circle
-                      r="4"
-                      fill="#2563EB"
-                      animate={{ cx: ['0%', '100%'] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                      cy="50%"
-                    />
-                  </svg>
-
-                  {/* Table 2: Orders - Center */}
-                  <motion.div
-                    animate={{ 
-                      y: [0, 12, 0],
-                    }}
-                    transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
-                    className="relative w-[180px] bg-white rounded-xl overflow-hidden shadow-2xl border border-gray-200 mx-8"
-                  >
-                    {/* Connection point - left side */}
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 bg-blue-600 rounded-full border-2 border-white shadow-lg z-10" />
-                    
-                    <div className="bg-emerald-600 px-4 py-3 flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 bg-emerald-300 rounded-full" />
-                      <span className="text-white font-semibold text-sm">Orders</span>
-                    </div>
-                    <div className="p-4 space-y-2.5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-amber-400 rounded flex items-center justify-center">
-                          <span className="text-[7px] text-amber-900 font-bold">PK</span>
-                        </div>
-                        <span className="text-xs text-gray-800 font-medium">id</span>
-                        <span className="text-[10px] text-gray-500 ml-auto">INT</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-blue-500 rounded flex items-center justify-center">
-                          <span className="text-[7px] text-white font-bold">FK</span>
-                        </div>
-                        <span className="text-xs text-gray-700">user_id</span>
-                        <span className="text-[10px] text-gray-500 ml-auto">INT</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-purple-500 rounded flex items-center justify-center">
-                          <span className="text-[7px] text-white font-bold">FK</span>
-                        </div>
-                        <span className="text-xs text-gray-700">product_id</span>
-                        <span className="text-[10px] text-gray-500 ml-auto">INT</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-gray-200 rounded" />
-                        <span className="text-xs text-gray-700">total</span>
-                        <span className="text-[10px] text-gray-500 ml-auto">DECIMAL</span>
-                      </div>
-                    </div>
-                    {/* Connection point - right side */}
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3 h-3 bg-purple-500 rounded-full border-2 border-white shadow-lg z-10" />
-                  </motion.div>
-
-                  {/* Relationship Line 2: Orders -> Products */}
-                  <svg className="absolute right-[180px] left-[calc(50%+90px)] top-1/2 h-4 -translate-y-1/2 overflow-visible" style={{ zIndex: 1, width: 'calc(50% - 180px - 90px)' }}>
-                    <motion.line
-                      x1="0"
-                      y1="50%"
-                      x2="100%"
-                      y2="50%"
-                      stroke="#A855F7"
-                      strokeWidth="2"
-                      initial={{ pathLength: 0 }}
-                      animate={{ pathLength: 1 }}
-                      transition={{ duration: 1, delay: 0.8 }}
-                    />
-                    {/* Animated dot flowing along the line */}
-                    <motion.circle
-                      r="4"
-                      fill="#A855F7"
-                      animate={{ cx: ['0%', '100%'] }}
-                      transition={{ duration: 2.5, repeat: Infinity, ease: 'linear', delay: 0.5 }}
-                      cy="50%"
-                    />
-                  </svg>
-
-                  {/* Table 3: Products - Right */}
-                  <motion.div
-                    animate={{ 
-                      y: [0, -10, 0],
-                    }}
-                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
-                    className="relative w-[180px] bg-white rounded-xl overflow-hidden shadow-2xl border border-gray-200"
-                  >
-                    {/* Connection point - left side */}
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 bg-purple-500 rounded-full border-2 border-white shadow-lg z-10" />
-                    
-                    <div className="bg-purple-600 px-4 py-3 flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 bg-purple-300 rounded-full" />
-                      <span className="text-white font-semibold text-sm">Products</span>
-                    </div>
-                    <div className="p-4 space-y-2.5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-amber-400 rounded flex items-center justify-center">
-                          <span className="text-[7px] text-amber-900 font-bold">PK</span>
-                        </div>
-                        <span className="text-xs text-gray-800 font-medium">id</span>
-                        <span className="text-[10px] text-gray-500 ml-auto">INT</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-gray-200 rounded" />
-                        <span className="text-xs text-gray-700">name</span>
-                        <span className="text-[10px] text-gray-500 ml-auto">VARCHAR</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-gray-200 rounded" />
-                        <span className="text-xs text-gray-700">price</span>
-                        <span className="text-[10px] text-gray-500 ml-auto">DECIMAL</span>
-                      </div>
-                    </div>
-                  </motion.div>
-
-                </div>
-              </div>
-            </div>
-            </div>
-          </motion.div>
+          {/* MacBook Scroll: SS starts in screen → scroll → stops with SS in middle */}
+          <div className="mt-4 sm:mt-6 w-full overflow-hidden max-w-full">
+            <MacbookScroll 
+              src="/screenshot.png" 
+              showGradient={false} 
+            />
+          </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-24 px-4 bg-gray-50/50">
+      {/* Numbers - appear after MacBook stops */}
+      <section className="pt-6 sm:pt-8 pb-14 sm:pb-20 px-4 bg-white -mt-4 sm:-mt-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 text-center">
+            {[
+              { value: 10, suffix: 'K+', label: 'Schemas designed' },
+              { unlimited: true, label: 'Tables & relations' },
+              { value: 50, suffix: '+', label: 'Data types' },
+              { value: 99.9, suffix: '%', decimals: 1, label: 'Uptime' },
+            ].map((item, index) => (
+              <motion.div
+                key={item.label}
+                initial={{ y: 28, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true, margin: '-60px' }}
+                transition={{ duration: 0.55, delay: index * 0.12, ease: [0.25, 0.46, 0.45, 0.94] }}
+                className="text-center"
+              >
+                <p className="text-2xl sm:text-3xl md:text-4xl font-light text-black" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                  {'unlimited' in item && item.unlimited ? 'Unlimited' : <CountUp value={(item as { value: number }).value} suffix={(item as { suffix?: string }).suffix ?? ''} duration={1.8} decimals={(item as { decimals?: number }).decimals} />}
+                </p>
+                <motion.p
+                  initial={{ y: 10, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true, margin: '-60px' }}
+                  transition={{ duration: 0.4, delay: index * 0.12 + 0.2 }}
+                  className="text-sm text-gray-500 mt-1 font-light"
+                >
+                  {item.label}
+                </motion.p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section - dark */}
+      <section id="pricing" className="py-16 sm:py-24 px-4 bg-gray-950">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             whileInView={{ y: 0, opacity: 1 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-10 sm:mb-16"
           >
-            <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">Features</span>
-            <h2 className="text-3xl sm:text-4xl font-light text-black mt-3 mb-4" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+            <span className="text-sm font-medium text-gray-400 uppercase tracking-wider">Pricing</span>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-light text-white mt-3 mb-4" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+              Simple, transparent pricing
+            </h2>
+            <p className="text-sm sm:text-base text-gray-400 max-w-2xl mx-auto font-light px-1" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+              Start free. Upgrade when you need more.
+            </p>
+          </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
+            {[
+              {
+                name: 'Free',
+                price: 0,
+                tag: null,
+                description: 'Perfect for learning and side projects.',
+                features: ['Up to 3 databases', '10 tables per database', 'Visual editor & canvas', 'SQL terminal (read-only)', 'Community support'],
+                cta: 'Get started',
+                primary: false,
+              },
+              {
+                name: 'Pro',
+                price: 12,
+                tag: 'Popular',
+                description: 'For developers and small teams shipping real products.',
+                features: ['Unlimited databases & tables', 'Full SQL terminal (read/write)', 'Export to SQL, DOCX, PDF', 'Presentation mode', 'Priority support'],
+                cta: 'Start free trial',
+                primary: true,
+              },
+              {
+                name: 'Team',
+                price: 29,
+                tag: null,
+                description: 'Collaboration and governance for growing teams.',
+                features: ['Everything in Pro', 'Team workspace', 'Shared schemas & export', 'Audit log', 'Dedicated support'],
+                cta: 'Contact sales',
+                primary: false,
+              },
+            ].map((plan, i) => (
+              <motion.div
+                key={plan.name}
+                initial={{ y: 24, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, type: 'spring', stiffness: 400, damping: 30 }}
+                whileHover={{ y: -6 }}
+                className="relative p-5 sm:p-8 rounded-2xl text-left min-h-0 sm:min-h-[380px] flex flex-col cursor-default"
+              >
+                <div
+                  className="absolute inset-0 rounded-2xl transition-all duration-300 ease-out"
+                  style={{
+                    background: plan.primary ? 'linear-gradient(145deg, #1a1a1a 0%, #0f0f0f 100%)' : 'linear-gradient(145deg, #262626 0%, #171717 100%)',
+                    border: plan.primary ? '2px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.08)',
+                    boxShadow: plan.primary
+                      ? '0 25px 50px -12px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)'
+                      : '0 20px 40px -12px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03)',
+                  }}
+                />
+                <div className="relative z-10 flex flex-col h-full">
+                  {plan.tag && (
+                    <span className="inline-block w-fit mb-4 px-3 py-1 rounded-full bg-white/10 text-gray-200 text-xs font-medium border border-white/20">
+                      {plan.tag}
+                    </span>
+                  )}
+                  <h3 className="text-xl font-medium text-white mb-1" style={{ fontFamily: 'var(--font-geist-sans)' }}>{plan.name}</h3>
+                  <p className="text-3xl font-light text-white mt-2">${plan.price}<span className="text-base font-normal text-gray-400">/mo</span></p>
+                  <p className="text-sm text-gray-400 mt-4 font-light" style={{ fontFamily: 'var(--font-geist-sans)' }}>{plan.description}</p>
+                  <ul className="mt-6 space-y-3 flex-1">
+                    {plan.features.map((f, j) => (
+                      <li key={j} className="flex items-center gap-2 text-sm text-gray-300 font-light" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                        <span className="text-white">✓</span>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    variant={plan.primary ? 'primary' : 'secondary'}
+                    size="md"
+                    className={plan.primary ? 'mt-8 w-full !bg-white !text-gray-950 hover:!bg-gray-100 border-0' : 'mt-8 w-full'}
+                    onClick={() => router.push('/login')}
+                  >
+                    {plan.cta}
+                  </Button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="py-16 sm:py-24 px-4 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mb-10 sm:mb-16"
+          >
+            <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">How it works</span>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-light text-black mt-3 mb-4" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+              From idea to database in minutes
+            </h2>
+            <p className="text-sm sm:text-base text-gray-500 max-w-2xl mx-auto font-light px-1" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+              No SQL required. Drag, connect, and go.
+            </p>
+          </motion.div>
+
+          <div className="relative">
+            {/* Connecting line - horizontal on lg, vertical on small */}
+            <div className="absolute left-5 top-6 bottom-6 w-px bg-gradient-to-b from-gray-200 via-gray-300 to-gray-200 lg:left-0 lg:right-0 lg:top-5 lg:h-px lg:w-full lg:bg-gradient-to-r" />
+
+            <div className="relative flex flex-col lg:flex-row lg:justify-between lg:gap-4 gap-6 sm:gap-8">
+              {[
+                { step: '1', title: 'Create database', desc: 'Name your project and create a new MySQL database in one click.' },
+                { step: '2', title: 'Add tables', desc: 'Define tables and columns with types, keys, and constraints visually.' },
+                { step: '3', title: 'Connect relations', desc: 'Link tables with foreign keys. See relationships on the canvas.' },
+                { step: '4', title: 'Run or export', desc: 'Execute SQL in the terminal or export schema to SQL, DOCX, or PDF.' },
+              ].map((item, i) => (
+                <motion.div
+                  key={item.step}
+                  initial={{ y: 16, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="relative flex gap-4 lg:flex-1 lg:flex-col lg:items-center lg:text-center"
+                >
+                  <div className="relative z-10 flex shrink-0">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-black bg-white text-sm font-medium text-black" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                      {item.step}
+                    </div>
+                  </div>
+                  <div className="min-w-0 flex-1 lg:mt-4 lg:px-2">
+                    <h3 className="text-base sm:text-lg font-medium text-black mb-1" style={{ fontFamily: 'var(--font-geist-sans)' }}>{item.title}</h3>
+                    <p className="text-sm text-gray-500 font-light leading-snug" style={{ fontFamily: 'var(--font-geist-sans)' }}>{item.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section - dark, same as pricing */}
+      <section id="features" className="py-16 sm:py-24 px-4 bg-gray-950">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mb-10 sm:mb-16"
+          >
+            <span className="text-sm font-medium text-gray-400 uppercase tracking-wider">Features</span>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-light text-white mt-3 mb-4" style={{ fontFamily: 'var(--font-geist-sans)' }}>
               Everything you need
             </h2>
-            <p className="text-gray-500 max-w-2xl mx-auto font-light" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+            <p className="text-sm sm:text-base text-gray-400 max-w-2xl mx-auto font-light px-1" style={{ fontFamily: 'var(--font-geist-sans)' }}>
               Powerful tools to design, visualize, and manage your databases
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {features.map((feature, index) => (
               <motion.div
                 key={feature.title}
@@ -649,26 +705,30 @@ export default function LandingPage() {
                 transition={{ delay: index * 0.1 }}
                 whileHover={{ y: -4, transition: { duration: 0.2 } }}
                 onClick={() => setSelectedFeature(feature)}
-                className="group relative p-6 bg-gradient-to-b from-white to-gray-50/50 rounded-2xl border border-gray-200/80 hover:border-gray-300 hover:shadow-2xl hover:shadow-gray-200/50 transition-all duration-300 cursor-pointer overflow-hidden"
+                className="group relative p-5 sm:p-6 rounded-2xl border border-white/[0.08] hover:border-white/[0.15] transition-all duration-300 cursor-pointer overflow-hidden"
+                style={{
+                  background: 'linear-gradient(145deg, #262626 0%, #171717 100%)',
+                  boxShadow: '0 20px 40px -12px rgba(0,0,0,0.4)',
+                }}
               >
                 {/* Subtle gradient overlay on hover */}
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-100/0 to-gray-100/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 
                 <div className="relative z-10">
-                  <div className="w-12 h-12 bg-white group-hover:bg-black rounded-2xl flex items-center justify-center mb-5 transition-all duration-300 shadow-sm group-hover:shadow-lg border border-gray-100 group-hover:border-black">
-                    <feature.icon className="w-5 h-5 text-gray-700 group-hover:text-white transition-colors duration-300" />
+                  <div className="w-12 h-12 bg-gray-800 group-hover:bg-white/10 rounded-2xl flex items-center justify-center mb-5 transition-all duration-300 border border-gray-700/50 group-hover:border-white/20">
+                    <feature.icon className="w-5 h-5 text-gray-300 group-hover:text-white transition-colors duration-300" />
                   </div>
-                  <h3 className="text-lg font-light text-black mb-2" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                  <h3 className="text-lg font-light text-white mb-2" style={{ fontFamily: 'var(--font-geist-sans)' }}>
                     {feature.title}
                   </h3>
-                  <p className="text-sm text-gray-500 leading-relaxed font-light" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                  <p className="text-sm text-gray-400 leading-relaxed font-light" style={{ fontFamily: 'var(--font-geist-sans)' }}>
                     {feature.description}
                   </p>
                 </div>
                 
                 {/* Arrow indicator */}
                 <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
-                  <ArrowRight className="w-4 h-4 text-gray-400" />
+                  <ArrowRight className="w-4 h-4 text-gray-500" />
                 </div>
               </motion.div>
             ))}
@@ -676,21 +736,83 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* FAQ - accordion */}
+      <section id="faq" className="py-16 sm:py-24 px-4 bg-white">
+        <div className="max-w-3xl mx-auto">
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mb-10 sm:mb-14"
+          >
+            <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">FAQ</span>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-light text-black mt-3 mb-4" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+              Common questions
+            </h2>
+          </motion.div>
+          <div className="space-y-2">
+            {faqItems.map((item, i) => {
+              const isOpen = expandedFaq === i;
+              return (
+                <motion.div
+                  key={item.q}
+                  initial={{ y: 12, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.05 }}
+                  className="rounded-xl border border-gray-200 bg-white overflow-hidden transition-colors hover:border-gray-300"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setExpandedFaq(isOpen ? null : i)}
+                    className="w-full flex items-center justify-between gap-4 text-left p-4 sm:p-5 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 rounded-xl"
+                    aria-expanded={isOpen}
+                    aria-controls={`faq-answer-${i}`}
+                    id={`faq-question-${i}`}
+                  >
+                    <h3 className="font-medium text-black text-sm sm:text-base pr-2" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                      {item.q}
+                    </h3>
+                    <ChevronDown
+                      className={`w-5 h-5 shrink-0 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                      aria-hidden
+                    />
+                  </button>
+                  <motion.div
+                    id={`faq-answer-${i}`}
+                    role="region"
+                    aria-labelledby={`faq-question-${i}`}
+                    initial={false}
+                    animate={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }}
+                    transition={{ duration: 0.25, ease: 'easeInOut' }}
+                    className="overflow-hidden"
+                  >
+                    <p className="text-sm text-gray-600 font-light px-4 sm:px-5 pb-4 sm:pb-5 pt-0 border-t border-gray-100" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                      {item.a}
+                    </p>
+                  </motion.div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
-      <section className="py-24 px-4 bg-black relative overflow-hidden">
+      <section className="py-16 sm:py-24 px-4 bg-black relative overflow-hidden">
         {/* Subtle gradient */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_120%,rgba(255,255,255,0.1),transparent)]" />
         
-        <div className="max-w-3xl mx-auto text-center relative z-10">
+        <div className="max-w-3xl mx-auto text-center relative z-10 px-1">
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             whileInView={{ y: 0, opacity: 1 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl sm:text-4xl font-light text-white mb-4" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-light text-white mb-3 sm:mb-4" style={{ fontFamily: 'var(--font-geist-sans)' }}>
               Ready to build your database?
             </h2>
-            <p className="text-gray-400 mb-8 font-light" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+            <p className="text-sm sm:text-base text-gray-400 mb-6 sm:mb-8 font-light" style={{ fontFamily: 'var(--font-geist-sans)' }}>
               Join thousands of developers who design their databases visually.
             </p>
             <Button
@@ -706,16 +828,16 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-6 px-4 bg-black border-t border-gray-800">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-white rounded-md flex items-center justify-center">
+      {/* Footer - same dark as pricing */}
+      <footer className="py-5 sm:py-6 px-4 bg-gray-950 border-t border-gray-800">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+          <div className="flex items-center gap-2 justify-center sm:justify-start">
+            <div className="w-6 h-6 bg-white rounded-md flex items-center justify-center shrink-0">
               <Database className="w-3 h-3 text-black" />
             </div>
             <span className="text-sm text-white font-light" style={{ fontFamily: 'var(--font-geist-sans)' }}>DB Visualiser</span>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-4 sm:gap-6">
             <button
               onClick={() => router.push('/terms-of-service')}
               className="text-xs text-gray-500 hover:text-white transition-colors"
@@ -752,28 +874,29 @@ export default function LandingPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[600px] md:max-h-[80vh] bg-white rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col"
+              className="fixed inset-4 sm:inset-6 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[600px] md:max-h-[80vh] bg-white rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col max-h-[90vh]"
             >
               {/* Modal Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+              <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 shrink-0">
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 rounded-xl flex items-center justify-center shrink-0">
                     <selectedFeature.icon className="w-6 h-6 text-black" />
                   </div>
-                  <h3 className="text-xl font-light text-black" style={{ fontFamily: 'var(--font-geist-sans)' }}>{selectedFeature.title}</h3>
+                  <h3 className="text-lg sm:text-xl font-light text-black truncate" style={{ fontFamily: 'var(--font-geist-sans)' }}>{selectedFeature.title}</h3>
                 </div>
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setSelectedFeature(null)}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors shrink-0"
+                  aria-label="Close"
                 >
                   <X className="w-5 h-5 text-gray-600" />
                 </motion.button>
               </div>
               
               {/* Modal Content */}
-              <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 min-h-0">
                 {/* Feature Illustration */}
                 <div className="w-full h-48 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl mb-6 flex items-center justify-center border border-gray-100">
                   {selectedFeature.title === 'Create Databases' && (
@@ -830,6 +953,24 @@ export default function LandingPage() {
                       </div>
                     </div>
                   )}
+                  {selectedFeature.title === 'Presentation Mode' && (
+                    <div className="flex items-center gap-3">
+                      <div className="w-16 h-12 rounded-lg bg-gray-800 flex items-center justify-center">
+                        <Presentation className="w-8 h-8 text-white" />
+                      </div>
+                      <div className="text-left">
+                        <div className="w-24 h-3 bg-gray-200 rounded mb-2" />
+                        <div className="w-32 h-2 bg-gray-100 rounded" />
+                      </div>
+                    </div>
+                  )}
+                  {selectedFeature.title === 'Export & Docs' && (
+                    <div className="flex items-center gap-2">
+                      <div className="px-3 py-2 rounded bg-gray-100 border border-gray-200 text-xs font-mono">.sql</div>
+                      <div className="px-3 py-2 rounded bg-gray-100 border border-gray-200 text-xs font-mono">.docx</div>
+                      <div className="px-3 py-2 rounded bg-gray-100 border border-gray-200 text-xs font-mono">.pdf</div>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Description */}
@@ -841,6 +982,7 @@ export default function LandingPage() {
           </>
         )}
       </AnimatePresence>
-    </div>
+      </div>
+    </SmoothScroll>
   );
 }

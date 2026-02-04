@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Terminal, Play, Loader2, Database, Clock, CheckCircle, XCircle, Trash2 } from 'lucide-react';
@@ -30,7 +30,7 @@ interface QueryResult {
   affectedRows?: number;
 }
 
-export default function TerminalModePage() {
+function TerminalModeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const databaseId = searchParams.get('db');
@@ -585,5 +585,13 @@ export default function TerminalModePage() {
         </motion.div>
       </div>
     </motion.div>
+  );
+}
+
+export default function TerminalModePage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
+      <TerminalModeContent />
+    </Suspense>
   );
 }

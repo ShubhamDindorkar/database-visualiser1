@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ReactFlow, {
   Node,
@@ -50,7 +50,7 @@ const edgeTypes = {
   relationshipEdge: RelationshipEdge,
 };
 
-export default function PresentationPage() {
+function PresentationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const databaseId = searchParams.get('db');
@@ -515,5 +515,13 @@ export default function PresentationPage() {
         </AnimatePresence>
       </motion.div>
     </motion.div>
+  );
+}
+
+export default function PresentationPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
+      <PresentationContent />
+    </Suspense>
   );
 }
