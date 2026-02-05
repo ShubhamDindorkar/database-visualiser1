@@ -62,7 +62,7 @@ function TableNode({ data, selected }: NodeProps<TableNodeData>) {
       <div className={`${theme?.button || 'bg-black'} px-4 py-3 flex items-center justify-between group rounded-t-xl`}>
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-white rounded-full opacity-80" />
-          <h3 className="text-white font-semibold text-sm tracking-wide">
+          <h3 className="text-white font-light text-sm tracking-wide" style={{ fontFamily: 'var(--font-geist-sans)' }}>
             {table.name}
           </h3>
         </div>
@@ -105,7 +105,7 @@ function TableNode({ data, selected }: NodeProps<TableNodeData>) {
               {column.isForeignKey && (
                 <Link className={`w-3.5 h-3.5 ${theme?.text || 'text-gray-700'} flex-shrink-0`} />
               )}
-              <span className={`text-sm ${theme?.text || 'text-gray-900'} truncate font-medium`}>
+              <span className={`text-sm ${theme?.text || 'text-gray-900'} truncate font-light`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
                 {column.name}
               </span>
             </div>
@@ -119,12 +119,12 @@ function TableNode({ data, selected }: NodeProps<TableNodeData>) {
             {/* Constraints Badges */}
             <div className="flex gap-1">
               {column.isNotNull && (
-                <span className={`text-[10px] px-1 py-0.5 ${theme?.buttonSecondary || 'bg-gray-200 text-gray-800'} rounded font-medium`}>
+                <span className={`text-[10px] px-1 py-0.5 ${theme?.buttonSecondary || 'bg-gray-200 text-gray-800'} rounded font-light`}>
                   NN
                 </span>
               )}
               {column.isUnique && !column.isPrimaryKey && (
-                <span className={`text-[10px] px-1 py-0.5 ${theme?.navbar?.includes('slate') ? 'bg-slate-600 text-white' : 'bg-gray-400 text-gray-800'} rounded font-medium`}>
+                <span className={`text-[10px] px-1 py-0.5 ${theme?.navbar?.includes('slate') ? 'bg-slate-600 text-white' : 'bg-gray-400 text-gray-800'} rounded font-light`}>
                   UQ
                 </span>
               )}

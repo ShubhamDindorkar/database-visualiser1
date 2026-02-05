@@ -69,7 +69,7 @@ export default function Settings({
           >
             {/* Header */}
             <div className={`flex items-center justify-between p-4 border-b ${currentTheme === 'dark' ? 'border-slate-700/50 bg-slate-800/50' : 'border-gray-200/50 bg-white/50'}`}>
-              <h2 className={`text-lg font-semibold ${currentTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              <h2 className={`text-lg font-light ${currentTheme === 'dark' ? 'text-white' : 'text-gray-900'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
                 Settings
               </h2>
               <motion.button
@@ -89,7 +89,7 @@ export default function Settings({
                 <div>
                   <div className="flex items-center gap-2 mb-4">
                     <UserIcon className={`w-5 h-5 ${currentTheme === 'dark' ? 'text-slate-300' : 'text-gray-700'}`} />
-                    <h3 className={`text-sm font-semibold ${currentTheme === 'dark' ? 'text-slate-300' : 'text-gray-700'} uppercase tracking-wider`}>
+                    <h3 className={`text-sm font-light ${currentTheme === 'dark' ? 'text-slate-300' : 'text-gray-700'} uppercase tracking-wider`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
                       Account
                     </h3>
                   </div>
@@ -104,10 +104,10 @@ export default function Settings({
                         />
                       )}
                       <div className="flex-1">
-                        <p className={`text-sm font-medium ${currentTheme === 'dark' ? 'text-white' : 'text-gray-900'} mb-1`}>
+                        <p className={`text-sm font-light ${currentTheme === 'dark' ? 'text-white' : 'text-gray-900'} mb-1`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
                           {user.displayName}
                         </p>
-                        <p className={`text-xs ${currentTheme === 'dark' ? 'text-slate-400' : 'text-gray-500'}`}>
+                        <p className={`text-xs font-light ${currentTheme === 'dark' ? 'text-slate-400' : 'text-gray-500'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
                           {user.email}
                         </p>
                       </div>
@@ -117,7 +117,8 @@ export default function Settings({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={onLogout}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl transition-all font-medium shadow-lg shadow-red-500/25"
+                      className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 ${currentTheme === 'dark' ? 'bg-slate-700 hover:bg-slate-600' : 'bg-black hover:bg-gray-900'} text-white rounded-lg transition-all shadow-md`}
+                      style={{ fontFamily: 'var(--font-geist-sans)' }}
                     >
                       <LogOut className="w-4 h-4" />
                       Sign Out
@@ -130,7 +131,7 @@ export default function Settings({
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <Palette className={`w-5 h-5 ${currentTheme === 'dark' ? 'text-slate-300' : 'text-gray-700'}`} />
-                  <h3 className={`text-sm font-semibold ${currentTheme === 'dark' ? 'text-slate-300' : 'text-gray-700'} uppercase tracking-wider`}>
+                  <h3 className={`text-sm font-light ${currentTheme === 'dark' ? 'text-slate-300' : 'text-gray-700'} uppercase tracking-wider`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
                     Theme
                   </h3>
                 </div>
@@ -164,10 +165,10 @@ export default function Settings({
                         
                         {/* Theme Info */}
                         <div className="flex-1 text-left">
-                          <p className={`text-sm font-semibold ${currentTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                          <p className={`text-sm font-light ${currentTheme === 'dark' ? 'text-white' : 'text-gray-900'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
                             {theme.name}
                           </p>
-                          <p className={`text-xs ${currentTheme === 'dark' ? 'text-slate-400' : 'text-gray-500'}`}>
+                          <p className={`text-xs font-light ${currentTheme === 'dark' ? 'text-slate-400' : 'text-gray-500'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
                             {theme.description}
                           </p>
                         </div>

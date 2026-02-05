@@ -124,3 +124,16 @@ export interface User {
   displayName: string | null;
   photoURL: string | null;
 }
+
+// Workflow Layout type for persisting table positions
+export interface WorkflowLayout {
+  id: string; // Composite: `${userId}_${databaseId}_${tableId}`
+  userId: string;
+  databaseId: string;
+  tableId: string;
+  position: {
+    x: number;
+    y: number;
+  };
+  updatedAt: Date;
+}

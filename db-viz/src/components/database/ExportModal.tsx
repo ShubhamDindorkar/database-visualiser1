@@ -43,11 +43,11 @@ export default function ExportModal({
   const [exportSuccess, setExportSuccess] = useState<ExportType | null>(null);
 
   const exportOptions = [
-    { type: 'pdf' as ExportType, label: 'Export to PDF', icon: FileText, color: 'bg-red-500 hover:bg-red-600' },
-    { type: 'word' as ExportType, label: 'Export to Word', icon: FileType, color: 'bg-blue-500 hover:bg-blue-600' },
-    { type: 'png' as ExportType, label: 'Export to PNG', icon: FileImage, color: 'bg-green-500 hover:bg-green-600' },
-    { type: 'whatsapp' as ExportType, label: 'Share to WhatsApp', icon: Share2, color: 'bg-emerald-500 hover:bg-emerald-600' },
-    { type: 'save' as ExportType, label: 'Save to Files', icon: Save, color: 'bg-purple-500 hover:bg-purple-600' },
+    { type: 'pdf' as ExportType, label: 'PDF Document', icon: FileText, color: 'bg-black hover:bg-gray-900' },
+    { type: 'word' as ExportType, label: 'Word Document', icon: FileType, color: 'bg-black hover:bg-gray-900' },
+    { type: 'png' as ExportType, label: 'PNG Image', icon: FileImage, color: 'bg-black hover:bg-gray-900' },
+    { type: 'whatsapp' as ExportType, label: 'Share via WhatsApp', icon: Share2, color: 'bg-black hover:bg-gray-900' },
+    { type: 'save' as ExportType, label: 'Save Locally', icon: Save, color: 'bg-black hover:bg-gray-900' },
   ];
 
   const captureWorkflow = async (): Promise<HTMLCanvasElement | null> => {
@@ -457,14 +457,14 @@ export default function ExportModal({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className={`flex items-center justify-between p-4 border-b ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'}`}>
+            <div className={`flex items-center justify-between p-5 border-b ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'}`}>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                  <Download className="w-5 h-5 text-white" />
+                <div className={`w-9 h-9 ${theme?.buttonSecondary || 'bg-gray-100'} rounded-lg flex items-center justify-center`}>
+                  <Download className={`w-4 h-4 ${theme?.textSecondary || 'text-gray-700'}`} />
                 </div>
                 <div>
-                  <h2 className={`text-lg font-semibold ${theme?.text || 'text-black'}`}>Export Data</h2>
-                  <p className={`text-sm ${theme?.textSecondary || 'text-gray-600'}`}>{databaseName}</p>
+                  <h2 className={`text-base font-normal ${theme?.text || 'text-black'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>Export Schema</h2>
+                  <p className={`text-[13px] ${theme?.textSecondary || 'text-gray-500'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>{databaseName}</p>
                 </div>
               </div>
               <motion.button
@@ -478,38 +478,39 @@ export default function ExportModal({
             </div>
 
             {/* Content */}
-            <div className="p-4 space-y-3">
-              <p className={`text-sm ${theme?.textSecondary || 'text-gray-600'} mb-4`}>
-                Export your database schema with {tables.length} table{tables.length !== 1 ? 's' : ''} and workflow visualization.
+            <div className="p-5 space-y-2.5">
+              <p className={`text-[13px] ${theme?.textSecondary || 'text-gray-600'} mb-3`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                {tables.length} {tables.length === 1 ? 'table' : 'tables'} ready to export
               </p>
 
               {exportOptions.map(({ type, label, icon: Icon, color }) => (
                 <motion.button
                   key={type}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: 1.01, y: -1 }}
+                  whileTap={{ scale: 0.99 }}
                   onClick={() => handleExport(type)}
                   disabled={isExporting !== null}
-                  className={`w-full flex items-center gap-3 p-4 rounded-lg text-white font-medium transition-all ${color} ${
+                  className={`w-full flex items-center gap-2.5 p-3 rounded-lg text-white transition-all ${color} ${
                     isExporting !== null && isExporting !== type ? 'opacity-50' : ''
-                  }`}
+                  } text-[13px]`}
+                  style={{ fontFamily: 'var(--font-geist-sans)' }}
                 >
                   {isExporting === type ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                   ) : exportSuccess === type ? (
-                    <Check className="w-5 h-5" />
+                    <Check className="w-4 h-4" />
                   ) : (
-                    <Icon className="w-5 h-5" />
+                    <Icon className="w-4 h-4" />
                   )}
-                  <span>{exportSuccess === type ? 'Exported!' : label}</span>
+                  <span>{exportSuccess === type ? 'Exported' : label}</span>
                 </motion.button>
               ))}
             </div>
 
             {/* Footer */}
             <div className={`p-4 border-t ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'} ${theme?.buttonSecondary || 'bg-gray-50'}`}>
-              <p className="text-xs text-gray-500 text-center">
-                Exports include workflow images, table structures, and column details.
+              <p className="text-xs text-gray-500 text-center" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                Includes schema structure and visual layout
               </p>
             </div>
           </motion.div>

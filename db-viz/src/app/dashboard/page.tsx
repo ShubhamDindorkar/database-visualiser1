@@ -57,6 +57,7 @@ import ExportModal from '@/components/database/ExportModal';
 
 // Hooks and Types
 import { useAuth } from '@/hooks/useAuth';
+import { useWorkflowLayouts } from '@/hooks/useWorkflowLayouts';
 import {
   Database as DatabaseType,
   Table as TableType,
@@ -142,6 +143,16 @@ export default function DashboardPage() {
   // React Flow state
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
+
+  // Workflow layouts for position persistence
+  const {
+    layouts: workflowLayouts,
+    updateTablePosition: saveTablePosition,
+    isLoading: layoutsLoading,
+  } = useWorkflowLayouts({
+    userId: user?.uid,
+    databaseId: selectedDatabaseId,
+  });
 
   // Load theme from localStorage on mount
   useEffect(() => {
@@ -277,24 +288,18 @@ export default function DashboardPage() {
     async (changes: NodeChange[]) => {
       setNodes((nds) => applyNodeChanges(changes, nds));
 
-      // Update position in Firebase when drag ends
+      // Save position to workflow_layouts when drag ends
       for (const change of changes) {
         if (change.type === 'position' && change.position && !change.dragging) {
           const tableId = change.id;
           const newPosition = change.position;
 
-          try {
-            await updateDoc(doc(db, 'tables', tableId), {
-              position: newPosition,
-              updatedAt: Timestamp.now(),
-            });
-          } catch (error) {
-            console.error('Error updating table position:', error);
-          }
+          // Save to dedicated workflow_layouts collection (debounced)
+          saveTablePosition(tableId, newPosition);
         }
       }
     },
-    [setNodes]
+    [setNodes, saveTablePosition]
   );
 
   // Add terminal log
@@ -855,22 +860,31 @@ export default function DashboardPage() {
     [databases, selectedDatabaseId, executeQuery]
   );
 
-  // Convert tables to React Flow nodes
+  // Convert tables to React Flow nodes with persisted layout positions
   useEffect(() => {
-    const newNodes: Node[] = tables.map((table) => ({
-      id: table.id,
-      type: 'tableNode',
-      position: table.position,
-      data: {
-        table: { ...table, columns: [...table.columns] }, // Create new reference to force re-render
-        onDelete: handleDeleteTable,
-        onViewData: handleViewData,
-        isSelected: selectedTableId === table.id,
-        theme: THEMES[currentTheme as keyof typeof THEMES] || THEMES.light,
-      },
-    }));
+    // Wait for layouts to load before rendering nodes with positions
+    if (layoutsLoading) return;
+
+    const newNodes: Node[] = tables.map((table) => {
+      // Use saved layout position if available, otherwise use table's default position
+      const savedPosition = workflowLayouts[table.id];
+      const position = savedPosition || table.position;
+
+      return {
+        id: table.id,
+        type: 'tableNode',
+        position,
+        data: {
+          table: { ...table, columns: [...table.columns] }, // Create new reference to force re-render
+          onDelete: handleDeleteTable,
+          onViewData: handleViewData,
+          isSelected: selectedTableId === table.id,
+          theme: THEMES[currentTheme as keyof typeof THEMES] || THEMES.light,
+        },
+      };
+    });
     setNodes(newNodes);
-  }, [tables, selectedTableId, handleViewData, handleDeleteTable, currentTheme]);
+  }, [tables, selectedTableId, handleViewData, handleDeleteTable, currentTheme, workflowLayouts, layoutsLoading]);
 
   // Handle INSERT data
   const handleInsertData = useCallback(
@@ -1558,7 +1572,7 @@ export default function DashboardPage() {
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
-                className="h-full rounded-2xl overflow-hidden shadow-2xl shadow-gray-200/50 border border-gray-200/80 bg-white"
+                className="h-full rounded-xl overflow-hidden border border-gray-200 bg-white"
               >
                 <ReactFlow
                   nodes={nodes}
@@ -1568,8 +1582,6 @@ export default function DashboardPage() {
                   edgeTypes={edgeTypes}
                   fitViewOptions={{
                     padding: 0.2,
-                    maxZoom: 0.85,
-                    minZoom: 0.5,
                   }}
                   defaultViewport={{ x: 0, y: 0, zoom: 0.75 }}
                   proOptions={{ hideAttribution: true }}
@@ -1582,7 +1594,7 @@ export default function DashboardPage() {
                     color={THEMES[currentTheme as keyof typeof THEMES]?.dots || THEMES.light.dots}
                   />
                   <Controls
-                    className="bg-white/90 backdrop-blur-sm border border-gray-200/50 rounded-xl shadow-lg"
+                    className="bg-white border border-gray-200 rounded-lg"
                   />
                 </ReactFlow>
               </motion.div>
@@ -1592,16 +1604,16 @@ export default function DashboardPage() {
                   initial={{ opacity: 0, y: 30, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ duration: 0.5, type: "spring", damping: 20 }}
-                  className="text-center"
+                  className="text-center max-w-md mx-auto px-6"
                 >
                   <motion.div 
-                    initial={{ scale: 0.8 }}
-                    animate={{ scale: 1 }}
-                    transition={{ duration: 0.4, delay: 0.2 }}
-                    className={`w-24 h-24 ${currentTheme === 'dark' ? 'bg-gradient-to-br from-slate-800 to-slate-700 border-slate-600/50 shadow-slate-900/50' : 'bg-gradient-to-br from-white to-gray-50 border-gray-200/80 shadow-gray-200/30'} backdrop-blur-sm border rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl`}
+                    initial={{ scale: 0.8, rotate: -3 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1, type: "spring", damping: 15 }}
+                    className={`w-20 h-20 ${currentTheme === 'dark' ? 'bg-slate-800/90 border-slate-700/60' : 'bg-white/90 border-gray-300/60'} border-2 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg`}
                   >
                     <svg
-                      className={`w-12 h-12 ${THEMES[currentTheme as keyof typeof THEMES]?.textSecondary || 'text-gray-600'}`}
+                      className={`w-10 h-10 ${THEMES[currentTheme as keyof typeof THEMES]?.textSecondary || 'text-gray-500'}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -1617,30 +1629,32 @@ export default function DashboardPage() {
                   <motion.h3 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className={`text-4xl font-light ${THEMES[currentTheme as keyof typeof THEMES]?.text || 'text-gray-900'} mb-3`}
-                    style={{ fontFamily: 'var(--font-geist-sans)' }}
+                    transition={{ delay: 0.25 }}
+                    className={`text-3xl font-normal ${THEMES[currentTheme as keyof typeof THEMES]?.text || 'text-gray-900'} mb-2 tracking-tight`}
+                    style={{ fontFamily: 'var(--font-geist-sans)', letterSpacing: '-0.02em' }}
                   >
-                    No Database Selected
+                    Let's get started
                   </motion.h3>
                   <motion.p 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.35 }}
-                    className={`${THEMES[currentTheme as keyof typeof THEMES]?.textSecondary || 'text-gray-600'} mb-6 max-w-sm font-light`}
+                    transition={{ delay: 0.3 }}
+                    className={`text-base ${THEMES[currentTheme as keyof typeof THEMES]?.textSecondary || 'text-gray-600'} mb-7 leading-relaxed`}
+                    style={{ fontFamily: 'var(--font-geist-sans)' }}
                   >
-                    Select or create a database to start designing tables
+                    Pick a database from the sidebar or create a new one to start building your schema
                   </motion.p>
                   <motion.button
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
+                    transition={{ delay: 0.35 }}
+                    whileHover={{ scale: 1.03, y: -1 }}
+                    whileTap={{ scale: 0.97 }}
                     onClick={() => setIsCreateDbModalOpen(true)}
-                    className="px-8 py-3.5 bg-gradient-to-r from-gray-900 to-black text-white rounded-xl hover:from-gray-800 hover:to-gray-900 transition-all shadow-xl shadow-gray-900/10 font-light"
+                    className="px-7 py-3 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors shadow-lg font-normal text-[15px]"
+                    style={{ fontFamily: 'var(--font-geist-sans)' }}
                   >
-                    Create Database
+                    Create your first database
                   </motion.button>
                 </motion.div>
               </div>
@@ -1660,13 +1674,14 @@ export default function DashboardPage() {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.1 }}
-                    className={`${currentTheme === 'dark' ? 'bg-slate-800/95 border-slate-700/80 shadow-slate-900/50' : 'bg-white/95 border-gray-200/80 shadow-gray-200/50'} backdrop-blur-md px-5 py-3 rounded-2xl shadow-xl border`}
+                    className={`${currentTheme === 'dark' ? 'bg-slate-800/90 border-slate-700' : 'bg-white/90 border-gray-300'} backdrop-blur-sm px-4 py-2.5 rounded-xl shadow-md border`}
                   >
-                    <p className={`text-sm ${THEMES[currentTheme as keyof typeof THEMES]?.textSecondary || 'text-gray-700'} font-light`}>
-                      <span className={`font-light ${THEMES[currentTheme as keyof typeof THEMES]?.text || 'text-gray-900'}`}>
+                    <p className={`text-[13px] ${THEMES[currentTheme as keyof typeof THEMES]?.textSecondary || 'text-gray-600'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                      <span className={`font-medium ${THEMES[currentTheme as keyof typeof THEMES]?.text || 'text-gray-900'}`}>
                         {selectedDatabaseName}
-                      </span>{' '}
-                      • {tablesForSelectedDb.length} table{tablesForSelectedDb.length !== 1 ? 's' : ''}
+                      </span>
+                      <span className="mx-1.5">·</span>
+                      {tablesForSelectedDb.length} {tablesForSelectedDb.length === 1 ? 'table' : 'tables'}
                     </p>
                   </motion.div>
                   
@@ -1675,15 +1690,16 @@ export default function DashboardPage() {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.15 }}
-                    whileHover={{ scale: 1.03, y: -2 }}
-                    whileTap={{ scale: 0.97 }}
+                    whileHover={{ scale: 1.02, y: -1 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => setIsExportModalOpen(true)}
-                    className="w-full bg-gradient-to-r from-gray-900 to-black hover:from-gray-800 hover:to-gray-900 text-white px-5 py-3 rounded-2xl shadow-xl shadow-gray-900/10 font-light text-sm flex items-center justify-center gap-2 transition-all"
+                    className="w-full bg-black hover:bg-gray-900 text-white px-4 py-2.5 rounded-xl shadow-md text-[13px] flex items-center justify-center gap-2 transition-colors"
+                    style={{ fontFamily: 'var(--font-geist-sans)' }}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
-                    Export Data
+                    Export
                   </motion.button>
                 </motion.div>
               )}

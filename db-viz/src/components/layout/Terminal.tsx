@@ -94,35 +94,20 @@ export default function Terminal({
       {/* Terminal Header */}
       <motion.div 
         className="flex items-center justify-between px-4 py-2.5 bg-gray-800/90 backdrop-blur-xl border-b border-gray-700/50"
-        whileHover={{ backgroundColor: 'rgba(31, 41, 55, 0.95)' }}
       >
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <motion.div 
-              whileHover={{ scale: 1.2 }}
-              className="w-3 h-3 rounded-full bg-red-500"
-            />
-            <motion.div 
-              whileHover={{ scale: 1.2 }}
-              className="w-3 h-3 rounded-full bg-yellow-500"
-            />
-            <motion.div 
-              whileHover={{ scale: 1.2 }}
-              className="w-3 h-3 rounded-full bg-green-500"
-            />
-          </div>
-          <div className="ml-3 flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <TerminalIcon className="w-4 h-4 text-gray-400" />
-            <span className="text-sm font-medium text-gray-300">SQL Terminal</span>
-            <span className="text-xs text-gray-400 bg-gray-700/60 px-2.5 py-1 rounded-lg font-medium">MySQL 8.0</span>
+            <span className="text-sm text-gray-300" style={{ fontFamily: 'var(--font-geist-sans)' }}>SQL Terminal</span>
+            <span className="text-xs text-gray-400 bg-gray-700/60 px-2 py-0.5 rounded-md" style={{ fontFamily: 'var(--font-geist-sans)' }}>MySQL</span>
           </div>
         </div>
         <div className="flex items-center gap-1">
           <motion.button
-            whileHover={{ scale: 1.1, backgroundColor: 'rgba(55, 65, 81, 0.8)' }}
+            whileHover={{ scale: 1.05, backgroundColor: 'rgba(55, 65, 81, 0.8)' }}
             whileTap={{ scale: 0.95 }}
             onClick={onToggleMinimize}
-            className="p-2 rounded-lg text-gray-400 hover:text-white transition-colors"
+            className="p-1.5 rounded-md text-gray-400 hover:text-white transition-colors"
           >
             {isMinimized ? (
               <ChevronUp className="w-4 h-4" />
@@ -153,11 +138,10 @@ export default function Terminal({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.1 }}
-                className="text-white mb-3"
+                className="text-white mb-2"
               >
-                <p className="text-gray-300">Welcome to MySQL Terminal (Connected to Local MySQL)</p>
-                <p className="text-gray-400 text-xs mt-1">Type SQL commands or &apos;help&apos; for assistance.</p>
-                <p className="text-gray-600 mt-2">---</p>
+                <p className="text-gray-300 text-sm">Connected to MySQL</p>
+                <p className="text-gray-500 text-xs mt-1">Type SQL or &apos;help&apos;</p>
               </motion.div>
 
               {/* Logs */}
@@ -178,15 +162,15 @@ export default function Terminal({
 
             {/* Input Area */}
             <form onSubmit={handleSubmit} className="flex items-center px-4 pb-3 gap-2">
-              <span className="text-white font-mono font-medium">mysql&gt;</span>
+              <span className="text-gray-400 font-mono text-sm">$</span>
               <input
                 ref={inputRef}
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="flex-1 bg-gray-800/50 border border-gray-700/50 rounded-lg px-3 py-2 outline-none text-white font-mono text-sm placeholder:text-gray-500 focus:border-gray-600 focus:bg-gray-800 transition-all"
-                placeholder="Enter SQL command..."
+                className="flex-1 bg-transparent border-none outline-none text-white font-mono text-sm placeholder:text-gray-600"
+                placeholder="enter SQL command"
                 autoComplete="off"
                 spellCheck={false}
               />

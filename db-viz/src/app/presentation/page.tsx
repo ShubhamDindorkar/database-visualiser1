@@ -25,8 +25,6 @@ import {
   onSnapshot,
   query,
   where,
-  updateDoc,
-  Timestamp,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -36,6 +34,7 @@ import RelationshipEdge from '@/components/database/RelationshipEdge';
 
 // Hooks and Types
 import { useAuth } from '@/hooks/useAuth';
+import { useWorkflowLayouts } from '@/hooks/useWorkflowLayouts';
 import {
   Database as DatabaseType,
   Table as TableType,
@@ -80,6 +79,16 @@ function PresentationContent() {
   // React Flow state
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
+
+  // Workflow layouts for position persistence
+  const {
+    layouts: workflowLayouts,
+    updateTablePosition: saveTablePosition,
+    isLoading: layoutsLoading,
+  } = useWorkflowLayouts({
+    userId: user?.uid,
+    databaseId: databaseId,
+  });
 
   // Transition animation
   useEffect(() => {
@@ -205,23 +214,18 @@ function PresentationContent() {
     async (changes: NodeChange[]) => {
       setNodes((nds) => applyNodeChanges(changes, nds));
 
+      // Save position to workflow_layouts when drag ends
       for (const change of changes) {
         if (change.type === 'position' && change.position && !change.dragging) {
           const tableId = change.id;
           const newPosition = change.position;
 
-          try {
-            await updateDoc(doc(db, 'tables', tableId), {
-              position: newPosition,
-              updatedAt: Timestamp.now(),
-            });
-          } catch (error) {
-            console.error('Error updating table position:', error);
-          }
+          // Save to dedicated workflow_layouts collection (debounced)
+          saveTablePosition(tableId, newPosition);
         }
       }
     },
-    [setNodes]
+    [setNodes, saveTablePosition]
   );
 
   // Handle view data from table node
@@ -263,21 +267,30 @@ function PresentationContent() {
     // No-op in presentation mode
   }, []);
 
-  // Convert tables to React Flow nodes
+  // Convert tables to React Flow nodes with persisted layout positions
   useEffect(() => {
-    const newNodes: Node[] = tables.map((table) => ({
-      id: table.id,
-      type: 'tableNode',
-      position: table.position,
-      data: {
-        table: { ...table, columns: [...table.columns] },
-        onDelete: handleDeleteTable,
-        onViewData: handleViewData,
-        isSelected: false,
-      },
-    }));
+    // Wait for layouts to load before rendering nodes with positions
+    if (layoutsLoading) return;
+
+    const newNodes: Node[] = tables.map((table) => {
+      // Use saved layout position if available, otherwise use table's default position
+      const savedPosition = workflowLayouts[table.id];
+      const position = savedPosition || table.position;
+
+      return {
+        id: table.id,
+        type: 'tableNode',
+        position,
+        data: {
+          table: { ...table, columns: [...table.columns] },
+          onDelete: handleDeleteTable,
+          onViewData: handleViewData,
+          isSelected: false,
+        },
+      };
+    });
     setNodes(newNodes);
-  }, [tables, handleViewData, handleDeleteTable, setNodes]);
+  }, [tables, handleViewData, handleDeleteTable, setNodes, workflowLayouts, layoutsLoading]);
 
   // Back to dashboard
   const handleBack = () => {

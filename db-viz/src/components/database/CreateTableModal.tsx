@@ -313,10 +313,10 @@ export default function CreateTableModal({
                     <Table className={`w-5 h-5 ${theme?.text || 'text-gray-800'}`} />
                   </div>
                   <div>
-                    <h2 className={`text-lg font-semibold ${theme?.text || 'text-black'}`}>
+                    <h2 className={`text-lg font-light ${theme?.text || 'text-black'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
                       Create Table
                     </h2>
-                    <p className={`text-sm ${theme?.textSecondary || 'text-gray-600'}`}>
+                    <p className={`text-sm font-light ${theme?.textSecondary || 'text-gray-600'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
                       in {databaseName}
                     </p>
                   </div>
@@ -347,7 +347,7 @@ export default function CreateTableModal({
 
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <label className={`block text-sm font-medium ${theme?.text || 'text-gray-800'}`}>
+                    <label className={`block text-sm font-light ${theme?.text || 'text-gray-800'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
                       Columns
                     </label>
                     <Button

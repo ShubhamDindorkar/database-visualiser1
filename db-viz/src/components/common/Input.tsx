@@ -27,7 +27,8 @@ export default function Input({
       {label && (
         <label
           htmlFor={inputId}
-          className="block text-sm font-medium text-gray-700 mb-1.5"
+          className="block text-sm font-light text-gray-700 mb-1.5"
+          style={{ fontFamily: 'var(--font-geist-sans)' }}
         >
           {label}
         </label>
@@ -43,7 +44,7 @@ export default function Input({
           className={`
             w-full px-4 py-2.5 rounded-xl transition-all duration-200
             bg-white border border-gray-300
-            text-gray-900
+            text-gray-900 font-light
             placeholder:text-gray-400
             focus:ring-2 focus:ring-gray-500 focus:border-gray-500
             disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-50
@@ -52,6 +53,7 @@ export default function Input({
             ${error ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : ''}
             ${className}
           `}
+          style={{ fontFamily: 'var(--font-geist-sans)' }}
           {...props}
         />
         {rightIcon && (
@@ -61,7 +63,7 @@ export default function Input({
         )}
       </div>
       {error && (
-        <p className="mt-1.5 text-sm text-red-500 flex items-center gap-1">
+        <p className="mt-1.5 text-sm font-light text-red-500 flex items-center gap-1" style={{ fontFamily: 'var(--font-geist-sans)' }}>
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
@@ -69,7 +71,7 @@ export default function Input({
         </p>
       )}
       {helperText && !error && (
-        <p className="mt-1.5 text-sm text-gray-500">{helperText}</p>
+        <p className="mt-1.5 text-sm font-light text-gray-500" style={{ fontFamily: 'var(--font-geist-sans)' }}>{helperText}</p>
       )}
     </div>
   );

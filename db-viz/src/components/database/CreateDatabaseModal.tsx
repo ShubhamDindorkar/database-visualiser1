@@ -114,10 +114,10 @@ export default function CreateDatabaseModal({
                     <Database className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h2 className={`text-lg font-semibold ${theme?.text || 'text-gray-900'}`}>
+                    <h2 className={`text-lg font-light ${theme?.text || 'text-gray-900'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
                       Create Database
                     </h2>
-                    <p className={`text-sm ${theme?.textSecondary || 'text-gray-500'}`}>
+                    <p className={`text-sm font-light ${theme?.textSecondary || 'text-gray-500'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
                       Create a new MySQL database
                     </p>
                   </div>
@@ -184,7 +184,7 @@ export default function CreateDatabaseModal({
                 {/* Info Box */}
                 <div className={`flex items-start gap-3 p-4 ${theme?.buttonSecondary || 'bg-blue-50 border-blue-200'} border rounded-xl`}>
                   <AlertCircle className={`w-5 h-5 ${theme?.button?.includes('blue') ? 'text-blue-600' : theme?.text || 'text-blue-600'} mt-0.5 flex-shrink-0`} />
-                  <p className={`text-sm ${theme?.text || 'text-gray-700'}`}>
+                  <p className={`text-sm font-light ${theme?.text || 'text-gray-700'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
                     The password will be securely hashed and stored. Make sure to remember it for future access.
                   </p>
                 </div>
