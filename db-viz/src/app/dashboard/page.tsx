@@ -39,7 +39,7 @@ import { db } from '@/lib/firebase';
 import Navbar from '@/components/layout/Navbar';
 import Sidebar from '@/components/layout/Sidebar';
 import Terminal from '@/components/layout/Terminal';
-import Settings from '@/components/layout/Settings';
+
 import CreateDatabaseModal from '@/components/database/CreateDatabaseModal';
 import CreateTableModal from '@/components/database/CreateTableModal';
 import EditTableModal from '@/components/database/EditTableModal';
@@ -115,7 +115,7 @@ export default function DashboardPage() {
   const [currentTheme, setCurrentTheme] = useState<string>('light');
 
   // UI State
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
   const [isTerminalMinimized, setIsTerminalMinimized] = useState(false);
   const [isCreateChoiceModalOpen, setIsCreateChoiceModalOpen] = useState(false);
   const [isCreateDbModalOpen, setIsCreateDbModalOpen] = useState(false);
@@ -1609,7 +1609,7 @@ export default function DashboardPage() {
           onQuickSQL={handleQuickSQL}
           onEditTable={handleEditTable}
           onManageForeignKeys={() => setIsForeignKeyModalOpen(true)}
-          onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenSettings={() => router.push('/settings')}
           onViewProfile={() => router.push('/profile')}
           onTerminalMode={() => {
             if (selectedDatabaseId) {
@@ -1811,16 +1811,7 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
-      {/* Settings Panel */}
-      <Settings
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        user={user}
-        onLogout={handleLogout}
-        onViewPricing={() => router.push('/pricing')}
-        currentTheme={currentTheme}
-        onThemeChange={handleThemeChange}
-      />
+
 
       {/* Create Choice Modal */}
       <CreateChoiceModal
