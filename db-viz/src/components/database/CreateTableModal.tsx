@@ -29,6 +29,7 @@ interface ColumnFormData {
   foreignKeyColumnId: string;
   isNotNull: boolean;
   isUnique: boolean;
+  isAutoIncrement: boolean;
 }
 
 interface RowValues {
@@ -57,6 +58,7 @@ export default function CreateTableModal({
       foreignKeyColumnId: '',
       isNotNull: false,
       isUnique: false,
+      isAutoIncrement: false,
     },
   ]);
   const [wantsToAddData, setWantsToAddData] = useState(false);
@@ -133,6 +135,7 @@ export default function CreateTableModal({
         foreignKeyColumnId: '',
         isNotNull: false,
         isUnique: false,
+        isAutoIncrement: false,
       },
     ]);
   };
@@ -155,6 +158,8 @@ export default function CreateTableModal({
         isPrimaryKey: c.id === id ? !c.isPrimaryKey : false,
         isNotNull: c.id === id && !c.isPrimaryKey ? true : c.isNotNull,
         isUnique: c.id === id && !c.isPrimaryKey ? true : c.isUnique,
+        // Auto-enable auto increment for INT primary keys
+        isAutoIncrement: c.id === id && !c.isPrimaryKey && ['INT', 'BIGINT', 'SMALLINT', 'TINYINT'].includes(c.dataType) ? true : c.isAutoIncrement,
       }))
     );
   };
@@ -212,13 +217,14 @@ export default function CreateTableModal({
           isForeignKey: col.isForeignKey,
           isNotNull: col.isNotNull,
           isUnique: col.isUnique,
+          isAutoIncrement: col.isAutoIncrement,
         };
 
         // Only add foreignKeyReference if it's a foreign key with valid references
         if (col.isForeignKey && col.foreignKeyTableId && col.foreignKeyColumnId) {
           const refTable = existingTables.find((t) => t.id === col.foreignKeyTableId);
           const refColumn = refTable?.columns.find((c) => c.id === col.foreignKeyColumnId);
-          
+
           if (refTable && refColumn) {
             column.foreignKeyReference = {
               tableId: col.foreignKeyTableId,
@@ -233,14 +239,14 @@ export default function CreateTableModal({
       });
 
       await onCreate(tableName, formattedColumns);
-      
+
       // Insert data if user wants to add data
       if (wantsToAddData && rows.length > 0 && onInsertData && mysqlDatabaseName) {
         // Get primary key columns (they should be auto-increment and not included unless explicitly provided)
         const primaryKeyColumns = columns
           .filter(col => col.isPrimaryKey && col.name)
           .map(col => col.name);
-        
+
         for (const rowValues of rows) {
           // Filter out empty primary key values (let them auto-increment)
           const filteredValues = { ...rowValues };
@@ -249,7 +255,7 @@ export default function CreateTableModal({
               delete filteredValues[pkCol];
             }
           });
-          
+
           // Only insert if at least one value is provided
           const hasValues = Object.values(filteredValues).some((v) => v !== '');
           if (hasValues) {
@@ -257,7 +263,7 @@ export default function CreateTableModal({
           }
         }
       }
-      
+
       handleClose();
     } catch (error) {
       console.error('Error creating table:', error);
@@ -279,6 +285,7 @@ export default function CreateTableModal({
         foreignKeyColumnId: '',
         isNotNull: false,
         isUnique: false,
+        isAutoIncrement: false,
       },
     ]);
     setWantsToAddData(false);
@@ -482,6 +489,23 @@ export default function CreateTableModal({
                           >
                             UNIQUE
                           </motion.button>
+
+                          {/* Auto Increment - only for numeric types */}
+                          {['INT', 'BIGINT', 'SMALLINT', 'TINYINT'].includes(column.dataType) && (
+                            <motion.button
+                              type="button"
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => updateColumn(column.id, { isAutoIncrement: !column.isAutoIncrement })}
+                              className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors
+                                ${column.isAutoIncrement
+                                  ? 'bg-purple-100 text-purple-700 border border-purple-300'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }
+                              `}
+                            >
+                              AI
+                            </motion.button>
+                          )}
                         </div>
 
                         {/* Foreign Key Reference */}

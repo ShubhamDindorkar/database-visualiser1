@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import {
   Database,
   Table,
@@ -17,14 +18,21 @@ import {
   XCircle,
   Link,
   Unlink,
+  Settings,
+  LogOut,
+  User,
+  Terminal,
+  Presentation,
 } from 'lucide-react';
-import { Database as DatabaseType, Table as TableType } from '@/types/database';
+import { Database as DatabaseType, Table as TableType, User as UserType } from '@/types/database';
 
 interface SidebarProps {
   databases: DatabaseType[];
   tables: TableType[];
+  allTables: TableType[]; // All tables for counting across all databases
   selectedDatabaseId: string | null;
   selectedTableId: string | null;
+  user: UserType | null;
   onSelectDatabase: (databaseId: string) => void;
   onSelectTable: (tableId: string) => void;
   onCreateDatabase: () => void;
@@ -34,14 +42,22 @@ interface SidebarProps {
   onQuickSQL: (type: 'CREATE' | 'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE' | 'DROP') => void;
   onEditTable: (tableId: string) => void;
   onManageForeignKeys: () => void;
+  onOpenSettings: () => void;
+  onViewProfile: () => void;
+  onTerminalMode: () => void;
+  onPresentationMode: () => void;
+  showModeButtons: boolean;
+  onLogout: () => void;
   theme?: any;
 }
 
 export default function Sidebar({
   databases,
   tables,
+  allTables,
   selectedDatabaseId,
   selectedTableId,
+  user,
   onSelectDatabase,
   onSelectTable,
   onCreateDatabase,
@@ -51,6 +67,12 @@ export default function Sidebar({
   onQuickSQL,
   onEditTable,
   onManageForeignKeys,
+  onOpenSettings,
+  onViewProfile,
+  onTerminalMode,
+  onPresentationMode,
+  showModeButtons,
+  onLogout,
   theme,
 }: SidebarProps) {
   const [expandedDatabases, setExpandedDatabases] = useState<Set<string>>(new Set());
@@ -67,14 +89,14 @@ export default function Sidebar({
     });
   };
 
-  // Memoize table counts to prevent recalculation on every render
+  // Memoize table counts using allTables (all tables across all databases)
   const tableCountsByDatabase = useMemo(() => {
     const counts: Record<string, number> = {};
     databases.forEach((db) => {
-      counts[db.id] = tables.filter((t) => t.databaseId === db.id).length;
+      counts[db.id] = allTables.filter((t) => t.databaseId === db.id).length;
     });
     return counts;
-  }, [databases, tables]);
+  }, [databases, allTables]);
 
   const getTablesForDatabase = (databaseId: string) => {
     return tables.filter((t) => t.databaseId === databaseId);
@@ -94,7 +116,7 @@ export default function Sidebar({
       initial={{ x: -20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.4, delay: 0.05 }}
-      className={`w-72 ${theme?.sidebar || 'bg-white/95 border-gray-200'} border-r flex flex-col h-full backdrop-blur-xl shadow-lg shadow-gray-200/10`}
+      className={`w-60 ${theme?.sidebar || 'bg-white/95 border-gray-200'} border-r flex flex-col h-full backdrop-blur-xl shadow-lg shadow-gray-200/10`}
     >
       {/* Header */}
       <div className={`p-4 border-b ${theme?.navbar?.includes('slate') ? 'border-slate-700 bg-slate-800' : 'border-gray-200/80 bg-gray-50/80'}`}>
@@ -115,7 +137,7 @@ export default function Sidebar({
 
         {/* Quick SQL Buttons */}
         <div className="grid grid-cols-3 gap-1.5 mb-3">
-          {sqlButtons.map(({ type, color, icon: Icon }, index) => (
+          {sqlButtons.map(({ type, color }, index) => (
             <motion.button
               key={type}
               initial={{ opacity: 0 }}
@@ -124,11 +146,10 @@ export default function Sidebar({
               whileHover={{ scale: 1.02, y: -1 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => onQuickSQL(type)}
-              className={`${color} text-white text-xs py-2 px-1.5 rounded-md flex items-center justify-center gap-1 transition-colors`}
+              className={`${color} text-white text-xs py-2 px-1.5 rounded-md flex items-center justify-center transition-colors`}
               style={{ fontFamily: 'var(--font-geist-sans)' }}
               title={type}
             >
-              <Icon className="w-3 h-3" />
               <span>{type}</span>
             </motion.button>
           ))}
@@ -159,7 +180,7 @@ export default function Sidebar({
       {/* Database List */}
       <div className="flex-1 overflow-y-auto p-3">
         {databases.length === 0 ? (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="text-center py-8"
@@ -308,6 +329,71 @@ export default function Sidebar({
                 </div>
               );
             })}
+          </div>
+        )}
+      </div>
+
+      {/* Bottom Section - Mode Buttons, Settings and Profile */}
+      <div className={`mt-auto border-t ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200/80'}`}>
+        {/* Terminal Mode Button */}
+        {showModeButtons && (
+          <button
+            onClick={onTerminalMode}
+            className={`w-full flex items-center gap-3 px-4 py-3 ${theme?.navbar?.includes('slate') ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-gray-50 text-gray-700'} transition-colors text-sm`}
+            style={{ fontFamily: 'var(--font-geist-sans)' }}
+          >
+            <Terminal className="w-4 h-4" />
+            <span>Terminal Mode</span>
+          </button>
+        )}
+
+        {/* Presentation Mode Button */}
+        {showModeButtons && (
+          <button
+            onClick={onPresentationMode}
+            className={`w-full flex items-center gap-3 px-4 py-3 ${theme?.navbar?.includes('slate') ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-gray-50 text-gray-700'} transition-colors text-sm`}
+            style={{ fontFamily: 'var(--font-geist-sans)' }}
+          >
+            <Presentation className="w-4 h-4" />
+            <span>Presentation Mode</span>
+          </button>
+        )}
+
+        {/* Settings Button */}
+        <button
+          onClick={onOpenSettings}
+          className={`w-full flex items-center gap-3 px-4 py-3 ${theme?.navbar?.includes('slate') ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-gray-50 text-gray-700'} transition-colors text-sm`}
+          style={{ fontFamily: 'var(--font-geist-sans)' }}
+        >
+          <Settings className="w-4 h-4" />
+          <span>Settings</span>
+        </button>
+
+        {/* User Profile - clickable to go to profile page */}
+        {user && (
+          <div className={`border-t ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200/80'}`}>
+            <button
+              onClick={onViewProfile}
+              className={`w-full flex items-center gap-3 px-4 py-3 ${theme?.navbar?.includes('slate') ? 'hover:bg-slate-800' : 'hover:bg-gray-50'} transition-colors`}
+            >
+              {user.photoURL ? (
+                <Image
+                  src={user.photoURL}
+                  alt={user.displayName || 'User'}
+                  width={32}
+                  height={32}
+                  className="w-8 h-8 rounded-full"
+                />
+              ) : (
+                <div className={`w-8 h-8 rounded-full ${theme?.button || 'bg-gray-900'} flex items-center justify-center`}>
+                  <User className="w-4 h-4 text-white" />
+                </div>
+              )}
+              <span className={`text-sm truncate flex-1 text-left ${theme?.text || 'text-gray-900'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                {user.displayName || user.email?.split('@')[0] || 'User'}
+              </span>
+              <ChevronRight className={`w-4 h-4 ${theme?.textSecondary || 'text-gray-400'}`} />
+            </button>
           </div>
         )}
       </div>

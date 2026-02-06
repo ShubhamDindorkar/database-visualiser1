@@ -54,6 +54,7 @@ import RelationshipEdge from '@/components/database/RelationshipEdge';
 import QueryResultsPanel from '@/components/database/QueryResultsPanel';
 import ForeignKeyModal from '@/components/database/ForeignKeyModal';
 import ExportModal from '@/components/database/ExportModal';
+import SQLChatbot from '@/components/chatbot/SQLChatbot';
 
 // Hooks and Types
 import { useAuth } from '@/hooks/useAuth';
@@ -106,7 +107,7 @@ const THEMES = {
 export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading, logout } = useAuth();
-  
+
   // Track intentional logout to prevent redirect to login
   const isLoggingOut = useRef(false);
 
@@ -136,6 +137,7 @@ export default function DashboardPage() {
   // Data State
   const [databases, setDatabases] = useState<DatabaseType[]>([]);
   const [tables, setTables] = useState<TableType[]>([]);
+  const [allTables, setAllTables] = useState<TableType[]>([]); // All tables for sidebar counts
   const [selectedDatabaseId, setSelectedDatabaseId] = useState<string | null>(null);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [terminalLogs, setTerminalLogs] = useState<TerminalLog[]>([]);
@@ -202,7 +204,7 @@ export default function DashboardPage() {
         });
       });
       setDatabases(dbs);
-      
+
       // Auto-select first database if no database is selected and databases exist
       setSelectedDatabaseId((current) => {
         if (!current && dbs.length > 0) {
@@ -215,7 +217,54 @@ export default function DashboardPage() {
     return () => unsubscribe();
   }, [user]);
 
-  // Firebase: Subscribe to tables for selected database
+  // Firebase: Subscribe to ALL tables for the user (for sidebar counts)
+  useEffect(() => {
+    if (!user) {
+      setAllTables([]);
+      return;
+    }
+
+    // Get all database IDs for this user
+    const dbIds = databases.map((d) => d.id);
+    if (dbIds.length === 0) {
+      setAllTables([]);
+      return;
+    }
+
+    // Subscribe to all tables for all user databases
+    const unsubscribes: (() => void)[] = [];
+    const tablesByDb: Record<string, TableType[]> = {};
+
+    dbIds.forEach((dbId) => {
+      const q = query(collection(db, 'tables'), where('databaseId', '==', dbId));
+      const unsub = onSnapshot(q, (snapshot) => {
+        const tbls: TableType[] = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          tbls.push({
+            id: doc.id,
+            name: data.name,
+            databaseId: data.databaseId,
+            columns: data.columns || [],
+            position: data.position || { x: 100, y: 100 },
+            createdAt: data.createdAt?.toDate() || new Date(),
+            updatedAt: data.updatedAt?.toDate() || new Date(),
+          });
+        });
+        tablesByDb[dbId] = tbls;
+        // Combine all tables from all databases
+        const allTablesArray = Object.values(tablesByDb).flat();
+        setAllTables(allTablesArray);
+      });
+      unsubscribes.push(unsub);
+    });
+
+    return () => {
+      unsubscribes.forEach((unsub) => unsub());
+    };
+  }, [user, databases]);
+
+  // Firebase: Subscribe to tables for selected database (for workflow canvas)
   useEffect(() => {
     if (!selectedDatabaseId) {
       setTables([]);
@@ -246,7 +295,7 @@ export default function DashboardPage() {
   // Convert foreign key relationships to edges
   useEffect(() => {
     const newEdges: Edge[] = [];
-    
+
     tables.forEach((table) => {
       table.columns.forEach((column) => {
         if (column.isForeignKey && column.foreignKeyReference) {
@@ -362,11 +411,11 @@ export default function DashboardPage() {
   const handleDeleteDatabase = useCallback(
     async (databaseId: string) => {
       if (!user) return;
-      
+
       try {
         const dbToDelete = databases.find((d) => d.id === databaseId);
         const dbName = dbToDelete?.name;
-        
+
         if (dbName) {
           // First, drop the database in MySQL with user isolation
           const mysqlResponse = await fetch('/api/database/drop', {
@@ -389,7 +438,7 @@ export default function DashboardPage() {
         }
 
         await deleteDoc(doc(db, 'databases', databaseId));
-        
+
         if (selectedDatabaseId === databaseId) {
           setSelectedDatabaseId(null);
         }
@@ -411,7 +460,7 @@ export default function DashboardPage() {
       try {
         const selectedDatabase = databases.find((d) => d.id === selectedDatabaseId);
         const databaseName = selectedDatabase?.mysqlName || selectedDatabase?.name;
-        
+
         if (!databaseName) {
           addLog('error', 'No database selected');
           return;
@@ -428,7 +477,7 @@ export default function DashboardPage() {
           }),
         });
         const checkResult = await checkResponse.json();
-        
+
         if (checkResult.success && checkResult.results && checkResult.results.length > 0) {
           addLog('error', `Table '${name}' already exists in MySQL. Use DROP TABLE \`${name}\` to remove it first.`);
           return;
@@ -441,6 +490,7 @@ export default function DashboardPage() {
           isPrimaryKey: col.isPrimaryKey,
           isNotNull: col.isNotNull,
           isUnique: col.isUnique,
+          isAutoIncrement: col.isAutoIncrement,
           defaultValue: col.defaultValue,
           isForeignKey: col.isForeignKey,
           foreignKeyReference: col.foreignKeyReference ? {
@@ -467,7 +517,7 @@ export default function DashboardPage() {
 
         // If MySQL creation successful, save to Firebase
         const tableId = uuidv4();
-        
+
         // Calculate position for new table
         const existingTables = tables.filter((t) => t.databaseId === selectedDatabaseId);
         const xOffset = (existingTables.length % 3) * 350;
@@ -533,7 +583,7 @@ export default function DashboardPage() {
         }
 
         await deleteDoc(doc(db, 'tables', tableId));
-        
+
         if (selectedTableId === tableId) {
           setSelectedTableId(null);
         }
@@ -565,27 +615,27 @@ export default function DashboardPage() {
           addLog('error', 'Table not found');
           return;
         }
-        
+
         const tableName = table.name;
         const selectedDatabase = databases.find((d) => d.id === table.databaseId);
         const databaseName = selectedDatabase?.mysqlName || selectedDatabase?.name;
-        
+
         if (!databaseName) {
           addLog('error', 'Database not found');
           return;
         }
-        
+
         // Get the old columns to compare
         const oldColumns = table.columns;
         const oldColumnNames = new Set(oldColumns.map((c) => c.name));
         const newColumnNames = new Set(columns.map((c) => c.name));
-        
+
         // Identify added columns
         const addedColumns = columns.filter((c) => !oldColumnNames.has(c.name));
-        
+
         // Identify removed columns
         const removedColumns = oldColumns.filter((c) => !newColumnNames.has(c.name));
-        
+
         // Identify modified columns (same name but different properties)
         const modifiedColumns = columns.filter((newCol) => {
           const oldCol = oldColumns.find((c) => c.name === newCol.name);
@@ -597,10 +647,10 @@ export default function DashboardPage() {
             oldCol.defaultValue !== newCol.defaultValue
           );
         });
-        
+
         // Execute ALTER TABLE commands for each change
         const alterCommands: string[] = [];
-        
+
         // Add new columns
         for (const col of addedColumns) {
           let colDef = `ADD COLUMN \`${col.name}\` ${col.dataType}`;
@@ -609,12 +659,12 @@ export default function DashboardPage() {
           if (col.defaultValue) colDef += ` DEFAULT '${col.defaultValue}'`;
           alterCommands.push(colDef);
         }
-        
+
         // Drop removed columns
         for (const col of removedColumns) {
           alterCommands.push(`DROP COLUMN \`${col.name}\``);
         }
-        
+
         // Modify existing columns
         for (const col of modifiedColumns) {
           let colDef = `MODIFY COLUMN \`${col.name}\` ${col.dataType}`;
@@ -623,11 +673,11 @@ export default function DashboardPage() {
           if (col.defaultValue) colDef += ` DEFAULT '${col.defaultValue}'`;
           alterCommands.push(colDef);
         }
-        
+
         // Execute all ALTER TABLE commands
         if (alterCommands.length > 0) {
           const alterQuery = `ALTER TABLE \`${tableName}\` ${alterCommands.join(', ')}`;
-          
+
           const response = await fetch('/api/query/execute', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -637,17 +687,17 @@ export default function DashboardPage() {
               userId: user?.uid,
             }),
           });
-          
+
           const result = await response.json();
-          
+
           if (!result.success) {
             addLog('error', `Failed to alter table: ${result.error}`);
             return;
           }
-          
+
           addLog('success', `Table '${tableName}' structure altered in MySQL`);
         }
-        
+
         // Update Firebase with new columns
         await updateDoc(doc(db, 'tables', tableId), {
           columns,
@@ -820,7 +870,7 @@ export default function DashboardPage() {
           body: JSON.stringify({ database, query, userId: user?.uid }),
         });
         const result = await response.json();
-        
+
         if (result.success) {
           addLog('success', `Query executed: ${query.substring(0, 50)}${query.length > 50 ? '...' : ''}`);
           if (result.formattedOutput) {
@@ -829,7 +879,7 @@ export default function DashboardPage() {
         } else {
           addLog('error', result.error || 'Query failed');
         }
-        
+
         return result;
       } catch (error) {
         const errMsg = error instanceof Error ? error.message : 'Query execution failed';
@@ -845,10 +895,10 @@ export default function DashboardPage() {
     async (tableId: string, tableName: string) => {
       const db = databases.find((d) => d.id === selectedDatabaseId);
       if (!db) return;
-      
+
       const mysqlDatabaseName = db.mysqlName || db.name;
       const query = `SELECT * FROM \`${tableName}\``;
-      
+
       const result = await executeQuery(mysqlDatabaseName, query);
       if (result.success && result.results) {
         setQueryResults({
@@ -898,14 +948,14 @@ export default function DashboardPage() {
         }
         return `'${val.replace(/'/g, "''")}'`;
       });
-      
+
       if (columns.length === 0) {
         throw new Error('At least one value is required');
       }
 
       const query = `INSERT INTO \`${table}\` (\`${columns.join('`, `')}\`) VALUES (${vals.join(', ')})`;
       const result = await executeQuery(database, query);
-      
+
       if (!result.success) {
         throw new Error(result.error);
       }
@@ -919,21 +969,21 @@ export default function DashboardPage() {
       // Find the table in Firebase
       const tableToDelete = tables.find((t) => t.name === tableName);
       const dbObject = databases.find((d) => d.name === database || d.mysqlName === database);
-      
+
       if (tableToDelete && dbObject && tableToDelete.databaseId === dbObject.id) {
         // Drop from MySQL
         const result = await executeQuery(database, `DROP TABLE \`${tableName}\``);
         if (!result.success) {
           throw new Error(result.error);
         }
-        
+
         // Delete from Firebase
         await deleteDoc(doc(db, 'tables', tableToDelete.id));
-        
+
         if (selectedTableId === tableToDelete.id) {
           setSelectedTableId(null);
         }
-        
+
         addLog('success', `Table '${tableName}' dropped successfully`);
       } else {
         throw new Error('Table not found');
@@ -962,7 +1012,7 @@ export default function DashboardPage() {
         addLog('info', '  CREATE TABLE ...  - Create a new table');
         addLog('info', '  DROP TABLE ...    - Drop a table');
         addLog('info', '  CLEAR             - Clear terminal');
-        
+
         // Show in workflow area
         const helpData = [
           { Command: 'SHOW DATABASES', Description: 'List all databases' },
@@ -992,21 +1042,21 @@ export default function DashboardPage() {
       // Handle SHOW DATABASES - fetch from MySQL with user filter
       if (upperCommand === 'SHOW DATABASES' || upperCommand === 'SHOW DATABASES;') {
         addLog('info', 'Executing: SHOW DATABASES');
-        
+
         try {
           const response = await fetch(`/api/database/list?userId=${user?.uid}`);
           const result = await response.json();
-          
+
           if (result.success && result.databases) {
             const mysqlDatabases = result.databases;
-            
+
             if (mysqlDatabases.length === 0) {
               addLog('info', '+--------------------+');
               addLog('info', '| Database           |');
               addLog('info', '+--------------------+');
               addLog('info', '+--------------------+');
               addLog('info', 'No databases found');
-              
+
               setQueryResults({
                 results: [],
                 query: 'SHOW DATABASES',
@@ -1020,7 +1070,7 @@ export default function DashboardPage() {
               });
               addLog('info', '+--------------------+');
               addLog('info', `${mysqlDatabases.length} row${mysqlDatabases.length !== 1 ? 's' : ''} in set`);
-              
+
               // Show in workflow area
               const dbData = mysqlDatabases.map((db: { name: string }) => ({ Database: db.name }));
               setQueryResults({
@@ -1044,12 +1094,12 @@ export default function DashboardPage() {
           addLog('error', 'No database selected. Use "USE <database>" first.');
           return;
         }
-        
+
         const selectedDatabase = databases.find((d) => d.id === selectedDatabaseId);
         const currentTables = tables.filter((t) => t.databaseId === selectedDatabaseId);
-        
+
         addLog('info', `Executing: SHOW TABLES from ${selectedDatabase?.name}`);
-        
+
         if (currentTables.length === 0) {
           addLog('info', 'No tables found in database');
           setQueryResults({
@@ -1065,7 +1115,7 @@ export default function DashboardPage() {
           });
           addLog('info', '+--------------------+');
           addLog('info', `${currentTables.length} row${currentTables.length !== 1 ? 's' : ''} in set`);
-          
+
           // Show in workflow area
           const tableData = currentTables.map((t) => ({
             [`Tables_in_${selectedDatabase?.name}`]: t.name,
@@ -1122,7 +1172,7 @@ export default function DashboardPage() {
           } else {
             addLog('success', 'Query executed successfully');
           }
-          
+
           // If it's a SELECT query and has results, also show in panel
           if (upperCommand.startsWith('SELECT') && result.results && Array.isArray(result.results) && result.results.length > 0) {
             setQueryResults({
@@ -1130,7 +1180,7 @@ export default function DashboardPage() {
               query: trimmedCommand,
             });
           }
-          
+
           // If it's a DESCRIBE query and has results, also show in panel
           if ((upperCommand.startsWith('DESCRIBE') || upperCommand.startsWith('DESC ')) && result.results && Array.isArray(result.results) && result.results.length > 0) {
             setQueryResults({
@@ -1145,7 +1195,7 @@ export default function DashboardPage() {
             const match = trimmedCommand.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`"]?(\w+)[`"]?/i);
             if (match && match[1]) {
               const tableName = match[1];
-              
+
               // Fetch table structure from MySQL
               try {
                 const describeResponse = await fetch('/api/query/execute', {
@@ -1158,7 +1208,7 @@ export default function DashboardPage() {
                   }),
                 });
                 const describeResult = await describeResponse.json();
-                
+
                 if (describeResult.success && Array.isArray(describeResult.results)) {
                   // Get foreign key information from INFORMATION_SCHEMA
                   const fkResponse = await fetch('/api/query/execute', {
@@ -1180,7 +1230,7 @@ export default function DashboardPage() {
                   });
                   const fkResult = await fkResponse.json();
                   const foreignKeys = fkResult.success && Array.isArray(fkResult.results) ? fkResult.results : [];
-                  
+
                   // Create a map of column name -> foreign key reference
                   const fkMap = new Map<string, { tableName: string; columnName: string }>();
                   foreignKeys.forEach((fk: any) => {
@@ -1189,7 +1239,7 @@ export default function DashboardPage() {
                       columnName: fk.REFERENCED_COLUMN_NAME,
                     });
                   });
-                  
+
                   // Convert MySQL column info to our Column format
                   const columns = describeResult.results.map((col: any) => {
                     const column: Column = {
@@ -1202,21 +1252,21 @@ export default function DashboardPage() {
                       defaultValue: col.Default,
                       isForeignKey: col.Key === 'MUL' || fkMap.has(col.Field),
                     };
-                    
+
                     // Add foreign key reference if exists
                     const fkRef = fkMap.get(col.Field);
                     if (fkRef) {
                       // Find the referenced table in our tables array
-                      const referencedTable = tables.find((t) => 
+                      const referencedTable = tables.find((t) =>
                         t.name === fkRef.tableName && t.databaseId === selectedDatabaseId
                       );
-                      
+
                       if (referencedTable) {
                         // Find the referenced column in that table
-                        const referencedColumn = referencedTable.columns.find((c) => 
+                        const referencedColumn = referencedTable.columns.find((c) =>
                           c.name === fkRef.columnName
                         );
-                        
+
                         if (referencedColumn) {
                           column.foreignKeyReference = {
                             tableId: referencedTable.id,
@@ -1227,7 +1277,7 @@ export default function DashboardPage() {
                         }
                       }
                     }
-                    
+
                     return column;
                   });
 
@@ -1245,9 +1295,9 @@ export default function DashboardPage() {
                     createdAt: Timestamp.now(),
                     updatedAt: Timestamp.now(),
                   });
-                  
+
                   addLog('info', `Table '${tableName}' added to workflow`);
-                  
+
                   // Log foreign key relationships
                   columns.forEach((col: Column) => {
                     if (col.isForeignKey && col.foreignKeyReference) {
@@ -1264,11 +1314,11 @@ export default function DashboardPage() {
             const match = trimmedCommand.match(/ALTER\s+TABLE\s+[`"]?(\w+)[`"]?/i);
             if (match && match[1] && selectedDatabaseId) {
               const tableName = match[1];
-              const tableToUpdate = tables.find((t) => 
-                t.name.toLowerCase() === tableName.toLowerCase() && 
+              const tableToUpdate = tables.find((t) =>
+                t.name.toLowerCase() === tableName.toLowerCase() &&
                 t.databaseId === selectedDatabaseId
               );
-              
+
               if (tableToUpdate) {
                 // Fetch updated table structure from MySQL
                 try {
@@ -1282,7 +1332,7 @@ export default function DashboardPage() {
                     }),
                   });
                   const describeResult = await describeResponse.json();
-                  
+
                   if (describeResult.success && Array.isArray(describeResult.results)) {
                     // Get foreign key information from INFORMATION_SCHEMA
                     const fkResponse = await fetch('/api/query/execute', {
@@ -1304,7 +1354,7 @@ export default function DashboardPage() {
                     });
                     const fkResult = await fkResponse.json();
                     const foreignKeys = fkResult.success && Array.isArray(fkResult.results) ? fkResult.results : [];
-                    
+
                     // Create a map of column name -> foreign key reference
                     const fkMap = new Map<string, { tableName: string; columnName: string }>();
                     foreignKeys.forEach((fk: any) => {
@@ -1313,7 +1363,7 @@ export default function DashboardPage() {
                         columnName: fk.REFERENCED_COLUMN_NAME,
                       });
                     });
-                    
+
                     // Convert MySQL column info to our Column format
                     const updatedColumns = describeResult.results.map((col: any) => {
                       const column: Column = {
@@ -1326,21 +1376,21 @@ export default function DashboardPage() {
                         defaultValue: col.Default,
                         isForeignKey: col.Key === 'MUL' || fkMap.has(col.Field),
                       };
-                      
+
                       // Add foreign key reference if exists
                       const fkRef = fkMap.get(col.Field);
                       if (fkRef) {
                         // Find the referenced table in our tables array
-                        const referencedTable = tables.find((t) => 
+                        const referencedTable = tables.find((t) =>
                           t.name === fkRef.tableName && t.databaseId === selectedDatabaseId
                         );
-                        
+
                         if (referencedTable) {
                           // Find the referenced column in that table
-                          const referencedColumn = referencedTable.columns.find((c) => 
+                          const referencedColumn = referencedTable.columns.find((c) =>
                             c.name === fkRef.columnName
                           );
-                          
+
                           if (referencedColumn) {
                             column.foreignKeyReference = {
                               tableId: referencedTable.id,
@@ -1351,7 +1401,7 @@ export default function DashboardPage() {
                           }
                         }
                       }
-                      
+
                       return column;
                     });
 
@@ -1360,9 +1410,9 @@ export default function DashboardPage() {
                       columns: updatedColumns,
                       updatedAt: Timestamp.now(),
                     });
-                    
+
                     addLog('info', `Table '${tableName}' structure updated in workflow`);
-                    
+
                     // Log foreign key relationships
                     updatedColumns.forEach((col: Column) => {
                       if (col.isForeignKey && col.foreignKeyReference) {
@@ -1380,13 +1430,13 @@ export default function DashboardPage() {
             const match = trimmedCommand.match(/DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?[`"]?(\w+)[`"]?/i);
             if (match && match[1]) {
               const tableName = match[1];
-              
+
               // Find table with case-insensitive matching
-              const tableToDelete = tables.find((t) => 
-                t.name.toLowerCase() === tableName.toLowerCase() && 
+              const tableToDelete = tables.find((t) =>
+                t.name.toLowerCase() === tableName.toLowerCase() &&
                 t.databaseId === selectedDatabaseId
               );
-              
+
               if (tableToDelete) {
                 // Delete from Firebase
                 try {
@@ -1402,7 +1452,7 @@ export default function DashboardPage() {
               } else {
                 addLog('info', `Table '${tableName}' not found in workflow (dropped from MySQL only)`);
               }
-              
+
               // Small delay to ensure MySQL has committed the DROP
               await new Promise(resolve => setTimeout(resolve, 200));
             }
@@ -1412,21 +1462,21 @@ export default function DashboardPage() {
             if (match && match[1]) {
               const dbName = match[1];
               const dbToDelete = databases.find((d) => d.name.toLowerCase() === dbName.toLowerCase());
-              
+
               if (dbToDelete) {
                 // Delete all tables in the database from Firebase
                 const tablesToDelete = tables.filter((t) => t.databaseId === dbToDelete.id);
                 for (const table of tablesToDelete) {
                   await deleteDoc(doc(db, 'tables', table.id));
                 }
-                
+
                 // Delete database from Firebase
                 await deleteDoc(doc(db, 'databases', dbToDelete.id));
-                
+
                 if (selectedDatabaseId === dbToDelete.id) {
                   setSelectedDatabaseId(null);
                 }
-                
+
                 addLog('info', `Database '${dbName}' removed from workflow`);
               }
             }
@@ -1512,7 +1562,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, y: -10 }}
@@ -1521,9 +1571,6 @@ export default function DashboardPage() {
     >
       {/* Navbar */}
       <Navbar
-        user={user}
-        onLogout={handleLogout}
-        onOpenSettings={() => setIsSettingsOpen(true)}
         onPresentationMode={() => {
           if (selectedDatabaseId) {
             router.push(`/presentation?db=${selectedDatabaseId}&theme=${currentTheme}`);
@@ -1539,7 +1586,7 @@ export default function DashboardPage() {
       />
 
       {/* Main Content */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
@@ -1549,8 +1596,10 @@ export default function DashboardPage() {
         <Sidebar
           databases={databases}
           tables={tables}
+          allTables={allTables}
           selectedDatabaseId={selectedDatabaseId}
           selectedTableId={selectedTableId}
+          user={user}
           onSelectDatabase={setSelectedDatabaseId}
           onSelectTable={setSelectedTableId}
           onCreateDatabase={() => setIsCreateDbModalOpen(true)}
@@ -1560,6 +1609,20 @@ export default function DashboardPage() {
           onQuickSQL={handleQuickSQL}
           onEditTable={handleEditTable}
           onManageForeignKeys={() => setIsForeignKeyModalOpen(true)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+          onViewProfile={() => router.push('/profile')}
+          onTerminalMode={() => {
+            if (selectedDatabaseId) {
+              router.push(`/terminal-mode?db=${selectedDatabaseId}`);
+            }
+          }}
+          onPresentationMode={() => {
+            if (selectedDatabaseId) {
+              router.push(`/presentation?db=${selectedDatabaseId}&theme=${currentTheme}`);
+            }
+          }}
+          showModeButtons={!!selectedDatabaseId}
+          onLogout={handleLogout}
           theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
         />
 
@@ -1568,7 +1631,7 @@ export default function DashboardPage() {
           {/* React Flow Canvas */}
           <div className="flex-1 relative" ref={workflowRef}>
             {selectedDatabaseId ? (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
@@ -1601,61 +1664,82 @@ export default function DashboardPage() {
             ) : (
               <div className={`h-full flex items-center justify-center rounded-2xl ${THEMES[currentTheme as keyof typeof THEMES]?.bg || THEMES.light.bg}`}>
                 <motion.div
-                  initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ duration: 0.5, type: "spring", damping: 20 }}
-                  className="text-center max-w-md mx-auto px-6"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  className="text-center max-w-lg mx-auto px-8"
                 >
-                  <motion.div 
-                    initial={{ scale: 0.8, rotate: -3 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ duration: 0.5, delay: 0.1, type: "spring", damping: 15 }}
-                    className={`w-20 h-20 ${currentTheme === 'dark' ? 'bg-slate-800/90 border-slate-700/60' : 'bg-white/90 border-gray-300/60'} border-2 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg`}
+                  {/* Clean, minimal icon */}
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.35, delay: 0.05 }}
+                    className={`w-14 h-14 ${currentTheme === 'dark' ? 'bg-slate-800 border-slate-700' : 'bg-gray-100 border-gray-200'} border rounded-xl flex items-center justify-center mx-auto mb-6`}
                   >
                     <svg
-                      className={`w-10 h-10 ${THEMES[currentTheme as keyof typeof THEMES]?.textSecondary || 'text-gray-500'}`}
+                      className={`w-6 h-6 ${currentTheme === 'dark' ? 'text-slate-400' : 'text-gray-500'}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
+                      strokeWidth={1.5}
                     >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
+                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
                       />
                     </svg>
                   </motion.div>
-                  <motion.h3 
+
+                  {/* Title */}
+                  <motion.h2
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.25 }}
-                    className={`text-3xl font-normal ${THEMES[currentTheme as keyof typeof THEMES]?.text || 'text-gray-900'} mb-2 tracking-tight`}
-                    style={{ fontFamily: 'var(--font-geist-sans)', letterSpacing: '-0.02em' }}
+                    transition={{ delay: 0.1 }}
+                    className={`text-2xl font-light ${THEMES[currentTheme as keyof typeof THEMES]?.text || 'text-gray-900'} mb-3`}
+                    style={{ fontFamily: 'var(--font-geist-sans)', letterSpacing: '-0.01em' }}
                   >
-                    Let's get started
-                  </motion.h3>
-                  <motion.p 
+                    Design your database
+                  </motion.h2>
+
+                  {/* Subtitle */}
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.15 }}
+                    className={`text-sm ${THEMES[currentTheme as keyof typeof THEMES]?.textSecondary || 'text-gray-500'} mb-8 max-w-sm mx-auto leading-relaxed`}
+                    style={{ fontFamily: 'var(--font-geist-sans)' }}
+                  >
+                    Create tables, define columns, and set up relationships visually. Select a database from the sidebar or create a new one.
+                  </motion.p>
+
+                  {/* Action button */}
+                  <motion.button
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2, duration: 0.3 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setIsCreateDbModalOpen(true)}
+                    className={`inline-flex items-center gap-2 px-5 py-2.5 ${currentTheme === 'dark' ? 'bg-white text-gray-900 hover:bg-gray-100' : 'bg-gray-900 text-white hover:bg-gray-800'} rounded-lg transition-colors text-sm font-medium`}
+                    style={{ fontFamily: 'var(--font-geist-sans)' }}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    New database
+                  </motion.button>
+
+                  {/* Keyboard shortcut hint */}
+                  <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
-                    className={`text-base ${THEMES[currentTheme as keyof typeof THEMES]?.textSecondary || 'text-gray-600'} mb-7 leading-relaxed`}
+                    className={`text-xs ${currentTheme === 'dark' ? 'text-slate-500' : 'text-gray-400'} mt-4`}
                     style={{ fontFamily: 'var(--font-geist-sans)' }}
                   >
-                    Pick a database from the sidebar or create a new one to start building your schema
+                    or select from the sidebar
                   </motion.p>
-                  <motion.button
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.35 }}
-                    whileHover={{ scale: 1.03, y: -1 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => setIsCreateDbModalOpen(true)}
-                    className="px-7 py-3 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors shadow-lg font-normal text-[15px]"
-                    style={{ fontFamily: 'var(--font-geist-sans)' }}
-                  >
-                    Create your first database
-                  </motion.button>
                 </motion.div>
               </div>
             )}
@@ -1663,7 +1747,7 @@ export default function DashboardPage() {
             {/* Table count badge and Export Button */}
             <AnimatePresence>
               {selectedDatabaseId && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
@@ -1684,7 +1768,7 @@ export default function DashboardPage() {
                       {tablesForSelectedDb.length} {tablesForSelectedDb.length === 1 ? 'table' : 'tables'}
                     </p>
                   </motion.div>
-                  
+
                   {/* Export Button */}
                   <motion.button
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -1704,7 +1788,7 @@ export default function DashboardPage() {
                 </motion.div>
               )}
             </AnimatePresence>
-            
+
             {/* Query Results Panel */}
             <AnimatePresence>
               {queryResults && (
@@ -1733,6 +1817,7 @@ export default function DashboardPage() {
         onClose={() => setIsSettingsOpen(false)}
         user={user}
         onLogout={handleLogout}
+        onViewPricing={() => router.push('/pricing')}
         currentTheme={currentTheme}
         onThemeChange={handleThemeChange}
       />
@@ -1865,6 +1950,9 @@ export default function DashboardPage() {
         workflowRef={workflowRef}
         theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
       />
+
+      {/* SQL Chatbot Assistant */}
+      <SQLChatbot theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light} />
     </motion.div>
   );
 }

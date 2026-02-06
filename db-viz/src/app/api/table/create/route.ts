@@ -7,6 +7,7 @@ interface Column {
   isPrimaryKey?: boolean;
   isNotNull?: boolean;
   isUnique?: boolean;
+  isAutoIncrement?: boolean;
   defaultValue?: string;
   isForeignKey?: boolean;
   foreignKeyReference?: {
@@ -92,6 +93,11 @@ export async function POST(request: NextRequest) {
       // Add constraints
       if (column.isNotNull) {
         definition += ' NOT NULL';
+      }
+
+      // Add AUTO_INCREMENT for auto increment columns
+      if (column.isAutoIncrement) {
+        definition += ' AUTO_INCREMENT';
       }
 
       if (column.isUnique && !column.isPrimaryKey) {

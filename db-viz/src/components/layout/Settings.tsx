@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User as UserIcon, LogOut, Palette, Check } from 'lucide-react';
+import { X, User as UserIcon, LogOut, Palette, Check, CreditCard } from 'lucide-react';
 import Button from '@/components/common/Button';
 import { User } from '@/types/database';
 
@@ -11,6 +11,7 @@ interface SettingsProps {
   onClose: () => void;
   user: User | null;
   onLogout: () => void;
+  onViewPricing: () => void;
   onThemeChange: (theme: string) => void;
   currentTheme: string;
 }
@@ -26,16 +27,6 @@ const THEMES = [
       preview: ['#f9fafb', '#ffffff', '#f3f4f6']
     }
   },
-  {
-    id: 'dark',
-    name: 'Dark',
-    description: 'Sleek dark interface',
-    colors: {
-      primary: 'from-slate-900 via-slate-800 to-slate-900',
-      accent: 'bg-slate-100',
-      preview: ['#0f172a', '#1e293b', '#0f172a']
-    }
-  },
 ];
 
 export default function Settings({
@@ -43,6 +34,7 @@ export default function Settings({
   onClose,
   user,
   onLogout,
+  onViewPricing,
   onThemeChange,
   currentTheme,
 }: SettingsProps) {
@@ -97,8 +89,8 @@ export default function Settings({
                   <div className="space-y-3">
                     <div className={`p-4 rounded-2xl ${currentTheme === 'dark' ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white/80 border-gray-200/50'} backdrop-blur-sm border shadow-sm flex items-center gap-3`}>
                       {user.photoURL && (
-                        <img 
-                          src={user.photoURL} 
+                        <img
+                          src={user.photoURL}
                           alt={user.displayName || 'User'}
                           className="w-12 h-12 rounded-full border-2 border-white shadow-md"
                         />
@@ -113,6 +105,19 @@ export default function Settings({
                       </div>
                     </div>
 
+                    {/* View Pricing Button */}
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => { onClose(); onViewPricing(); }}
+                      className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 ${currentTheme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded-lg transition-all shadow-md`}
+                      style={{ fontFamily: 'var(--font-geist-sans)' }}
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      View Pricing
+                    </motion.button>
+
+                    {/* Sign Out Button */}
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -143,13 +148,12 @@ export default function Settings({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => onThemeChange(theme.id)}
-                      className={`w-full p-4 rounded-2xl border-2 transition-all ${
-                        currentTheme === theme.id
-                          ? 'border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/20'
-                          : currentTheme === 'dark'
+                      className={`w-full p-4 rounded-2xl border-2 transition-all ${currentTheme === theme.id
+                        ? 'border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/20'
+                        : currentTheme === 'dark'
                           ? 'border-slate-700 bg-slate-800/80 hover:border-slate-600'
                           : 'border-gray-200 bg-white/80 hover:border-gray-300'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-3">
                         {/* Theme Color Preview */}
@@ -162,7 +166,7 @@ export default function Settings({
                             />
                           ))}
                         </div>
-                        
+
                         {/* Theme Info */}
                         <div className="flex-1 text-left">
                           <p className={`text-sm font-light ${currentTheme === 'dark' ? 'text-white' : 'text-gray-900'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>

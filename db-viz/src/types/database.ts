@@ -18,6 +18,7 @@ export interface Column {
   foreignKeyReference?: ForeignKeyReference;
   isNotNull: boolean;
   isUnique: boolean;
+  isAutoIncrement?: boolean;
   defaultValue?: string;
 }
 
@@ -95,17 +96,17 @@ export const NUMERIC_TYPES: DataType[] = ['INT', 'BIGINT', 'SMALLINT', 'TINYINT'
 // Check if two data types are compatible for FK-PK relationship
 export function areTypesCompatible(sourceType: DataType, targetType: DataType): boolean {
   if (sourceType === targetType) return true;
-  
+
   // Numeric types are compatible with each other
   if (NUMERIC_TYPES.includes(sourceType) && NUMERIC_TYPES.includes(targetType)) {
     return true;
   }
-  
+
   // String types compatibility
   if (['VARCHAR', 'CHAR', 'TEXT'].includes(sourceType) && ['VARCHAR', 'CHAR', 'TEXT'].includes(targetType)) {
     return true;
   }
-  
+
   return false;
 }
 
