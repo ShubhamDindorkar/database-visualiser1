@@ -13,10 +13,11 @@ import {
     CreditCard,
     Info,
     LogOut,
-    Check
+    Check,
+    Loader2
 } from 'lucide-react';
 import { auth } from '@/lib/firebase';
-import { signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { signOut, onAuthStateChanged, User as FirebaseUser, updateProfile } from 'firebase/auth';
 import Button from '@/components/common/Button';
 
 type SettingsSection = 'general' | 'account' | 'security' | 'database' | 'notifications' | 'billing' | 'about';
@@ -45,6 +46,8 @@ export default function SettingsPage() {
     const [displayName, setDisplayName] = useState('');
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [autoSave, setAutoSave] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -60,6 +63,26 @@ export default function SettingsPage() {
 
         return () => unsubscribe();
     }, [router]);
+
+    const handleSaveDisplayName = async () => {
+        if (!user || !displayName.trim()) return;
+
+        setSaving(true);
+        setSaveSuccess(false);
+
+        try {
+            await updateProfile(user, {
+                displayName: displayName.trim()
+            });
+            setSaveSuccess(true);
+            // Reset success message after 3 seconds
+            setTimeout(() => setSaveSuccess(false), 3000);
+        } catch (error) {
+            console.error('Error updating display name:', error);
+        } finally {
+            setSaving(false);
+        }
+    };
 
     const handleLogout = async () => {
         try {
@@ -99,7 +122,8 @@ export default function SettingsPage() {
                                 <input
                                     type="text"
                                     value={displayName}
-                                    onChange={(e) => setDisplayName(e.target.value)}
+                                    onChange={(e) => setDisplayName(e.target.value.slice(0, 32))}
+                                    maxLength={32}
                                     className="w-full max-w-md px-4 py-2.5 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                                     style={{ fontFamily: 'var(--font-geist-sans)' }}
                                     placeholder="Enter your name"
@@ -107,10 +131,30 @@ export default function SettingsPage() {
                             </div>
                             <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
                                 <p className="text-xs text-gray-500" style={{ fontFamily: 'var(--font-geist-sans)' }}>
-                                    Please use 32 characters at maximum.
+                                    {displayName.length}/32 characters
                                 </p>
-                                <button className="px-3 py-1.5 text-xs font-medium bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors" style={{ fontFamily: 'var(--font-geist-sans)' }}>
-                                    Save
+                                <button
+                                    onClick={handleSaveDisplayName}
+                                    disabled={saving || !displayName.trim()}
+                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 ${saveSuccess
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed'
+                                        }`}
+                                    style={{ fontFamily: 'var(--font-geist-sans)' }}
+                                >
+                                    {saving ? (
+                                        <>
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                            Saving...
+                                        </>
+                                    ) : saveSuccess ? (
+                                        <>
+                                            <Check className="w-3 h-3" />
+                                            Saved!
+                                        </>
+                                    ) : (
+                                        'Save'
+                                    )}
                                 </button>
                             </div>
                         </div>
@@ -451,7 +495,7 @@ export default function SettingsPage() {
             <header className="bg-white border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-6 py-5 flex items-center gap-4">
                     <button
-                        onClick={() => router.back()}
+                        onClick={() => router.push('/dashboard')}
                         className="p-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 transition-all shadow-sm border border-gray-200 hover:border-gray-300"
                     >
                         <ArrowLeft className="w-5 h-5 text-gray-700" />
