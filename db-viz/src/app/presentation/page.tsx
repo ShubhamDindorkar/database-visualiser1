@@ -478,8 +478,8 @@ function PresentationContent() {
                   <p className={`text-xs ${themeParam === 'dark' ? 'text-slate-400' : 'text-gray-500'} font-mono mt-1`}>{queryResults.query}</p>
                 </div>
                 <motion.button
-                  whileHover={{ scale: 1.1, rotate: 90 }}
-                  whileTap={{ scale: 0.9 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setQueryResults(null)}
                   className={`p-2 ${themeParam === 'dark' ? 'hover:bg-slate-700 text-slate-400 hover:text-white' : 'hover:bg-gray-200 text-gray-500 hover:text-gray-900'} rounded-lg transition-colors`}
                 >
