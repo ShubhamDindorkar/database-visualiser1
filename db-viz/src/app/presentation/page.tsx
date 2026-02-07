@@ -172,7 +172,7 @@ function PresentationContent() {
   // Convert foreign key relationships to edges
   useEffect(() => {
     const newEdges: Edge[] = [];
-    
+
     tables.forEach((table) => {
       table.columns.forEach((column) => {
         if (column.isForeignKey && column.foreignKeyReference) {
@@ -232,10 +232,10 @@ function PresentationContent() {
   const handleViewData = useCallback(
     async (tableId: string, tableName: string) => {
       if (!database) return;
-      
+
       const mysqlDatabaseName = database.mysqlName || database.name;
       const queryStr = `SELECT * FROM \`${tableName}\``;
-      
+
       try {
         const response = await fetch('/api/query/execute', {
           method: 'POST',
@@ -247,7 +247,7 @@ function PresentationContent() {
           }),
         });
         const result = await response.json();
-        
+
         if (result.success && result.results) {
           setQueryResults({
             results: result.results,
@@ -345,7 +345,7 @@ function PresentationContent() {
                   />
                 </div>
               </motion.div>
-              
+
               {/* Monitor Stand */}
               <motion.div
                 initial={{ scaleY: 0 }}
@@ -375,7 +375,7 @@ function PresentationContent() {
                 Switching to Presentation Mode
               </h2>
             </div>
-            
+
             {/* Progress Bar */}
             <div className="w-80 h-1 bg-gray-200 rounded-full mx-auto overflow-hidden">
               <motion.div
@@ -385,16 +385,7 @@ function PresentationContent() {
                 className="h-full bg-black rounded-full"
               />
             </div>
-            
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: [0, 1, 0] }}
-              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-              className="text-gray-500 text-base font-light"
-              style={{ fontFamily: 'var(--font-geist-sans)' }}
-            >
-              Loading tables...
-            </motion.p>
+
           </motion.div>
         </motion.div>
       </div>
@@ -402,7 +393,7 @@ function PresentationContent() {
   }
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
@@ -444,7 +435,7 @@ function PresentationContent() {
       </motion.header>
 
       {/* Workflow Area */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
@@ -459,7 +450,7 @@ function PresentationContent() {
           fitView
           className={THEMES[themeParam as keyof typeof THEMES]?.bg || THEMES.light.bg}
         >
-          <Controls 
+          <Controls
             className="bg-white border-gray-200 rounded-lg shadow-md"
             showInteractive={false}
           />

@@ -278,7 +278,7 @@ function TerminalModeContent() {
                 Switching to Terminal Mode
               </h2>
             </div>
-            
+
             {/* Progress Bar */}
             <div className="w-64 h-2 bg-gray-200 rounded-full mx-auto overflow-hidden">
               <motion.div
@@ -288,15 +288,7 @@ function TerminalModeContent() {
                 className="h-full bg-black rounded-full"
               />
             </div>
-            
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: [0, 1, 0] }}
-              transition={{ repeat: Infinity, duration: 2 }}
-              className="text-gray-500 text-sm font-light"
-            >
-              Initializing terminal...
-            </motion.p>
+
           </motion.div>
         </motion.div>
       </div>
@@ -304,7 +296,7 @@ function TerminalModeContent() {
   }
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, y: 10 }}
@@ -374,7 +366,7 @@ function TerminalModeContent() {
                   </span>
                 </div>
               </div>
-              
+
               <div className="relative">
                 <div className="absolute left-0 top-0 bottom-0 w-12 bg-slate-800/50 flex flex-col items-center py-3 text-slate-600 text-xs font-mono rounded-l-lg">
                   {query.split('\n').map((_, i) => (
