@@ -184,6 +184,13 @@ export default function DashboardPage() {
     }
   }, [user, authLoading, router]);
 
+  // Persist selected database to localStorage
+  useEffect(() => {
+    if (selectedDatabaseId) {
+      localStorage.setItem('dbviz-selected-database', selectedDatabaseId);
+    }
+  }, [selectedDatabaseId]);
+
   // Firebase: Subscribe to databases
   useEffect(() => {
     if (!user) return;
@@ -205,12 +212,21 @@ export default function DashboardPage() {
       });
       setDatabases(dbs);
 
-      // Auto-select first database if no database is selected and databases exist
+      // Restore previously selected database from localStorage, or auto-select first
       setSelectedDatabaseId((current) => {
-        if (!current && dbs.length > 0) {
+        if (current) return current; // Already selected, don't change
+
+        // Try to restore from localStorage
+        const savedDbId = localStorage.getItem('dbviz-selected-database');
+        if (savedDbId && dbs.find(d => d.id === savedDbId)) {
+          return savedDbId;
+        }
+
+        // Otherwise select first database
+        if (dbs.length > 0) {
           return dbs[0].id;
         }
-        return current;
+        return null;
       });
     });
 
@@ -332,23 +348,21 @@ export default function DashboardPage() {
     setEdges(newEdges);
   }, [tables]);
 
-  // Handle node position changes
+  // Handle node position changes (for immediate visual updates)
   const onNodesChange = useCallback(
-    async (changes: NodeChange[]) => {
+    (changes: NodeChange[]) => {
       setNodes((nds) => applyNodeChanges(changes, nds));
-
-      // Save position to workflow_layouts when drag ends
-      for (const change of changes) {
-        if (change.type === 'position' && change.position && !change.dragging) {
-          const tableId = change.id;
-          const newPosition = change.position;
-
-          // Save to dedicated workflow_layouts collection (debounced)
-          saveTablePosition(tableId, newPosition);
-        }
-      }
     },
-    [setNodes, saveTablePosition]
+    [setNodes]
+  );
+
+  // Handle node drag stop - save position when drag ends
+  const onNodeDragStop = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      console.log('[Dashboard] Node drag stopped:', node.id, 'Position:', node.position);
+      saveTablePosition(node.id, node.position);
+    },
+    [saveTablePosition]
   );
 
   // Add terminal log
@@ -913,12 +927,23 @@ export default function DashboardPage() {
   // Convert tables to React Flow nodes with persisted layout positions
   useEffect(() => {
     // Wait for layouts to load before rendering nodes with positions
-    if (layoutsLoading) return;
+    if (layoutsLoading) {
+      console.log('[Dashboard] Waiting for layouts to load...');
+      return;
+    }
+
+    console.log('[Dashboard] Creating nodes with layouts:', {
+      tablesCount: tables.length,
+      layoutsCount: Object.keys(workflowLayouts).length,
+      layouts: workflowLayouts,
+    });
 
     const newNodes: Node[] = tables.map((table) => {
       // Use saved layout position if available, otherwise use table's default position
       const savedPosition = workflowLayouts[table.id];
       const position = savedPosition || table.position;
+
+      console.log(`[Dashboard] Table ${table.name}: savedPosition=${JSON.stringify(savedPosition)}, using=${JSON.stringify(position)}`);
 
       return {
         id: table.id,
@@ -1641,6 +1666,7 @@ export default function DashboardPage() {
                   nodes={nodes}
                   edges={edges}
                   onNodesChange={onNodesChange}
+                  onNodeDragStop={onNodeDragStop}
                   nodeTypes={nodeTypes}
                   edgeTypes={edgeTypes}
                   fitViewOptions={{
