@@ -2,8 +2,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, X, Send, Bot, User, Copy, Check } from 'lucide-react';
-import { findMatchingIntent, fallbackResponse, SQLIntent } from '@/data/sqlKnowledgeBase';
+import { X, Send, Bot, User, Copy, Check, Loader2 } from 'lucide-react';
+import { findMatchingIntent, SQLIntent } from '@/data/sqlKnowledgeBase';
 
 interface Message {
     id: string;
@@ -34,6 +34,7 @@ export default function SQLChatbot({ theme }: SQLChatbotProps) {
     ]);
     const [inputValue, setInputValue] = useState('');
     const [copiedId, setCopiedId] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -51,8 +52,8 @@ export default function SQLChatbot({ theme }: SQLChatbotProps) {
         }
     }, [isOpen]);
 
-    const handleSend = () => {
-        if (!inputValue.trim()) return;
+    const handleSend = async () => {
+        if (!inputValue.trim() || isLoading) return;
 
         const userMessage: Message = {
             id: Date.now().toString(),
@@ -62,22 +63,64 @@ export default function SQLChatbot({ theme }: SQLChatbotProps) {
         };
 
         setMessages((prev) => [...prev, userMessage]);
+        const currentInput = inputValue.trim();
         setInputValue('');
 
-        // Process the query and generate response
-        setTimeout(() => {
-            const matchedIntent: SQLIntent | null = findMatchingIntent(inputValue);
+        // First try rule-based matching
+        const matchedIntent: SQLIntent | null = findMatchingIntent(currentInput);
 
-            const botMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                type: 'bot',
-                content: matchedIntent ? matchedIntent.response.explanation : fallbackResponse.explanation,
-                sql: matchedIntent ? matchedIntent.response.sql : fallbackResponse.sql,
-                timestamp: new Date(),
-            };
+        if (matchedIntent) {
+            // Rule-based response found - use it immediately
+            setTimeout(() => {
+                const botMessage: Message = {
+                    id: (Date.now() + 1).toString(),
+                    type: 'bot',
+                    content: matchedIntent.response.explanation,
+                    sql: matchedIntent.response.sql,
+                    timestamp: new Date(),
+                };
+                setMessages((prev) => [...prev, botMessage]);
+            }, 300);
+        } else {
+            // No rule-based match - use OpenRouter AI fallback
+            setIsLoading(true);
 
-            setMessages((prev) => [...prev, botMessage]);
-        }, 300);
+            try {
+                const response = await fetch('/api/chat/openrouter', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: currentInput }),
+                });
+
+                const data = await response.json();
+
+                const botMessage: Message = {
+                    id: (Date.now() + 1).toString(),
+                    type: 'bot',
+                    content: data.success
+                        ? data.message
+                        : "I'm sorry, I couldn't process your request right now. Please try again or ask a different SQL-related question.",
+                    timestamp: new Date(),
+                };
+
+                setMessages((prev) => [...prev, botMessage]);
+            } catch (error) {
+                console.error('OpenRouter API error:', error);
+
+                const errorMessage: Message = {
+                    id: (Date.now() + 1).toString(),
+                    type: 'bot',
+                    content: "I'm having trouble connecting to the AI service. Please check your connection and try again.",
+                    timestamp: new Date(),
+                };
+
+                setMessages((prev) => [...prev, errorMessage]);
+            } finally {
+                setIsLoading(false);
+            }
+        }
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -269,16 +312,20 @@ export default function SQLChatbot({ theme }: SQLChatbotProps) {
                                     style={{ fontFamily: 'var(--font-geist-sans)' }}
                                 />
                                 <motion.button
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
+                                    whileHover={{ scale: isLoading ? 1 : 1.05 }}
+                                    whileTap={{ scale: isLoading ? 1 : 0.95 }}
                                     onClick={handleSend}
-                                    disabled={!inputValue.trim()}
-                                    className={`p-2.5 rounded-xl transition-all ${inputValue.trim()
+                                    disabled={!inputValue.trim() || isLoading}
+                                    className={`p-2.5 rounded-xl transition-all ${inputValue.trim() && !isLoading
                                         ? 'bg-blue-600 text-white hover:bg-blue-700'
                                         : isDark ? 'bg-slate-700 text-slate-500' : 'bg-gray-200 text-gray-400'
                                         }`}
                                 >
-                                    <Send className="w-5 h-5" />
+                                    {isLoading ? (
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                    ) : (
+                                        <Send className="w-5 h-5" />
+                                    )}
                                 </motion.button>
                             </div>
                         </div>
