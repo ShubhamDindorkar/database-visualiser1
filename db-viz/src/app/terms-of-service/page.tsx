@@ -2,31 +2,30 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Database, ArrowLeft } from 'lucide-react';
 
 export default function TermsOfServicePage() {
-  const router = useRouter();
-
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white" style={{ fontFamily: 'var(--font-geist-sans)' }}>
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
-                <Database className="w-5 h-5 text-white" />
+            <div className="flex items-center gap-4">
+              <Link
+                href="/settings"
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-700" />
+              </Link>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
+                  <Database className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xl font-bold text-black">DB Visualiser</span>
               </div>
-              <span className="text-xl font-bold text-black">DB Visualiser</span>
             </div>
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:text-black transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </button>
           </div>
         </div>
       </nav>
@@ -48,8 +47,8 @@ export default function TermsOfServicePage() {
               <section className="mb-8">
                 <h2 className="text-2xl font-bold text-black mb-4">Agreement to Terms</h2>
                 <p className="text-gray-700 leading-relaxed mb-4">
-                  By accessing and using DB Visualiser, you agree to be bound by these Terms of Service and all 
-                  applicable laws and regulations. If you do not agree with any of these terms, you are prohibited 
+                  By accessing and using DB Visualiser, you agree to be bound by these Terms of Service and all
+                  applicable laws and regulations. If you do not agree with any of these terms, you are prohibited
                   from using or accessing this service.
                 </p>
               </section>
@@ -57,7 +56,7 @@ export default function TermsOfServicePage() {
               <section className="mb-8">
                 <h2 className="text-2xl font-bold text-black mb-4">Use License</h2>
                 <p className="text-gray-700 leading-relaxed mb-4">
-                  Permission is granted to temporarily use DB Visualiser for personal and commercial purposes. 
+                  Permission is granted to temporarily use DB Visualiser for personal and commercial purposes.
                   This is the grant of a license, not a transfer of title, and under this license you may not:
                 </p>
                 <ul className="list-disc pl-6 text-gray-700 space-y-2 mb-4">
@@ -72,13 +71,13 @@ export default function TermsOfServicePage() {
               <section className="mb-8">
                 <h2 className="text-2xl font-bold text-black mb-4">User Accounts</h2>
                 <p className="text-gray-700 leading-relaxed mb-4">
-                  When you create an account with us, you must provide accurate, complete, and current information. 
-                  Failure to do so constitutes a breach of the Terms, which may result in immediate termination of 
+                  When you create an account with us, you must provide accurate, complete, and current information.
+                  Failure to do so constitutes a breach of the Terms, which may result in immediate termination of
                   your account.
                 </p>
                 <p className="text-gray-700 leading-relaxed mb-4">
-                  You are responsible for safeguarding your account and for any activities or actions under your account. 
-                  You must notify us immediately upon becoming aware of any breach of security or unauthorized use of 
+                  You are responsible for safeguarding your account and for any activities or actions under your account.
+                  You must notify us immediately upon becoming aware of any breach of security or unauthorized use of
                   your account.
                 </p>
               </section>
@@ -103,8 +102,8 @@ export default function TermsOfServicePage() {
               <section className="mb-8">
                 <h2 className="text-2xl font-bold text-black mb-4">Intellectual Property</h2>
                 <p className="text-gray-700 leading-relaxed mb-4">
-                  The service and its original content, features, and functionality are and will remain the exclusive 
-                  property of DB Visualiser and its licensors. The service is protected by copyright, trademark, and 
+                  The service and its original content, features, and functionality are and will remain the exclusive
+                  property of DB Visualiser and its licensors. The service is protected by copyright, trademark, and
                   other laws of both the United States and foreign countries.
                 </p>
               </section>
@@ -112,8 +111,8 @@ export default function TermsOfServicePage() {
               <section className="mb-8">
                 <h2 className="text-2xl font-bold text-black mb-4">User Content</h2>
                 <p className="text-gray-700 leading-relaxed mb-4">
-                  You retain all rights to the database designs, schemas, and other content you create using DB Visualiser. 
-                  By using our service, you grant us a license to store, display, and process your content solely for the 
+                  You retain all rights to the database designs, schemas, and other content you create using DB Visualiser.
+                  By using our service, you grant us a license to store, display, and process your content solely for the
                   purpose of providing the service to you.
                 </p>
               </section>
@@ -121,8 +120,8 @@ export default function TermsOfServicePage() {
               <section className="mb-8">
                 <h2 className="text-2xl font-bold text-black mb-4">Service Availability</h2>
                 <p className="text-gray-700 leading-relaxed mb-4">
-                  We strive to provide uninterrupted service, but we do not guarantee that the service will be available 
-                  at all times. We may experience hardware, software, or other problems or need to perform maintenance 
+                  We strive to provide uninterrupted service, but we do not guarantee that the service will be available
+                  at all times. We may experience hardware, software, or other problems or need to perform maintenance
                   related to the service, resulting in interruptions, delays, or errors.
                 </p>
               </section>
@@ -130,9 +129,9 @@ export default function TermsOfServicePage() {
               <section className="mb-8">
                 <h2 className="text-2xl font-bold text-black mb-4">Limitation of Liability</h2>
                 <p className="text-gray-700 leading-relaxed mb-4">
-                  In no event shall DB Visualiser, nor its directors, employees, partners, agents, suppliers, or affiliates, 
-                  be liable for any indirect, incidental, special, consequential, or punitive damages, including without 
-                  limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access 
+                  In no event shall DB Visualiser, nor its directors, employees, partners, agents, suppliers, or affiliates,
+                  be liable for any indirect, incidental, special, consequential, or punitive damages, including without
+                  limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access
                   to or use of or inability to access or use the service.
                 </p>
               </section>
@@ -140,9 +139,9 @@ export default function TermsOfServicePage() {
               <section className="mb-8">
                 <h2 className="text-2xl font-bold text-black mb-4">Disclaimer</h2>
                 <p className="text-gray-700 leading-relaxed mb-4">
-                  Your use of the service is at your sole risk. The service is provided on an "AS IS" and "AS AVAILABLE" 
-                  basis. The service is provided without warranties of any kind, whether express or implied, including, 
-                  but not limited to, implied warranties of merchantability, fitness for a particular purpose, 
+                  Your use of the service is at your sole risk. The service is provided on an "AS IS" and "AS AVAILABLE"
+                  basis. The service is provided without warranties of any kind, whether express or implied, including,
+                  but not limited to, implied warranties of merchantability, fitness for a particular purpose,
                   non-infringement, or course of performance.
                 </p>
               </section>
@@ -150,8 +149,8 @@ export default function TermsOfServicePage() {
               <section className="mb-8">
                 <h2 className="text-2xl font-bold text-black mb-4">Termination</h2>
                 <p className="text-gray-700 leading-relaxed mb-4">
-                  We may terminate or suspend your account immediately, without prior notice or liability, for any reason 
-                  whatsoever, including without limitation if you breach the Terms. Upon termination, your right to use 
+                  We may terminate or suspend your account immediately, without prior notice or liability, for any reason
+                  whatsoever, including without limitation if you breach the Terms. Upon termination, your right to use
                   the service will immediately cease.
                 </p>
               </section>
@@ -159,8 +158,8 @@ export default function TermsOfServicePage() {
               <section className="mb-8">
                 <h2 className="text-2xl font-bold text-black mb-4">Changes to Terms</h2>
                 <p className="text-gray-700 leading-relaxed mb-4">
-                  We reserve the right, at our sole discretion, to modify or replace these Terms at any time. We will 
-                  provide notice of any material changes by posting the new Terms on this page and updating the 
+                  We reserve the right, at our sole discretion, to modify or replace these Terms at any time. We will
+                  provide notice of any material changes by posting the new Terms on this page and updating the
                   "Last updated" date.
                 </p>
               </section>
@@ -168,7 +167,7 @@ export default function TermsOfServicePage() {
               <section className="mb-8">
                 <h2 className="text-2xl font-bold text-black mb-4">Governing Law</h2>
                 <p className="text-gray-700 leading-relaxed mb-4">
-                  These Terms shall be governed and construed in accordance with the laws of the jurisdiction in which 
+                  These Terms shall be governed and construed in accordance with the laws of the jurisdiction in which
                   DB Visualiser operates, without regard to its conflict of law provisions.
                 </p>
               </section>

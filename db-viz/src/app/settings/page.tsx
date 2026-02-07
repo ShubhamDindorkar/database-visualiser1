@@ -425,13 +425,13 @@ export default function SettingsPage() {
                                     Resources
                                 </h3>
                                 <div className="space-y-3">
-                                    <a href="#" className="block text-sm text-gray-600 hover:text-gray-900 transition-colors" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                                    <a href="/documentation" className="block text-sm text-gray-600 hover:text-gray-900 transition-colors" style={{ fontFamily: 'var(--font-geist-sans)' }}>
                                         Documentation
                                     </a>
-                                    <a href="#" className="block text-sm text-gray-600 hover:text-gray-900 transition-colors" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                                    <a href="/privacy-policy" className="block text-sm text-gray-600 hover:text-gray-900 transition-colors" style={{ fontFamily: 'var(--font-geist-sans)' }}>
                                         Privacy Policy
                                     </a>
-                                    <a href="#" className="block text-sm text-gray-600 hover:text-gray-900 transition-colors" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                                    <a href="/terms-of-service" className="block text-sm text-gray-600 hover:text-gray-900 transition-colors" style={{ fontFamily: 'var(--font-geist-sans)' }}>
                                         Terms of Service
                                     </a>
                                 </div>
