@@ -14,8 +14,8 @@ import {
 import { db } from '@/lib/firebase';
 import { WorkflowLayout } from '@/types/database';
 
-// Debounce delay in milliseconds
-const DEBOUNCE_DELAY = 500;
+// Debounce delay in milliseconds - reduced for faster position saves
+const DEBOUNCE_DELAY = 300;
 
 interface UseWorkflowLayoutsProps {
   userId: string | undefined;
@@ -34,7 +34,7 @@ interface LayoutsMap {
 export function useWorkflowLayouts({ userId, databaseId }: UseWorkflowLayoutsProps) {
   const [layouts, setLayouts] = useState<LayoutsMap>({});
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Pending updates queue for debouncing
   const pendingUpdates = useRef<Map<string, LayoutPosition>>(new Map());
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
@@ -100,7 +100,7 @@ export function useWorkflowLayouts({ userId, databaseId }: UseWorkflowLayoutsPro
     updates.forEach((position, tableId) => {
       const docId = `${userId}_${databaseId}_${tableId}`;
       const layoutRef = doc(db, 'workflow_layouts', docId);
-      
+
       const layoutData: Omit<WorkflowLayout, 'id'> & { id: string } = {
         id: docId,
         userId,
@@ -115,8 +115,9 @@ export function useWorkflowLayouts({ userId, databaseId }: UseWorkflowLayoutsPro
 
     try {
       await batch.commit();
+      console.log('[WorkflowLayouts] Saved positions for', updates.size, 'tables');
     } catch (error) {
-      console.error('Error saving workflow layouts:', error);
+      console.error('[WorkflowLayouts] Error saving workflow layouts:', error);
       // Re-add failed updates to pending queue
       updates.forEach((position, tableId) => {
         pendingUpdates.current.set(tableId, position);
@@ -127,7 +128,12 @@ export function useWorkflowLayouts({ userId, databaseId }: UseWorkflowLayoutsPro
   // Update a single table's position with debouncing
   const updateTablePosition = useCallback(
     (tableId: string, position: LayoutPosition) => {
-      if (!userId || !databaseId) return;
+      if (!userId || !databaseId) {
+        console.warn('[WorkflowLayouts] Cannot save position - missing userId or databaseId');
+        return;
+      }
+
+      console.log('[WorkflowLayouts] Queueing position update for table:', tableId, position);
 
       // Add to pending updates
       pendingUpdates.current.set(tableId, position);
@@ -161,7 +167,7 @@ export function useWorkflowLayouts({ userId, databaseId }: UseWorkflowLayoutsPro
       updates.forEach(({ tableId, position }) => {
         const docId = `${userId}_${databaseId}_${tableId}`;
         const layoutRef = doc(db, 'workflow_layouts', docId);
-        
+
         const layoutData = {
           id: docId,
           userId,
@@ -176,7 +182,7 @@ export function useWorkflowLayouts({ userId, databaseId }: UseWorkflowLayoutsPro
 
       try {
         await batch.commit();
-        
+
         // Update local state
         setLayouts((prev) => {
           const newLayouts = { ...prev };
@@ -200,13 +206,17 @@ export function useWorkflowLayouts({ userId, databaseId }: UseWorkflowLayoutsPro
     [layouts]
   );
 
-  // Cleanup on unmount
+  // Cleanup on unmount - ensure pending updates are saved
   useEffect(() => {
+    const flushRef = flushUpdates;
     return () => {
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current);
-        // Flush any remaining updates
-        flushUpdates();
+      }
+      // Always flush any remaining updates on unmount
+      if (pendingUpdates.current.size > 0) {
+        console.log('[WorkflowLayouts] Flushing remaining updates on unmount:', pendingUpdates.current.size);
+        flushRef();
       }
     };
   }, [flushUpdates]);
