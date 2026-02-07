@@ -498,7 +498,7 @@ export default function CreateTableModal({
                               onClick={() => updateColumn(column.id, { isAutoIncrement: !column.isAutoIncrement })}
                               className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors
                                 ${column.isAutoIncrement
-                                  ? 'bg-purple-100 text-purple-700 border border-purple-300'
+                                  ? 'bg-gray-400 text-gray-900 border border-gray-500'
                                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }
                               `}

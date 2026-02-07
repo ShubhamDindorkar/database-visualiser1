@@ -66,7 +66,7 @@ export default function ForeignKeyModal({
   const sourceColumns = useMemo(() => {
     const table = tables.find((t) => t.id === sourceTableId);
     if (!table) return [];
-    
+
     if (mode === 'add') {
       // Filter out columns that are already foreign keys
       return table.columns.filter((c) => !c.isForeignKey);
@@ -117,14 +117,14 @@ export default function ForeignKeyModal({
   // Validate type compatibility
   const isTypeCompatible = useMemo(() => {
     if (!sourceColumnId || !targetColumnId) return true;
-    
+
     const sourceTable = tables.find((t) => t.id === sourceTableId);
     const targetTable = tables.find((t) => t.id === targetTableId);
     const sourceColumn = sourceTable?.columns.find((c) => c.id === sourceColumnId);
     const targetColumn = targetTable?.columns.find((c) => c.id === targetColumnId);
-    
+
     if (!sourceColumn || !targetColumn) return true;
-    
+
     return areTypesCompatible(sourceColumn.dataType, targetColumn.dataType);
   }, [tables, sourceTableId, sourceColumnId, targetTableId, targetColumnId]);
 
@@ -145,16 +145,16 @@ export default function ForeignKeyModal({
 
     try {
       await onAddForeignKey(sourceTableId, sourceColumnId, targetTableId, targetColumnId);
-      
+
       const sourceTable = tables.find((t) => t.id === sourceTableId);
       const sourceColumn = sourceTable?.columns.find((c) => c.id === sourceColumnId);
       const targetTable = tables.find((t) => t.id === targetTableId);
       const targetColumn = targetTable?.columns.find((c) => c.id === targetColumnId);
-      
+
       setSuccess(
         `Foreign key added: ${sourceTable?.name}.${sourceColumn?.name} → ${targetTable?.name}.${targetColumn?.name}`
       );
-      
+
       // Reset selections after success
       setSourceTableId('');
       setSourceColumnId('');
@@ -179,12 +179,12 @@ export default function ForeignKeyModal({
 
     try {
       await onRemoveForeignKey(sourceTableId, sourceColumnId);
-      
+
       const sourceTable = tables.find((t) => t.id === sourceTableId);
       const sourceColumn = sourceTable?.columns.find((c) => c.id === sourceColumnId);
-      
+
       setSuccess(`Foreign key removed from ${sourceTable?.name}.${sourceColumn?.name}`);
-      
+
       // Reset selections after success
       setSourceTableId('');
       setSourceColumnId('');
@@ -227,8 +227,8 @@ export default function ForeignKeyModal({
             {/* Header */}
             <div className={`flex items-center justify-between p-4 border-b ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'}`}>
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 ${theme?.buttonSecondary || 'bg-purple-100'} rounded-lg flex items-center justify-center`}>
-                  <Link className="w-5 h-5 text-purple-600" />
+                <div className={`w-10 h-10 ${theme?.buttonSecondary || 'bg-gray-100'} rounded-lg flex items-center justify-center`}>
+                  <Link className={`w-5 h-5 ${theme?.text || 'text-gray-700'}`} />
                 </div>
                 <div>
                   <h2 className={`text-lg font-semibold ${theme?.text || 'text-black'}`}>
@@ -260,11 +260,10 @@ export default function ForeignKeyModal({
                     setError(null);
                     setSuccess(null);
                   }}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-medium text-sm transition-all ${
-                    mode === 'add'
-                      ? 'bg-purple-600 text-white'
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-medium text-sm transition-all ${mode === 'add'
+                      ? 'bg-gray-900 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                    }`}
                 >
                   <Link className="w-4 h-4" />
                   Add Foreign Key
@@ -279,11 +278,10 @@ export default function ForeignKeyModal({
                     setError(null);
                     setSuccess(null);
                   }}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-medium text-sm transition-all ${
-                    mode === 'remove'
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-medium text-sm transition-all ${mode === 'remove'
                       ? 'bg-red-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                    }`}
                 >
                   <Unlink className="w-4 h-4" />
                   Remove Foreign Key
@@ -336,7 +334,7 @@ export default function ForeignKeyModal({
                     <select
                       value={sourceTableId}
                       onChange={(e) => setSourceTableId(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm bg-white text-black focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm bg-white text-black focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                     >
                       <option value="">Select source table...</option>
                       {tables.map((table) => (
@@ -364,7 +362,7 @@ export default function ForeignKeyModal({
                         <select
                           value={sourceColumnId}
                           onChange={(e) => setSourceColumnId(e.target.value)}
-                          className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm bg-white text-black focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                          className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm bg-white text-black focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                         >
                           <option value="">Select source column...</option>
                           {sourceColumns.map((column) => (
@@ -381,10 +379,10 @@ export default function ForeignKeyModal({
                   {/* Visual Arrow */}
                   {sourceColumnId && (
                     <div className="flex justify-center py-2">
-                      <div className="flex items-center gap-2 text-purple-600">
-                        <div className="w-8 h-0.5 bg-purple-300" />
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <div className="w-8 h-0.5 bg-gray-300" />
                         <ArrowRight className="w-5 h-5" />
-                        <div className="w-8 h-0.5 bg-purple-300" />
+                        <div className="w-8 h-0.5 bg-gray-300" />
                       </div>
                     </div>
                   )}
@@ -401,7 +399,7 @@ export default function ForeignKeyModal({
                       <select
                         value={targetTableId}
                         onChange={(e) => setTargetTableId(e.target.value)}
-                        className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm bg-white text-black focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm bg-white text-black focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                       >
                         <option value="">Select target table...</option>
                         {tables
@@ -433,9 +431,8 @@ export default function ForeignKeyModal({
                         <select
                           value={targetColumnId}
                           onChange={(e) => setTargetColumnId(e.target.value)}
-                          className={`w-full px-3 py-2.5 rounded-lg border text-sm bg-white text-black focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
-                            !isTypeCompatible ? 'border-red-500' : 'border-gray-300'
-                          }`}
+                          className={`w-full px-3 py-2.5 rounded-lg border text-sm bg-white text-black focus:ring-2 focus:ring-gray-500 focus:border-gray-500 ${!isTypeCompatible ? 'border-red-500' : 'border-gray-300'
+                            }`}
                         >
                           <option value="">Select target column...</option>
                           {targetColumns.map((column) => (
@@ -458,26 +455,26 @@ export default function ForeignKeyModal({
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="p-4 bg-purple-50 rounded-lg border border-purple-200"
+                      className="p-4 bg-gray-50 rounded-lg border border-gray-200"
                     >
-                      <p className="text-sm font-medium text-purple-800 mb-2">
+                      <p className="text-sm font-medium text-gray-800 mb-2">
                         Relationship Preview:
                       </p>
                       <div className="flex items-center justify-center gap-3 text-sm">
-                        <div className="px-3 py-2 bg-white rounded-lg border border-purple-300">
-                          <span className="font-medium text-purple-700">
+                        <div className="px-3 py-2 bg-white rounded-lg border border-gray-300">
+                          <span className="font-medium text-gray-700">
                             {tables.find((t) => t.id === sourceTableId)?.name}
                           </span>
-                          <span className="text-purple-600">
+                          <span className="text-gray-600">
                             .{tables.find((t) => t.id === sourceTableId)?.columns.find((c) => c.id === sourceColumnId)?.name}
                           </span>
                         </div>
-                        <ArrowRight className="w-5 h-5 text-purple-500" />
-                        <div className="px-3 py-2 bg-white rounded-lg border border-purple-300">
-                          <span className="font-medium text-purple-700">
+                        <ArrowRight className="w-5 h-5 text-gray-500" />
+                        <div className="px-3 py-2 bg-white rounded-lg border border-gray-300">
+                          <span className="font-medium text-gray-700">
                             {tables.find((t) => t.id === targetTableId)?.name}
                           </span>
-                          <span className="text-purple-600">
+                          <span className="text-gray-600">
                             .{tables.find((t) => t.id === targetTableId)?.columns.find((c) => c.id === targetColumnId)?.name}
                           </span>
                         </div>
@@ -590,7 +587,7 @@ export default function ForeignKeyModal({
                     !targetColumnId ||
                     !isTypeCompatible
                   }
-                  className="bg-purple-600 hover:bg-purple-700"
+                  className="bg-gray-900 hover:bg-gray-800"
                 >
                   <Link className="w-4 h-4 mr-2" />
                   Add Foreign Key
