@@ -3,9 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, User, Mail, Crown, ArrowUpRight, Database, Table, Key, Link2 } from 'lucide-react';
+import { ArrowLeft, User, Mail, Crown, ArrowUpRight, Database, Table, Key, Link2, LogOut } from 'lucide-react';
 import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
 import Button from '@/components/common/Button';
 
 export default function ProfilePage() {
@@ -165,6 +165,21 @@ export default function ProfilePage() {
                                             <ArrowUpRight className="w-4 h-4" />
                                         </Button>
                                     </div>
+                                </div>
+
+                                {/* Sign Out Section */}
+                                <div className="p-8 border-t border-gray-200">
+                                    <button
+                                        onClick={async () => {
+                                            await signOut(auth);
+                                            router.push('/');
+                                        }}
+                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-300 transition-all font-medium text-sm"
+                                        style={{ fontFamily: 'var(--font-geist-sans)' }}
+                                    >
+                                        <LogOut className="w-4 h-4" />
+                                        Sign Out
+                                    </button>
                                 </div>
                             </div>
                         </motion.div>
