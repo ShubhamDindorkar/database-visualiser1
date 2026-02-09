@@ -96,12 +96,46 @@ export default function SQLChatbot({ theme }: SQLChatbotProps) {
 
                 const data = await response.json();
 
+                // Extract SQL queries - prefer API-provided sql, fall back to regex extraction
+                let sqlQueries: string[] = data.sql || [];
+
+                // If no SQL from API, try to extract from the message content
+                if (sqlQueries.length === 0 && data.success && data.message) {
+                    // Extract SQL from markdown code blocks
+                    const codeBlockRegex = /```(?:sql)?\s*([\s\S]*?)```/gi;
+                    let match;
+                    while ((match = codeBlockRegex.exec(data.message)) !== null) {
+                        const sqlContent = match[1].trim();
+                        if (sqlContent && /^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|GRANT|REVOKE|USE|SHOW|DESCRIBE|EXPLAIN|WITH)\b/i.test(sqlContent)) {
+                            sqlQueries.push(sqlContent);
+                        }
+                    }
+                }
+
+                // Clean the message by removing SQL code blocks and standalone SQL
+                let cleanMessage = data.message;
+                if (sqlQueries.length > 0) {
+                    // Remove markdown code blocks
+                    cleanMessage = cleanMessage.replace(/```(?:sql)?\s*[\s\S]*?```/gi, '');
+
+                    // Also remove the actual SQL statements if they appear as plain text
+                    for (const sql of sqlQueries) {
+                        // Escape special regex characters in the SQL
+                        const escapedSQL = sql.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        cleanMessage = cleanMessage.replace(new RegExp(escapedSQL, 'gi'), '');
+                    }
+
+                    // Clean up extra whitespace and newlines
+                    cleanMessage = cleanMessage.replace(/\n{3,}/g, '\n\n').trim();
+                }
+
                 const botMessage: Message = {
                     id: (Date.now() + 1).toString(),
                     type: 'bot',
                     content: data.success
-                        ? data.message
+                        ? (cleanMessage || data.message)
                         : "I'm sorry, I couldn't process your request right now. Please try again or ask a different SQL-related question.",
+                    sql: sqlQueries.length > 0 ? sqlQueries : undefined,
                     timestamp: new Date(),
                 };
 

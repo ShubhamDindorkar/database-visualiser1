@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({
                 success: true,
                 message: result.message,
+                sql: result.sql,
             });
         } else {
             return NextResponse.json(

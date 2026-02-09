@@ -58,8 +58,93 @@ interface OpenRouterResponse {
 interface ChatResponse {
     success: boolean;
     message: string;
+    sql?: string[];
     model?: string;
     error?: string;
+}
+
+/**
+ * Extracts SQL queries from AI response text
+ * Looks for SQL code blocks (```sql ... ```) and standalone SQL statements
+ */
+function extractSQLQueries(text: string): { cleanedText: string; sqlQueries: string[] } {
+    const sqlQueries: string[] = [];
+    let cleanedText = text;
+
+    // Pattern 1: Extract SQL from markdown code blocks (```sql ... ``` or ``` ... ```)
+    const codeBlockRegex = /```(?:sql)?\s*([\s\S]*?)```/gi;
+    let match;
+
+    while ((match = codeBlockRegex.exec(text)) !== null) {
+        const sqlContent = match[1].trim();
+        if (sqlContent && isSQLStatement(sqlContent)) {
+            sqlQueries.push(sqlContent);
+        }
+    }
+
+    // Remove code blocks from the text for cleaner display
+    cleanedText = cleanedText.replace(codeBlockRegex, '').trim();
+
+    // Pattern 2: If no code blocks found, look for standalone SQL statements
+    if (sqlQueries.length === 0) {
+        const sqlKeywords = /\b(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|GRANT|REVOKE|USE|SHOW|DESCRIBE|EXPLAIN)\b/i;
+        const lines = text.split('\n');
+        const potentialSQL: string[] = [];
+        let inStatement = false;
+        let currentStatement = '';
+
+        for (const line of lines) {
+            const trimmedLine = line.trim();
+
+            // Check if this line starts a SQL statement
+            if (sqlKeywords.test(trimmedLine) && !inStatement) {
+                inStatement = true;
+                currentStatement = trimmedLine;
+            } else if (inStatement) {
+                currentStatement += '\n' + trimmedLine;
+            }
+
+            // Check if statement ends (with semicolon or empty line)
+            if (inStatement && (trimmedLine.endsWith(';') || trimmedLine === '')) {
+                if (currentStatement.trim()) {
+                    potentialSQL.push(currentStatement.trim());
+                }
+                inStatement = false;
+                currentStatement = '';
+            }
+        }
+
+        // Add any remaining statement
+        if (currentStatement.trim()) {
+            potentialSQL.push(currentStatement.trim());
+        }
+
+        // Validate and add to sqlQueries
+        for (const sql of potentialSQL) {
+            if (isSQLStatement(sql)) {
+                sqlQueries.push(sql);
+            }
+        }
+        // Remove extracted standalone SQL from the cleaned text
+        for (const sql of sqlQueries) {
+            // Escape special regex characters in the SQL
+            const escapedSQL = sql.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            cleanedText = cleanedText.replace(new RegExp(escapedSQL, 'gi'), '');
+        }
+    }
+
+    // Clean up multiple newlines in the cleaned text
+    cleanedText = cleanedText.replace(/\n{3,}/g, '\n\n').trim();
+
+    return { cleanedText, sqlQueries };
+}
+
+/**
+ * Validates if a string looks like a valid SQL statement
+ */
+function isSQLStatement(text: string): boolean {
+    const sqlKeywords = /^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|GRANT|REVOKE|USE|SHOW|DESCRIBE|EXPLAIN|WITH)\b/i;
+    return sqlKeywords.test(text.trim());
 }
 
 /**
@@ -172,9 +257,14 @@ export async function getOpenRouterResponse(userMessage: string): Promise<ChatRe
             }
 
             console.log(`[OpenRouter] Success with model: ${model}`);
+
+            // Extract SQL queries from the response
+            const { cleanedText, sqlQueries } = extractSQLQueries(content.trim());
+
             return {
                 success: true,
-                message: content.trim(),
+                message: cleanedText || content.trim(),
+                sql: sqlQueries.length > 0 ? sqlQueries : undefined,
                 model,
             };
 
