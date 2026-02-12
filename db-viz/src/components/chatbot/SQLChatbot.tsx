@@ -233,7 +233,7 @@ export default function SQLChatbot({ theme }: SQLChatbotProps) {
                                         SQL Assistant
                                     </h3>
                                     <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
-                                        Rule-based SQL helper
+                                        AI-powered SQL helper
                                     </p>
                                 </div>
                             </div>
