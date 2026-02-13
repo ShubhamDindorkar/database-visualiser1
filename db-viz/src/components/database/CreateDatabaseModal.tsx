@@ -2,14 +2,14 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Database, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { X, Database, AlertCircle } from 'lucide-react';
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 
 interface CreateDatabaseModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (name: string, password: string) => void;
+  onCreate: (name: string) => void;
   existingNames: string[];
   theme?: any;
 }
@@ -22,10 +22,7 @@ export default function CreateDatabaseModal({
   theme,
 }: CreateDatabaseModalProps) {
   const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<{ name?: string; password?: string; confirmPassword?: string }>({});
+  const [errors, setErrors] = useState<{ name?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
 
   const validateName = (value: string): string | undefined => {
@@ -44,31 +41,19 @@ export default function CreateDatabaseModal({
     return undefined;
   };
 
-  const validatePassword = (value: string): string | undefined => {
-    if (!value) {
-      return 'Password is required';
-    }
-    if (value.length < 6) {
-      return 'Password must be at least 6 characters';
-    }
-    return undefined;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const nameError = validateName(name);
-    const passwordError = validatePassword(password);
-    const confirmError = password !== confirmPassword ? 'Passwords do not match' : undefined;
 
-    if (nameError || passwordError || confirmError) {
-      setErrors({ name: nameError, password: passwordError, confirmPassword: confirmError });
+    if (nameError) {
+      setErrors({ name: nameError });
       return;
     }
 
     setIsLoading(true);
     try {
-      await onCreate(name, password);
+      await onCreate(name);
       handleClose();
     } catch (error) {
       console.error('Error creating database:', error);
@@ -79,10 +64,7 @@ export default function CreateDatabaseModal({
 
   const handleClose = () => {
     setName('');
-    setPassword('');
-    setConfirmPassword('');
     setErrors({});
-    setShowPassword(false);
     onClose();
   };
 
@@ -146,46 +128,11 @@ export default function CreateDatabaseModal({
                   leftIcon={<Database className="w-4 h-4" />}
                 />
 
-                <div className="relative">
-                  <Input
-                    label="Password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Enter password"
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      setErrors((prev) => ({ ...prev, password: undefined }));
-                    }}
-                    error={errors.password}
-                    leftIcon={<Lock className="w-4 h-4" />}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-8 text-gray-500 hover:text-gray-700"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-
-                <Input
-                  label="Confirm Password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Confirm password"
-                  value={confirmPassword}
-                  onChange={(e) => {
-                    setConfirmPassword(e.target.value);
-                    setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
-                  }}
-                  error={errors.confirmPassword}
-                  leftIcon={<Lock className="w-4 h-4" />}
-                />
-
                 {/* Info Box */}
                 <div className={`flex items-start gap-3 p-4 ${theme?.buttonSecondary || 'bg-blue-50 border-blue-200'} border rounded-xl`}>
                   <AlertCircle className={`w-5 h-5 ${theme?.button?.includes('blue') ? 'text-blue-600' : theme?.text || 'text-blue-600'} mt-0.5 flex-shrink-0`} />
                   <p className={`text-sm font-light ${theme?.text || 'text-gray-700'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
-                    The password will be securely hashed and stored. Make sure to remember it for future access.
+                    A new MySQL database will be created with this name.
                   </p>
                 </div>
 

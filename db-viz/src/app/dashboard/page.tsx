@@ -19,7 +19,6 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
-import bcrypt from 'bcryptjs';
 
 // Firebase
 import {
@@ -32,6 +31,8 @@ import {
   where,
   updateDoc,
   Timestamp,
+  getDocs,
+  orderBy,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -55,6 +56,7 @@ import QueryResultsPanel from '@/components/database/QueryResultsPanel';
 import ForeignKeyModal from '@/components/database/ForeignKeyModal';
 import ExportModal from '@/components/database/ExportModal';
 import SQLChatbot from '@/components/chatbot/SQLChatbot';
+import { ChatMessage } from '@/components/chatbot/SQLChatbot';
 
 // Hooks and Types
 import { useAuth } from '@/hooks/useAuth';
@@ -142,6 +144,12 @@ export default function DashboardPage() {
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [terminalLogs, setTerminalLogs] = useState<TerminalLog[]>([]);
 
+  // Chatbot state
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatbotDbId, setChatbotDbId] = useState<string | null>(null);
+  const [chatbotDbName, setChatbotDbName] = useState<string | null>(null);
+  const [chatLoaded, setChatLoaded] = useState(false);
+
   // React Flow state
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
@@ -190,6 +198,78 @@ export default function DashboardPage() {
       localStorage.setItem('dbviz-selected-database', selectedDatabaseId);
     }
   }, [selectedDatabaseId]);
+
+  // Firebase: Load chat messages on mount
+  useEffect(() => {
+    if (!user || chatLoaded) return;
+
+    const loadChat = async () => {
+      try {
+        const chatRef = doc(db, 'chatHistory', user.uid);
+        const unsub = onSnapshot(chatRef, (snap) => {
+          if (snap.exists()) {
+            const data = snap.data();
+            if (data.messages && Array.isArray(data.messages)) {
+              const loaded: ChatMessage[] = data.messages.map((m: Record<string, unknown>) => ({
+                id: m.id as string,
+                type: m.type as 'user' | 'bot',
+                content: m.content as string,
+                sql: m.sql as string[] | undefined,
+                executed: m.executed as boolean | undefined,
+                timestamp: m.timestamp instanceof Timestamp
+                  ? (m.timestamp as Timestamp).toDate()
+                  : new Date(m.timestamp as string),
+              }));
+              setChatMessages(loaded);
+            }
+            if (data.activeDatabaseId) {
+              setChatbotDbId(data.activeDatabaseId);
+            }
+            if (data.activeDatabaseName) {
+              setChatbotDbName(data.activeDatabaseName);
+            }
+          }
+          setChatLoaded(true);
+        });
+        return unsub;
+      } catch (err) {
+        console.error('Error loading chat history:', err);
+        setChatLoaded(true);
+      }
+    };
+
+    loadChat();
+  }, [user, chatLoaded]);
+
+  // Save chat messages to Firebase
+  const handleChatMessagesChange = useCallback(
+    async (msgs: ChatMessage[]) => {
+      if (!user) return;
+      try {
+        // Serialize messages for Firebase (no undefined values)
+        const serialized = msgs.map(m => {
+          const obj: Record<string, unknown> = {
+            id: m.id,
+            type: m.type,
+            content: m.content,
+            timestamp: m.timestamp instanceof Date ? Timestamp.fromDate(m.timestamp) : m.timestamp,
+          };
+          if (m.sql && m.sql.length > 0) obj.sql = m.sql;
+          if (m.executed) obj.executed = true;
+          return obj;
+        });
+        await setDoc(doc(db, 'chatHistory', user.uid), {
+          messages: serialized,
+          activeDatabaseId: chatbotDbId || null,
+          activeDatabaseName: chatbotDbName || null,
+          updatedAt: Timestamp.now(),
+        }, { merge: true });
+      } catch (err) {
+        console.error('Error saving chat history:', err);
+      }
+    },
+    [user, chatbotDbId, chatbotDbName]
+  );
 
   // Firebase: Subscribe to databases
   useEffect(() => {
@@ -380,7 +460,7 @@ export default function DashboardPage() {
 
   // Create database
   const handleCreateDatabase = useCallback(
-    async (name: string, password: string) => {
+    async (name: string) => {
       if (!user) return;
 
       try {
@@ -397,14 +477,13 @@ export default function DashboardPage() {
           return;
         }
 
-        // If MySQL creation successful, save to Firebase
-        const hashedPassword = await bcrypt.hash(password, 10);
+        // If MySQL creation successful, save to Firebase (no password)
         const dbId = uuidv4();
 
         await setDoc(doc(db, 'databases', dbId), {
           name,
           userId: user.uid,
-          db_password_hash: hashedPassword,
+          db_password_hash: '',
           mysqlName: mysqlResult.actualDatabaseName, // Store actual MySQL name
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
@@ -464,6 +543,173 @@ export default function DashboardPage() {
       }
     },
     [user, databases, tables, selectedDatabaseId, addLog]
+  );
+
+  // ── Helper: sync MySQL tables → Firebase for a given database ────────────
+  const syncTablesToFirebase = useCallback(
+    async (actualDbName: string, firebaseDbId: string) => {
+      if (!user) return;
+
+      const showTablesResponse = await fetch('/api/query/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ database: actualDbName, query: 'SHOW TABLES', userId: user.uid }),
+      });
+      const showTablesResult = await showTablesResponse.json();
+
+      if (!showTablesResult.success || !showTablesResult.results) return;
+
+      const mysqlTableNames: string[] = showTablesResult.results.map(
+        (row: Record<string, string>) => Object.values(row)[0]
+      );
+
+      // Get existing Firebase tables for this database so we don't duplicate
+      const existingTablesSnap = await getDocs(
+        query(collection(db, 'tables'), where('databaseId', '==', firebaseDbId))
+      );
+      const existingNames = new Set<string>();
+      existingTablesSnap.forEach(d => existingNames.add(d.data().name));
+
+      let newTableCount = 0;
+      const totalExisting = existingNames.size;
+
+      for (let i = 0; i < mysqlTableNames.length; i++) {
+        const tableName = mysqlTableNames[i];
+        if (existingNames.has(tableName)) continue; // Already in Firebase
+
+        const descResponse = await fetch('/api/table/describe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ database: actualDbName, table: tableName, userId: user.uid }),
+        });
+        const descResult = await descResponse.json();
+
+        if (descResult.success && descResult.columns) {
+          const columns: Column[] = descResult.columns.map(
+            (col: { Field: string; Type: string; Null: string; Key: string; Default: string | null; Extra: string }) => {
+              const column: Record<string, unknown> = {
+                id: uuidv4(),
+                name: col.Field,
+                dataType: col.Type.toUpperCase().replace(/\(.*\)/, '').trim(),
+                isPrimaryKey: col.Key === 'PRI',
+                isForeignKey: col.Key === 'MUL',
+                isNotNull: col.Null === 'NO',
+                isUnique: col.Key === 'UNI',
+                isAutoIncrement: (col.Extra || '').includes('auto_increment'),
+              };
+              if (col.Default !== null && col.Default !== undefined) {
+                column.defaultValue = col.Default;
+              }
+              return column as unknown as Column;
+            }
+          );
+
+          const idx = totalExisting + newTableCount;
+          const xOffset = (idx % 3) * 350;
+          const yOffset = Math.floor(idx / 3) * 300;
+
+          const tableId = uuidv4();
+          await setDoc(doc(db, 'tables', tableId), {
+            name: tableName,
+            databaseId: firebaseDbId,
+            columns,
+            position: { x: 100 + xOffset, y: 100 + yOffset },
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+          });
+
+          addLog('success', `Table '${tableName}' synced to workflow`);
+          newTableCount++;
+        }
+      }
+    },
+    [user, addLog]
+  );
+
+  // ── Execute SQL from chatbot → terminal → workflow ───────────────────────
+  const handleExecuteSQL = useCallback(
+    async (sqlStatements: string[]) => {
+      if (!user) throw new Error('Not authenticated');
+
+      let dbId = chatbotDbId;
+      let dbName = chatbotDbName;
+      let actualDbName: string;
+
+      // If no active chatbot database yet, create one
+      if (!dbId) {
+        dbName = `chatbot_db_${Date.now().toString(36)}`;
+
+        const mysqlResponse = await fetch('/api/database/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: dbName, userId: user.uid }),
+        });
+        const mysqlResult = await mysqlResponse.json();
+
+        if (!mysqlResult.success) {
+          addLog('error', `MySQL Error: ${mysqlResult.error}`);
+          throw new Error(mysqlResult.error);
+        }
+
+        dbId = uuidv4();
+        await setDoc(doc(db, 'databases', dbId), {
+          name: dbName,
+          userId: user.uid,
+          db_password_hash: '',
+          mysqlName: mysqlResult.actualDatabaseName,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+        });
+
+        actualDbName = mysqlResult.actualDatabaseName;
+        setChatbotDbId(dbId);
+        setChatbotDbName(dbName);
+
+        // Persist chatbot DB info immediately (state won't be in closure yet)
+        await setDoc(doc(db, 'chatHistory', user.uid), {
+          activeDatabaseId: dbId,
+          activeDatabaseName: dbName,
+          updatedAt: Timestamp.now(),
+        }, { merge: true });
+
+        addLog('success', `Database '${dbName}' created from chatbot`);
+      } else {
+        // Use existing chatbot database
+        const existingDb = databases.find(d => d.id === dbId);
+        if (!existingDb) {
+          throw new Error('Chatbot database not found. It may have been deleted.');
+        }
+        actualDbName = existingDb.mysqlName || existingDb.name;
+      }
+
+      // Execute each SQL statement
+      for (const sql of sqlStatements) {
+        const trimmed = sql.trim();
+        if (!trimmed) continue;
+        if (/^CREATE\s+DATABASE/i.test(trimmed)) continue; // Skip CREATE DATABASE
+
+        const execResponse = await fetch('/api/query/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ database: actualDbName, query: trimmed, userId: user.uid }),
+        });
+        const execResult = await execResponse.json();
+
+        if (!execResult.success) {
+          addLog('warning', `SQL: ${execResult.error}`);
+        } else {
+          addLog('success', `Executed: ${trimmed.substring(0, 80)}${trimmed.length > 80 ? '...' : ''}`);
+        }
+      }
+
+      // Sync tables from MySQL → Firebase (handles new tables only, skips existing)
+      await syncTablesToFirebase(actualDbName, dbId);
+
+      // Switch workflow to the chatbot database
+      setSelectedDatabaseId(dbId);
+      addLog('success', `Workflow showing '${dbName}'`);
+    },
+    [user, chatbotDbId, chatbotDbName, databases, addLog, syncTablesToFirebase]
   );
 
   // Create table
@@ -1969,7 +2215,13 @@ export default function DashboardPage() {
       />
 
       {/* SQL Chatbot Assistant */}
-      <SQLChatbot theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light} />
+      <SQLChatbot
+        theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
+        onExecuteSQL={handleExecuteSQL}
+        savedMessages={chatLoaded ? chatMessages : undefined}
+        onMessagesChange={handleChatMessagesChange}
+        activeDatabaseName={chatbotDbName || undefined}
+      />
     </motion.div>
   );
 }

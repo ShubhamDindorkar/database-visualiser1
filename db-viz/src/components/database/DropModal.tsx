@@ -2,10 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Trash2, Database, Table, AlertTriangle, Lock, Eye, EyeOff } from 'lucide-react';
+import { X, Trash2, Database, Table, AlertTriangle } from 'lucide-react';
 import Button from '@/components/common/Button';
 import { Database as DatabaseType, Table as TableType } from '@/types/database';
-import bcrypt from 'bcryptjs';
 
 interface DropModalProps {
   isOpen: boolean;
@@ -33,8 +32,6 @@ export default function DropModal({
   const [mode, setMode] = useState<DropMode | null>(null);
   const [selectedDatabase, setSelectedDatabase] = useState<string>('');
   const [selectedTable, setSelectedTable] = useState<string>('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmDrop, setConfirmDrop] = useState(false);
@@ -64,13 +61,6 @@ export default function DropModal({
     if (mode === 'database') {
       if (!selectedDbObject) {
         setError('Please select a database');
-        return;
-      }
-
-      // Verify password
-      const isPasswordValid = await bcrypt.compare(password, selectedDbObject.db_password_hash);
-      if (!isPasswordValid) {
-        setError('Invalid database password');
         return;
       }
 
@@ -116,8 +106,6 @@ export default function DropModal({
     setMode(null);
     setSelectedDatabase('');
     setSelectedTable('');
-    setPassword('');
-    setShowPassword(false);
     setError(null);
     setConfirmDrop(false);
     onClose();
@@ -212,7 +200,6 @@ export default function DropModal({
                           setSelectedDatabase(e.target.value);
                           setSelectedTable('');
                           setConfirmDrop(false);
-                          setPassword('');
                         }}
                         className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                       >
@@ -251,37 +238,8 @@ export default function DropModal({
                       </div>
                     )}
 
-                    {/* Password for database drop */}
-                    {mode === 'database' && selectedDatabase && (
-                      <div className="mb-4">
-                        <label className={`block text-sm font-medium ${theme?.text || 'text-gray-700'} mb-2`}>
-                          <Lock className="w-4 h-4 inline mr-2" />
-                          Database Password
-                        </label>
-                        <div className="relative">
-                          <input
-                            type={showPassword ? 'text' : 'password'}
-                            value={password}
-                            onChange={(e) => {
-                              setPassword(e.target.value);
-                              setConfirmDrop(false);
-                            }}
-                            placeholder="Enter database password"
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent pr-12"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
-                          >
-                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
                     {/* Warning */}
-                    {((mode === 'database' && selectedDatabase && password) ||
+                    {((mode === 'database' && selectedDatabase) ||
                       (mode === 'table' && selectedTable)) && (
                       <div className="p-4 bg-red-50 border border-red-200 rounded-xl mb-4">
                         <div className="flex items-center gap-2 text-red-800 font-medium">
@@ -329,7 +287,6 @@ export default function DropModal({
                             setConfirmDrop(false);
                           } else if (mode) {
                             setMode(null);
-                            setPassword('');
                           } else {
                             handleClose();
                           }
@@ -344,7 +301,7 @@ export default function DropModal({
                           variant="danger"
                           disabled={
                             isLoading ||
-                            (mode === 'database' && (!selectedDatabase || !password)) ||
+                            (mode === 'database' && !selectedDatabase) ||
                             (mode === 'table' && (!selectedDatabase || !selectedTable))
                           }
                           isLoading={isLoading}

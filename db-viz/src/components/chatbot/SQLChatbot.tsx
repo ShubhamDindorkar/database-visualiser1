@@ -1,16 +1,19 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Bot, User, Copy, Check, Loader2 } from 'lucide-react';
+import { X, Send, Bot, User, Copy, Check, Loader2, Play, Trash2 } from 'lucide-react';
 import { findMatchingIntent, SQLIntent } from '@/data/sqlKnowledgeBase';
 
-interface Message {
+// ── Types ──────────────────────────────────────────────────────────────────────
+
+export interface ChatMessage {
     id: string;
     type: 'user' | 'bot';
     content: string;
     sql?: string[];
     timestamp: Date;
+    executed?: boolean;
 }
 
 interface SQLChatbotProps {
@@ -20,137 +23,242 @@ interface SQLChatbotProps {
         textSecondary?: string;
         modal?: string;
     };
+    onExecuteSQL?: (sqlStatements: string[]) => Promise<void>;
+    savedMessages?: ChatMessage[];
+    onMessagesChange?: (messages: ChatMessage[]) => void;
+    activeDatabaseName?: string;
 }
 
-export default function SQLChatbot({ theme }: SQLChatbotProps) {
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+const hasExecutableSQL = (sql?: string[]): boolean => {
+    if (!sql || sql.length === 0) return false;
+    return sql.some(s =>
+        /^\s*(CREATE\s+TABLE|INSERT|UPDATE|DELETE|ALTER|DROP\s+TABLE|TRUNCATE)/i.test(s)
+    );
+};
+
+const splitSQLStatements = (raw: string): string[] => {
+    const statements: string[] = [];
+    let current = '';
+    let inString = false;
+    let stringChar = '';
+
+    for (let i = 0; i < raw.length; i++) {
+        const ch = raw[i];
+        if (inString) {
+            current += ch;
+            if (ch === stringChar && raw[i - 1] !== '\\') {
+                inString = false;
+            }
+        } else if (ch === '\'' || ch === '"') {
+            inString = true;
+            stringChar = ch;
+            current += ch;
+        } else if (ch === ';') {
+            const trimmed = current.trim();
+            if (trimmed) statements.push(trimmed);
+            current = '';
+        } else {
+            current += ch;
+        }
+    }
+    const last = current.trim();
+    if (last) statements.push(last);
+    return statements;
+};
+
+// ── Component ──────────────────────────────────────────────────────────────────
+
+export default function SQLChatbot({
+    theme,
+    onExecuteSQL,
+    savedMessages,
+    onMessagesChange,
+    activeDatabaseName,
+}: SQLChatbotProps) {
+    const WELCOME: ChatMessage = {
+        id: 'welcome',
+        type: 'bot',
+        content:
+            "Hi! I'm your SQL Assistant. I can help you with:\n\n• Creating databases & tables\n• SELECT, INSERT, UPDATE, DELETE\n• JOINs and relationships\n• Constraints & indexes\n• SQL functions\n\nAsk me anything about SQL!",
+        timestamp: new Date(),
+    };
+
     const [isOpen, setIsOpen] = useState(false);
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            id: 'welcome',
-            type: 'bot',
-            content: "Hi! I'm your SQL Assistant. I can help you with:\n\n• Creating databases & tables\n• SELECT, INSERT, UPDATE, DELETE\n• JOINs and relationships\n• Constraints & indexes\n• SQL functions\n\nAsk me anything about SQL!",
-            timestamp: new Date(),
-        },
-    ]);
+    const [messages, setMessages] = useState<ChatMessage[]>([WELCOME]);
     const [inputValue, setInputValue] = useState('');
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [executingId, setExecutingId] = useState<string | null>(null);
+    const [initialised, setInitialised] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
+    // Load saved messages once
+    useEffect(() => {
+        if (!initialised && savedMessages && savedMessages.length > 0) {
+            setMessages(savedMessages);
+            setInitialised(true);
+        } else if (!initialised) {
+            setInitialised(true);
+        }
+    }, [savedMessages, initialised]);
+
+    // Persist messages on change
+    useEffect(() => {
+        if (initialised && onMessagesChange) {
+            onMessagesChange(messages);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [messages, initialised]);
 
     useEffect(() => {
-        scrollToBottom();
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
     useEffect(() => {
-        if (isOpen && inputRef.current) {
-            inputRef.current.focus();
-        }
+        if (isOpen && inputRef.current) inputRef.current.focus();
     }, [isOpen]);
+
+    const addMessages = useCallback((...msgs: ChatMessage[]) => {
+        setMessages(prev => [...prev, ...msgs]);
+    }, []);
+
+    // Execute SQL in workflow
+    const handleExecuteInWorkflow = useCallback(
+        async (messageId: string, sql: string[]) => {
+            if (!onExecuteSQL || executingId) return;
+            setExecutingId(messageId);
+            try {
+                await onExecuteSQL(sql);
+                setMessages(prev =>
+                    prev.map(m =>
+                        m.id === messageId ? { ...m, executed: true } : m
+                    )
+                );
+                addMessages({
+                    id: `confirm-${Date.now()}`,
+                    type: 'bot',
+                    content: '✅ SQL executed successfully! Changes are reflected in the workflow.',
+                    timestamp: new Date(),
+                });
+            } catch (err) {
+                console.error('Execute in workflow error:', err);
+                addMessages({
+                    id: `err-${Date.now()}`,
+                    type: 'bot',
+                    content: `❌ Error executing SQL: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`,
+                    timestamp: new Date(),
+                });
+            } finally {
+                setExecutingId(null);
+            }
+        },
+        [onExecuteSQL, executingId, addMessages]
+    );
 
     const handleSend = async () => {
         if (!inputValue.trim() || isLoading) return;
 
-        const userMessage: Message = {
-            id: Date.now().toString(),
+        const userMsg: ChatMessage = {
+            id: `u-${Date.now()}`,
             type: 'user',
             content: inputValue.trim(),
             timestamp: new Date(),
         };
 
-        setMessages((prev) => [...prev, userMessage]);
+        setMessages(prev => [...prev, userMsg]);
         const currentInput = inputValue.trim();
         setInputValue('');
 
-        // First try rule-based matching
+        // Check if user typed "yes" to execute last pending SQL
+        if (/^(yes|yeah|yep|sure|ok|okay|y|do it|go ahead)$/i.test(currentInput)) {
+            const lastBot = [...messages].reverse().find(
+                m => m.type === 'bot' && hasExecutableSQL(m.sql) && !m.executed
+            );
+            if (lastBot && onExecuteSQL) {
+                await handleExecuteInWorkflow(lastBot.id, lastBot.sql!);
+                return;
+            }
+        }
+
+        // Rule-based matching first
         const matchedIntent: SQLIntent | null = findMatchingIntent(currentInput);
 
         if (matchedIntent) {
-            // Rule-based response found - use it immediately
+            const botSql = matchedIntent.response.sql;
+            const allStatements = botSql
+                ? botSql.flatMap(s => splitSQLStatements(s))
+                : undefined;
+
             setTimeout(() => {
-                const botMessage: Message = {
-                    id: (Date.now() + 1).toString(),
+                addMessages({
+                    id: `b-${Date.now()}`,
                     type: 'bot',
                     content: matchedIntent.response.explanation,
-                    sql: matchedIntent.response.sql,
+                    sql: allStatements,
                     timestamp: new Date(),
-                };
-                setMessages((prev) => [...prev, botMessage]);
+                });
             }, 300);
         } else {
-            // No rule-based match - use OpenRouter AI fallback
+            // AI fallback via OpenRouter
             setIsLoading(true);
-
             try {
                 const response = await fetch('/api/chat/openrouter', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: currentInput }),
                 });
-
                 const data = await response.json();
 
-                // Extract SQL queries - prefer API-provided sql, fall back to regex extraction
                 let sqlQueries: string[] = data.sql || [];
 
-                // If no SQL from API, try to extract from the message content
                 if (sqlQueries.length === 0 && data.success && data.message) {
-                    // Extract SQL from markdown code blocks
                     const codeBlockRegex = /```(?:sql)?\s*([\s\S]*?)```/gi;
                     let match;
                     while ((match = codeBlockRegex.exec(data.message)) !== null) {
                         const sqlContent = match[1].trim();
-                        if (sqlContent && /^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|GRANT|REVOKE|USE|SHOW|DESCRIBE|EXPLAIN|WITH)\b/i.test(sqlContent)) {
+                        if (
+                            sqlContent &&
+                            /^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|GRANT|REVOKE|USE|SHOW|DESCRIBE|EXPLAIN|WITH)\b/i.test(sqlContent)
+                        ) {
                             sqlQueries.push(sqlContent);
                         }
                     }
                 }
 
-                // Clean the message by removing SQL code blocks and standalone SQL
-                let cleanMessage = data.message;
+                // Split each block into individual statements
+                sqlQueries = sqlQueries.flatMap(s => splitSQLStatements(s));
+
+                let cleanMessage = data.message || '';
                 if (sqlQueries.length > 0) {
-                    // Remove markdown code blocks
                     cleanMessage = cleanMessage.replace(/```(?:sql)?\s*[\s\S]*?```/gi, '');
-
-                    // Also remove the actual SQL statements if they appear as plain text
                     for (const sql of sqlQueries) {
-                        // Escape special regex characters in the SQL
-                        const escapedSQL = sql.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                        cleanMessage = cleanMessage.replace(new RegExp(escapedSQL, 'gi'), '');
+                        const escaped = sql.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        cleanMessage = cleanMessage.replace(new RegExp(escaped, 'gi'), '');
                     }
-
-                    // Clean up extra whitespace and newlines
                     cleanMessage = cleanMessage.replace(/\n{3,}/g, '\n\n').trim();
                 }
 
-                const botMessage: Message = {
-                    id: (Date.now() + 1).toString(),
+                const finalSql = sqlQueries.length > 0 ? sqlQueries : undefined;
+                addMessages({
+                    id: `b-${Date.now()}`,
                     type: 'bot',
                     content: data.success
-                        ? (cleanMessage || data.message)
-                        : "I'm sorry, I couldn't process your request right now. Please try again or ask a different SQL-related question.",
-                    sql: sqlQueries.length > 0 ? sqlQueries : undefined,
+                        ? cleanMessage || data.message
+                        : "I'm sorry, I couldn't process your request right now. Please try again.",
+                    sql: finalSql,
                     timestamp: new Date(),
-                };
-
-                setMessages((prev) => [...prev, botMessage]);
+                });
             } catch (error) {
                 console.error('OpenRouter API error:', error);
-
-                const errorMessage: Message = {
-                    id: (Date.now() + 1).toString(),
+                addMessages({
+                    id: `b-${Date.now()}`,
                     type: 'bot',
-                    content: "I'm having trouble connecting to the AI service. Please check your connection and try again.",
+                    content: "I'm having trouble connecting to the AI service. Please check your connection.",
                     timestamp: new Date(),
-                };
-
-                setMessages((prev) => [...prev, errorMessage]);
+                });
             } finally {
                 setIsLoading(false);
             }
@@ -164,18 +272,21 @@ export default function SQLChatbot({ theme }: SQLChatbotProps) {
         }
     };
 
+    const handleClearChat = () => {
+        setMessages([WELCOME]);
+    };
+
     const copyToClipboard = (sql: string[], messageId: string) => {
-        const text = sql.join('\n');
-        navigator.clipboard.writeText(text);
+        navigator.clipboard.writeText(sql.join(';\n'));
         setCopiedId(messageId);
         setTimeout(() => setCopiedId(null), 2000);
     };
 
     const quickQuestions = [
-        "Create users table",
-        "How to JOIN tables?",
-        "What is foreign key?",
-        "SELECT with WHERE"
+        'Create users table',
+        'How to JOIN tables?',
+        'What is foreign key?',
+        'SELECT with WHERE',
     ];
 
     const handleQuickQuestion = (question: string) => {
@@ -190,21 +301,14 @@ export default function SQLChatbot({ theme }: SQLChatbotProps) {
             {/* Floating Chat Button */}
             <motion.button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${isOpen
-                    ? 'bg-gray-900 text-white'
-                    : 'bg-white text-gray-900 hover:bg-gray-50'
-                    }`}
+                className={`fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${
+                    isOpen ? 'bg-gray-900 text-white' : 'bg-white text-gray-900 hover:bg-gray-50'
+                }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                style={{
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-                }}
+                style={{ boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)' }}
             >
-                {isOpen ? (
-                    <X className="w-6 h-6" />
-                ) : (
-                    <Bot className="w-6 h-6" />
-                )}
+                {isOpen ? <X className="w-6 h-6" /> : <Bot className="w-6 h-6" />}
             </motion.button>
 
             {/* Chat Popup */}
@@ -215,8 +319,9 @@ export default function SQLChatbot({ theme }: SQLChatbotProps) {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.8, y: 20 }}
                         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                        className={`fixed bottom-24 right-6 z-50 w-96 max-w-[calc(100vw-48px)] rounded-2xl shadow-2xl overflow-hidden ${isDark ? 'bg-slate-900 border border-slate-700' : 'bg-white border border-gray-200'
-                            }`}
+                        className={`fixed bottom-24 right-6 z-50 w-96 max-w-[calc(100vw-48px)] rounded-2xl shadow-2xl overflow-hidden ${
+                            isDark ? 'bg-slate-900 border border-slate-700' : 'bg-white border border-gray-200'
+                        }`}
                         style={{
                             boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
                             maxHeight: 'calc(100vh - 150px)',
@@ -224,18 +329,29 @@ export default function SQLChatbot({ theme }: SQLChatbotProps) {
                     >
                         {/* Header */}
                         <div className={`p-4 border-b ${isDark ? 'border-slate-700 bg-slate-800' : 'border-gray-100 bg-gray-50'}`}>
-                            <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-blue-600' : 'bg-gray-900'}`}>
-                                    <Bot className="w-5 h-5 text-white" />
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-blue-600' : 'bg-gray-900'}`}>
+                                        <Bot className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                                            SQL Assistant
+                                        </h3>
+                                        <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                                            {activeDatabaseName ? `DB: ${activeDatabaseName}` : 'AI-powered SQL helper'}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
-                                        SQL Assistant
-                                    </h3>
-                                    <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
-                                        AI-powered SQL helper
-                                    </p>
-                                </div>
+                                <motion.button
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    onClick={handleClearChat}
+                                    className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-gray-200 text-gray-400'}`}
+                                    title="Clear chat"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </motion.button>
                             </div>
                         </div>
 
@@ -245,18 +361,16 @@ export default function SQLChatbot({ theme }: SQLChatbotProps) {
                             style={{ height: '350px' }}
                         >
                             <div className="space-y-4">
-                                {messages.map((message) => (
+                                {messages.map(message => (
                                     <motion.div
                                         key={message.id}
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         className={`flex gap-3 ${message.type === 'user' ? 'flex-row-reverse' : ''}`}
                                     >
-                                        {/* Avatar */}
-                                        <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${message.type === 'user'
-                                            ? 'bg-blue-600'
-                                            : isDark ? 'bg-slate-700' : 'bg-gray-100'
-                                            }`}>
+                                        <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${
+                                            message.type === 'user' ? 'bg-black' : isDark ? 'bg-slate-700' : 'bg-gray-100'
+                                        }`}>
                                             {message.type === 'user' ? (
                                                 <User className="w-4 h-4 text-white" />
                                             ) : (
@@ -264,22 +378,26 @@ export default function SQLChatbot({ theme }: SQLChatbotProps) {
                                             )}
                                         </div>
 
-                                        {/* Message Content */}
-                                        <div className={`flex-1 ${message.type === 'user' ? 'text-right' : ''}`}>
-                                            <div className={`inline-block p-3 rounded-xl max-w-full text-left ${message.type === 'user'
-                                                ? 'bg-blue-600 text-white'
-                                                : isDark ? 'bg-slate-800 text-slate-200' : 'bg-gray-100 text-gray-800'
-                                                }`}>
-                                                <p className="text-sm whitespace-pre-wrap" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                                        <div className={`flex-1 min-w-0 ${message.type === 'user' ? 'text-right' : ''}`}>
+                                            <div
+                                                className={`inline-block p-3 rounded-xl max-w-full text-left ${
+                                                    message.type === 'user'
+                                                        ? 'bg-black text-white'
+                                                        : isDark ? 'bg-slate-800 text-slate-200' : 'bg-gray-100 text-gray-800'
+                                                }`}
+                                                style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+                                            >
+                                                <p className="text-sm whitespace-pre-wrap" style={{ fontFamily: 'var(--font-geist-sans)', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                                                     {message.content}
                                                 </p>
 
-                                                {/* SQL Code Block */}
                                                 {message.sql && message.sql.length > 0 && (
                                                     <div className="mt-3">
                                                         <div className={`relative rounded-lg overflow-hidden ${isDark ? 'bg-slate-900' : 'bg-gray-900'}`}>
                                                             <div className="flex items-center justify-between px-3 py-2 border-b border-gray-700">
-                                                                <span className="text-xs text-gray-400">SQL</span>
+                                                                <span className="text-xs text-gray-400">
+                                                                    SQL ({message.sql.length} statement{message.sql.length > 1 ? 's' : ''})
+                                                                </span>
                                                                 <button
                                                                     onClick={() => copyToClipboard(message.sql!, message.id)}
                                                                     className="text-gray-400 hover:text-white transition-colors"
@@ -292,11 +410,39 @@ export default function SQLChatbot({ theme }: SQLChatbotProps) {
                                                                 </button>
                                                             </div>
                                                             <pre className="p-3 overflow-x-auto text-sm">
-                                                                <code className="text-green-400">
-                                                                    {message.sql.join('\n')}
-                                                                </code>
+                                                                <code className="text-green-400">{message.sql.join(';\n')}</code>
                                                             </pre>
                                                         </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Execute in Workflow Button */}
+                                                {message.type === 'bot' && hasExecutableSQL(message.sql) && !message.executed && onExecuteSQL && (
+                                                    <div className="mt-3 pt-2 border-t border-gray-600/30">
+                                                        <p className={`text-xs mb-2 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                                                            Run this SQL in your workflow?
+                                                        </p>
+                                                        <motion.button
+                                                            whileHover={{ scale: 1.02 }}
+                                                            whileTap={{ scale: 0.98 }}
+                                                            onClick={() => handleExecuteInWorkflow(message.id, message.sql!)}
+                                                            disabled={executingId === message.id}
+                                                            className="flex items-center gap-2 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded-lg transition-colors disabled:opacity-50"
+                                                        >
+                                                            {executingId === message.id ? (
+                                                                <Loader2 className="w-3 h-3 animate-spin" />
+                                                            ) : (
+                                                                <Play className="w-3 h-3" />
+                                                            )}
+                                                            {executingId === message.id ? 'Executing...' : 'Yes, Execute in Workflow'}
+                                                        </motion.button>
+                                                    </div>
+                                                )}
+
+                                                {message.type === 'bot' && message.executed && (
+                                                    <div className="mt-2 flex items-center gap-1 text-green-500 text-xs">
+                                                        <Check className="w-3 h-3" />
+                                                        <span>Executed in workflow</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -312,14 +458,13 @@ export default function SQLChatbot({ theme }: SQLChatbotProps) {
                             <div className={`px-4 pb-2 ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
                                 <p className={`text-xs mb-2 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Quick questions:</p>
                                 <div className="flex flex-wrap gap-2">
-                                    {quickQuestions.map((q) => (
+                                    {quickQuestions.map(q => (
                                         <button
                                             key={q}
                                             onClick={() => handleQuickQuestion(q)}
-                                            className={`px-3 py-1.5 text-xs rounded-full transition-colors ${isDark
-                                                ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                                }`}
+                                            className={`px-3 py-1.5 text-xs rounded-full transition-colors ${
+                                                isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            }`}
                                             style={{ fontFamily: 'var(--font-geist-sans)' }}
                                         >
                                             {q}
@@ -336,13 +481,12 @@ export default function SQLChatbot({ theme }: SQLChatbotProps) {
                                     ref={inputRef}
                                     type="text"
                                     value={inputValue}
-                                    onChange={(e) => setInputValue(e.target.value)}
-                                    onKeyPress={handleKeyPress}
+                                    onChange={e => setInputValue(e.target.value)}
+                                    onKeyDown={handleKeyPress}
                                     placeholder="Ask about SQL..."
-                                    className={`flex-1 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDark
-                                        ? 'bg-slate-700 text-white placeholder-slate-400 border-slate-600'
-                                        : 'bg-white text-gray-900 placeholder-gray-400 border-gray-200'
-                                        } border`}
+                                    className={`flex-1 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                        isDark ? 'bg-slate-700 text-white placeholder-slate-400 border-slate-600' : 'bg-white text-gray-900 placeholder-gray-400 border-gray-200'
+                                    } border`}
                                     style={{ fontFamily: 'var(--font-geist-sans)' }}
                                 />
                                 <motion.button
@@ -350,16 +494,13 @@ export default function SQLChatbot({ theme }: SQLChatbotProps) {
                                     whileTap={{ scale: isLoading ? 1 : 0.95 }}
                                     onClick={handleSend}
                                     disabled={!inputValue.trim() || isLoading}
-                                    className={`p-2.5 rounded-xl transition-all ${inputValue.trim() && !isLoading
-                                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                        : isDark ? 'bg-slate-700 text-slate-500' : 'bg-gray-200 text-gray-400'
-                                        }`}
+                                    className={`p-2.5 rounded-xl transition-all ${
+                                        inputValue.trim() && !isLoading
+                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                            : isDark ? 'bg-slate-700 text-slate-500' : 'bg-gray-200 text-gray-400'
+                                    }`}
                                 >
-                                    {isLoading ? (
-                                        <Loader2 className="w-5 h-5 animate-spin" />
-                                    ) : (
-                                        <Send className="w-5 h-5" />
-                                    )}
+                                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                                 </motion.button>
                             </div>
                         </div>
