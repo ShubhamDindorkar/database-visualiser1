@@ -483,7 +483,7 @@ export default function LandingPage() {
           {/* MacBook Scroll: SS starts in screen → scroll → stops with SS in middle */}
           <div className="mt-4 sm:mt-6 w-full overflow-hidden max-w-full">
             <MacbookScroll 
-              src="/screenshot.png" 
+              src="/Mac.png" 
               showGradient={false} 
             />
           </div>
