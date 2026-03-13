@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
 
 // Firebase Admin SDK - already initialized
 let adminAuth: any = null;
