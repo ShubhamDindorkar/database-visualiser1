@@ -1,14 +1,34 @@
 import mysql from 'mysql2/promise';
 
 // MySQL connection configuration
-// For local development, MySQL runs on localhost
-// This will be updated for cloud hosting (Railway) later
+// Supports both local dev (MYSQL_*) and Railway (MYSQL*) environment variables
+// Railway auto-provides: MYSQLHOST, MYSQLPORT, MYSQLUSER, MYSQLPASSWORD
 const connectionConfig = {
-  host: process.env.MYSQL_HOST || 'localhost',
-  port: parseInt(process.env.MYSQL_PORT || '3306'),
-  user: process.env.MYSQL_USER || 'root',
-  password: process.env.MYSQL_PASSWORD || '',
+  host: process.env.MYSQLHOST || process.env.MYSQL_HOST || 'localhost',
+  port: parseInt(
+    process.env.MYSQLPORT || process.env.MYSQL_PORT || '3306'
+  ),
+  user: process.env.MYSQLUSER || process.env.MYSQL_USER || 'root',
+  password: process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD || '',
 };
+
+// Connection pool for better performance
+let pool: mysql.Pool | null = null;
+
+function getPool() {
+  if (!pool) {
+    pool = mysql.createPool({
+      host: connectionConfig.host,
+      port: connectionConfig.port,
+      user: connectionConfig.user,
+      password: connectionConfig.password,
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+    });
+  }
+  return pool;
+}
 
 /**
  * Generate the user-specific database prefix
@@ -54,8 +74,7 @@ export function getDisplayDatabaseName(mysqlName: string, userId: string): strin
  * Used for operations like CREATE DATABASE, SHOW DATABASES
  */
 export async function getConnection() {
-  const connection = await mysql.createConnection(connectionConfig);
-  return connection;
+  return getPool().getConnection();
 }
 
 /**
@@ -63,10 +82,8 @@ export async function getConnection() {
  * Used for operations within a database like CREATE TABLE, INSERT, SELECT, etc.
  */
 export async function getConnectionWithDatabase(database: string) {
-  const connection = await mysql.createConnection({
-    ...connectionConfig,
-    database,
-  });
+  const connection = await getPool().getConnection();
+  await connection.changeUser({ database });
   return connection;
 }
 
@@ -74,8 +91,9 @@ export async function getConnectionWithDatabase(database: string) {
  * Execute a query without a specific database context
  */
 export async function executeQuery(query: string) {
-  const connection = await getConnection();
+  let connection: any = null;
   try {
+    connection = await getConnection();
     const [results] = await connection.execute(query);
     return { success: true, results };
   } catch (error: unknown) {
@@ -88,7 +106,9 @@ export async function executeQuery(query: string) {
       sqlState: mysqlError.sqlState,
     };
   } finally {
-    await connection.end();
+    if (connection) {
+      await connection.release();
+    }
   }
 }
 
@@ -96,8 +116,9 @@ export async function executeQuery(query: string) {
  * Execute a query within a specific database context
  */
 export async function executeQueryInDatabase(database: string, query: string) {
-  const connection = await getConnectionWithDatabase(database);
+  let connection: any = null;
   try {
+    connection = await getConnectionWithDatabase(database);
     const [results, fields] = await connection.execute(query);
     return { success: true, results, fields };
   } catch (error: unknown) {
@@ -110,7 +131,9 @@ export async function executeQueryInDatabase(database: string, query: string) {
       sqlState: mysqlError.sqlState,
     };
   } finally {
-    await connection.end();
+    if (connection) {
+      await connection.release();
+    }
   }
 }
 
