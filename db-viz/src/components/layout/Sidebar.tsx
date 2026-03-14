@@ -116,7 +116,7 @@ export default function Sidebar({
       initial={{ x: -20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.4, delay: 0.05 }}
-      className={`w-60 ${theme?.sidebar || 'bg-white/95 border-gray-200'} border-r flex flex-col h-full backdrop-blur-xl shadow-lg shadow-gray-200/10`}
+      className={`hidden md:flex w-60 lg:w-64 ${theme?.sidebar || 'bg-white/95 border-gray-200'} border-r flex-col h-full backdrop-blur-xl shadow-lg shadow-gray-200/10 overflow-hidden`}
     >
       {/* Header */}
       <div className={`p-4 border-b ${theme?.navbar?.includes('slate') ? 'border-slate-700 bg-slate-800' : 'border-gray-200/80 bg-gray-50/80'}`}>
@@ -146,7 +146,7 @@ export default function Sidebar({
               whileHover={{ scale: 1.02, y: -1 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => onQuickSQL(type)}
-              className={`${color} text-white text-xs py-2 px-1.5 rounded-md flex items-center justify-center transition-colors`}
+              className={`${color} text-white text-xs py-2.5 px-2 rounded-md flex items-center justify-center transition-colors touch-target`}
               style={{ fontFamily: 'var(--font-geist-sans)' }}
               title={type}
             >

@@ -77,7 +77,7 @@ export default function CreateDatabaseModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
             onClick={handleClose}
           >
             {/* Modal */}
@@ -86,20 +86,20 @@ export default function CreateDatabaseModal({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className={`${theme?.modal || 'bg-white'} rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden`}
+              className={`${theme?.modal || 'bg-white'} rounded-2xl shadow-xl w-full max-w-md overflow-hidden`}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className={`flex items-center justify-between p-5 border-b ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'}`}>
-                <div className="flex items-center gap-3">
-                  <div className={`w-11 h-11 ${theme?.button || 'bg-blue-600'} rounded-xl flex items-center justify-center`}>
-                    <Database className="w-5 h-5 text-white" />
+              <div className={`flex items-center justify-between p-4 sm:p-6 border-b ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'}`}>
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <div className={`w-9 sm:w-11 h-9 sm:h-11 ${theme?.button || 'bg-blue-600'} rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0`}>
+                    <Database className="w-4 sm:w-5 h-4 sm:h-5 text-white" />
                   </div>
-                  <div>
-                    <h2 className={`text-lg font-light ${theme?.text || 'text-gray-900'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                  <div className="min-w-0">
+                    <h2 className={`text-base sm:text-lg font-light truncate ${theme?.text || 'text-gray-900'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
                       Create Database
                     </h2>
-                    <p className={`text-sm font-light ${theme?.textSecondary || 'text-gray-500'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                    <p className={`text-xs sm:text-sm font-light ${theme?.textSecondary || 'text-gray-500'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
                       Create a new MySQL database
                     </p>
                   </div>
@@ -108,14 +108,14 @@ export default function CreateDatabaseModal({
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={handleClose}
-                  className={`p-2 rounded-lg ${theme?.buttonSecondary || 'hover:bg-gray-100'} transition-all`}
+                  className={`p-1.5 sm:p-2 rounded-lg ${theme?.buttonSecondary || 'hover:bg-gray-100'} transition-all flex-shrink-0`}
                 >
-                  <X className={`w-5 h-5 ${theme?.textSecondary || 'text-gray-500'}`} />
+                  <X className={`w-5 h-5 sm:w-6 sm:h-6 ${theme?.textSecondary || 'text-gray-500'}`} />
                 </motion.button>
               </div>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="p-5 space-y-4">
+              <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
                 <Input
                   label="Database Name"
                   placeholder="my_database"
@@ -129,19 +129,19 @@ export default function CreateDatabaseModal({
                 />
 
                 {/* Info Box */}
-                <div className={`flex items-start gap-3 p-4 ${theme?.buttonSecondary || 'bg-blue-50 border-blue-200'} border rounded-xl`}>
-                  <AlertCircle className={`w-5 h-5 ${theme?.button?.includes('blue') ? 'text-blue-600' : theme?.text || 'text-blue-600'} mt-0.5 flex-shrink-0`} />
-                  <p className={`text-sm font-light ${theme?.text || 'text-gray-700'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                <div className={`flex items-start gap-2 sm:gap-3 p-3 sm:p-4 ${theme?.buttonSecondary || 'bg-blue-50 border-blue-200'} border rounded-lg sm:rounded-xl text-sm`}>
+                  <AlertCircle className={`w-4 sm:w-5 h-4 sm:h-5 ${theme?.button?.includes('blue') ? 'text-blue-600' : theme?.text || 'text-blue-600'} mt-0.5 flex-shrink-0`} />
+                  <p className={`font-light ${theme?.text || 'text-gray-700'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
                     A new MySQL database will be created with this name.
                   </p>
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-3 pt-2">
+                <div className="flex gap-2 sm:gap-3 pt-2">
                   <Button
                     type="button"
                     variant="secondary"
-                    className="flex-1"
+                    className="flex-1 text-sm py-2 sm:py-3"
                     onClick={handleClose}
                   >
                     Cancel

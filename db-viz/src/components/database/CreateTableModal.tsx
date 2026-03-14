@@ -302,7 +302,7 @@ export default function CreateTableModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center overflow-y-auto py-8"
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center overflow-y-auto p-4 py-8"
             onClick={handleClose}
           >
             <motion.div
@@ -310,20 +310,20 @@ export default function CreateTableModal({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className={`${theme?.modal || 'bg-white'} rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden`}
+              className={`${theme?.modal || 'bg-white'} rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden`}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className={`flex items-center justify-between p-4 border-b ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'}`}>
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 ${theme?.buttonSecondary || 'bg-gray-100'} rounded-lg flex items-center justify-center`}>
-                    <Table className={`w-5 h-5 ${theme?.text || 'text-gray-800'}`} />
+              <div className={`flex items-center justify-between p-3 sm:p-4 border-b ${theme?.navbar?.includes('slate') ? 'border-slate-700' : 'border-gray-200'}`}>
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <div className={`w-9 sm:w-10 h-9 sm:h-10 ${theme?.buttonSecondary || 'bg-gray-100'} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                    <Table className={`w-4 sm:w-5 h-4 sm:h-5 ${theme?.text || 'text-gray-800'}`} />
                   </div>
-                  <div>
-                    <h2 className={`text-lg font-light ${theme?.text || 'text-black'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                  <div className="min-w-0">
+                    <h2 className={`text-base sm:text-lg font-light truncate ${theme?.text || 'text-black'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
                       Create Table
                     </h2>
-                    <p className={`text-sm font-light ${theme?.textSecondary || 'text-gray-600'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                    <p className={`text-xs sm:text-sm font-light truncate ${theme?.textSecondary || 'text-gray-600'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
                       in {databaseName}
                     </p>
                   </div>
@@ -332,14 +332,14 @@ export default function CreateTableModal({
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={handleClose}
-                  className={`p-2 rounded-lg ${theme?.buttonSecondary || 'hover:bg-gray-100'} transition-colors`}
+                  className={`p-1.5 sm:p-2 rounded-lg ${theme?.buttonSecondary || 'hover:bg-gray-100'} transition-colors flex-shrink-0`}
                 >
                   <X className={`w-5 h-5 ${theme?.textSecondary || 'text-gray-600'}`} />
                 </motion.button>
               </div>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+              <form onSubmit={handleSubmit} className="p-3 sm:p-4 space-y-4 max-h-[70vh] sm:max-h-[60vh] overflow-y-auto">
                 <Input
                   label="Table Name"
                   placeholder="users"
@@ -353,8 +353,8 @@ export default function CreateTableModal({
                 />
 
                 <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <label className={`block text-sm font-light ${theme?.text || 'text-gray-800'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                  <div className="flex items-center justify-between mb-2 sm:mb-3">
+                    <label className={`block text-xs sm:text-sm font-light ${theme?.text || 'text-gray-800'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
                       Columns
                     </label>
                     <Button

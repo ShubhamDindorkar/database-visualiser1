@@ -2,13 +2,14 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Presentation, Terminal } from 'lucide-react';
+import { Presentation, Terminal, Menu } from 'lucide-react';
 
 interface NavbarProps {
   onPresentationMode?: () => void;
   onTerminalMode?: () => void;
   showModeButtons?: boolean;
   theme?: any;
+  onMobileMenuToggle?: () => void;
 }
 
 export default function Navbar({
@@ -16,6 +17,7 @@ export default function Navbar({
   onTerminalMode,
   showModeButtons = false,
   theme,
+  onMobileMenuToggle,
 }: NavbarProps) {
   const initialHeight = 64; // px (h-16)
   const maxExtra = 24; // max extra px to expand
@@ -52,18 +54,18 @@ export default function Navbar({
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4 }}
       style={{ height: `${height}px`, paddingTop: `${paddingTop}px`, paddingBottom: `12px` }}
-      className={`${theme?.navbar || 'bg-white/95 border-gray-200/50'} backdrop-blur-2xl border-b px-6 flex items-start justify-between shadow-lg shadow-gray-200/20 z-50 transition-[height,padding] duration-200 ease-out`}
+      className={`${theme?.navbar || 'bg-white/95 border-gray-200/50'} backdrop-blur-2xl border-b px-4 sm:px-6 flex items-start justify-between shadow-lg shadow-gray-200/20 z-50 transition-[height,padding] duration-200 ease-out`}
     >
       {/* Logo and App Name */}
       <motion.div
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.1 }}
-        className="flex items-center gap-3"
+        className="flex items-center gap-2 sm:gap-3 min-w-0"
       >
-        <div className="w-10 h-10 bg-gradient-to-br from-gray-900 to-black rounded-xl flex items-center justify-center shadow-lg">
+        <div className="w-8 sm:w-10 h-8 sm:h-10 bg-gradient-to-br from-gray-900 to-black rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
           <svg
-            className="w-6 h-6 text-white"
+            className="w-5 sm:w-6 h-5 sm:h-6 text-white"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -76,11 +78,11 @@ export default function Navbar({
             />
           </svg>
         </div>
-        <div>
-          <h1 className={`text-xl font-light ${theme?.text || 'text-gray-900'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
+        <div className="min-w-0">
+          <h1 className={`text-lg sm:text-xl font-light truncate ${theme?.text || 'text-gray-900'}`} style={{ fontFamily: 'var(--font-geist-sans)' }}>
             DB Visualiser
           </h1>
-          <p className={`text-xs font-light ${theme?.textSecondary || 'text-gray-500'}`}>
+          <p className={`text-[10px] sm:text-xs font-light hidden sm:block ${theme?.textSecondary || 'text-gray-500'}`}>
             {/* MySQL Workbench */}
           </p>
         </div>
@@ -93,6 +95,19 @@ export default function Navbar({
         transition={{ delay: 0.15 }}
         className="flex items-center gap-3"
       >
+        {/* Mobile Menu Button */}
+        {onMobileMenuToggle && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onMobileMenuToggle}
+            className={`md:hidden p-2.5 rounded-lg ${theme?.buttonSecondary || 'bg-white hover:bg-gray-50 border-gray-200/80'} border transition-all`}
+            aria-label="Toggle menu"
+          >
+            <Menu className={`w-5 h-5 ${theme?.text || 'text-gray-900'}`} />
+          </motion.button>
+        )}
+
         {/* Mode Buttons */}
         {showModeButtons && (
           <div className="flex items-center gap-2">

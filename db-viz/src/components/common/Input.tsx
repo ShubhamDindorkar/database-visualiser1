@@ -42,18 +42,18 @@ export default function Input({
         <input
           id={inputId}
           className={`
-            w-full px-4 py-2.5 rounded-xl transition-all duration-200
+            w-full px-3 sm:px-4 py-3 sm:py-2.5 rounded-lg sm:rounded-xl transition-all duration-200
             bg-white border border-gray-300
-            text-gray-900 font-light
+            text-sm sm:text-base text-gray-900 font-light
             placeholder:text-gray-400
             focus:ring-2 focus:ring-gray-500 focus:border-gray-500
             disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-50
-            ${leftIcon ? 'pl-11' : ''}
-            ${rightIcon ? 'pr-11' : ''}
+            ${leftIcon ? 'pl-10 sm:pl-11' : ''}
+            ${rightIcon ? 'pr-10 sm:pr-11' : ''}
             ${error ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : ''}
             ${className}
           `}
-          style={{ fontFamily: 'var(--font-geist-sans)' }}
+          style={{ fontFamily: 'var(--font-geist-sans)', minHeight: '44px' }}
           {...props}
         />
         {rightIcon && (

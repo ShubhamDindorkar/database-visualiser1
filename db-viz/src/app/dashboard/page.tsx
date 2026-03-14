@@ -116,6 +116,9 @@ export default function DashboardPage() {
   // Theme State
   const [currentTheme, setCurrentTheme] = useState<string>('light');
 
+  // Mobile Sidebar State
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
   // UI State
 
   const [isTerminalMinimized, setIsTerminalMinimized] = useState(false);
@@ -1852,6 +1855,7 @@ export default function DashboardPage() {
             router.push(`/terminal-mode?db=${selectedDatabaseId}`);
           }
         }}
+        onMobileMenuToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
         showModeButtons={!!selectedDatabaseId}
         theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
       />
@@ -1861,9 +1865,90 @@ export default function DashboardPage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
-        className="flex-1 flex overflow-hidden"
+        className="flex-1 flex overflow-hidden relative"
       >
-        {/* Sidebar */}
+        {/* Mobile Sidebar Overlay */}
+        <AnimatePresence>
+          {isMobileSidebarOpen && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsMobileSidebarOpen(false)}
+                className="md:hidden fixed inset-0 z-30 bg-black/40"
+              />
+
+              {/* Mobile Sidebar */}
+              <motion.div
+                initial={{ x: -260 }}
+                animate={{ x: 0 }}
+                exit={{ x: -260 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                className={`absolute left-0 top-0 bottom-0 w-60 z-40 ${THEMES[currentTheme as keyof typeof THEMES]?.sidebar || THEMES.light.sidebar} border-r flex flex-col h-full backdrop-blur-xl shadow-lg shadow-gray-200/10`}
+              >
+                <Sidebar
+                  databases={databases}
+                  tables={tables}
+                  allTables={allTables}
+                  selectedDatabaseId={selectedDatabaseId}
+                  selectedTableId={selectedTableId}
+                  user={user}
+                  onSelectDatabase={(dbId) => {
+                    setSelectedDatabaseId(dbId);
+                    setIsMobileSidebarOpen(false);
+                  }}
+                  onSelectTable={(tableId) => {
+                    setSelectedTableId(tableId);
+                    setIsMobileSidebarOpen(false);
+                  }}
+                  onCreateDatabase={() => {
+                    setIsCreateDbModalOpen(true);
+                    setIsMobileSidebarOpen(false);
+                  }}
+                  onCreateTable={() => {
+                    setIsCreateTableModalOpen(true);
+                    setIsMobileSidebarOpen(false);
+                  }}
+                  onDeleteDatabase={handleDeleteDatabase}
+                  onDeleteTable={handleDeleteTable}
+                  onQuickSQL={handleQuickSQL}
+                  onEditTable={handleEditTable}
+                  onManageForeignKeys={() => {
+                    setIsForeignKeyModalOpen(true);
+                    setIsMobileSidebarOpen(false);
+                  }}
+                  onOpenSettings={() => {
+                    router.push('/settings');
+                    setIsMobileSidebarOpen(false);
+                  }}
+                  onViewProfile={() => {
+                    router.push('/profile');
+                    setIsMobileSidebarOpen(false);
+                  }}
+                  onTerminalMode={() => {
+                    if (selectedDatabaseId) {
+                      router.push(`/terminal-mode?db=${selectedDatabaseId}`);
+                    }
+                    setIsMobileSidebarOpen(false);
+                  }}
+                  onPresentationMode={() => {
+                    if (selectedDatabaseId) {
+                      router.push(`/presentation?db=${selectedDatabaseId}&theme=${currentTheme}`);
+                    }
+                    setIsMobileSidebarOpen(false);
+                  }}
+                  showModeButtons={!!selectedDatabaseId}
+                  onLogout={handleLogout}
+                  theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
+                />
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* Desktop Sidebar */}
         <Sidebar
           databases={databases}
           tables={tables}
@@ -1898,7 +1983,7 @@ export default function DashboardPage() {
         />
 
         {/* Canvas Area */}
-        <div className="flex-1 flex flex-col overflow-hidden p-4">
+        <div className="flex-1 flex flex-col overflow-hidden p-2 sm:p-3 md:p-4">
           {/* React Flow Canvas */}
           <div className="flex-1 relative" ref={workflowRef}>
             {selectedDatabaseId ? (
