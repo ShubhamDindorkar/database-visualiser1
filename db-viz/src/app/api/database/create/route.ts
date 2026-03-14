@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery, getPrefixedDatabaseName } from '@/lib/mysql';
+import { setNoCacheHeaders } from '@/lib/cache-headers';
 
 interface CreateDatabaseRequest {
   name: string;
@@ -34,17 +35,19 @@ export async function POST(request: NextRequest) {
 
     // Validate database name and userId
     if (!name || typeof name !== 'string') {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: false,
         error: 'Database name is required',
       }, { status: 400 });
+      return setNoCacheHeaders(response);
     }
 
     if (!userId || typeof userId !== 'string') {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: false,
         error: 'User ID is required',
       }, { status: 400 });
+      return setNoCacheHeaders(response);
     }
 
     const trimmedName = name.trim();
@@ -56,18 +59,20 @@ export async function POST(request: NextRequest) {
     // Validate database name format (MySQL naming rules)
     // Must start with letter or underscore, contain only alphanumeric and underscores
     if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmedName)) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: false,
         error: 'Invalid database name. Name must start with a letter or underscore and contain only letters, numbers, and underscores.',
       }, { status: 400 });
+      return setNoCacheHeaders(response);
     }
 
     // Check length (MySQL limit is 64 characters, accounting for prefix)
     if (prefixedName.length > 64) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: false,
         error: 'Database name is too long',
       }, { status: 400 });
+      return setNoCacheHeaders(response);
     }
 
     // Execute CREATE DATABASE query with prefixed name
@@ -76,12 +81,13 @@ export async function POST(request: NextRequest) {
     const result = await executeQuery(query);
 
     if (result.success) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         message: `Database '${trimmedName}' created successfully`,
         database: trimmedName, // Return user-friendly name
         actualDatabaseName: prefixedName, // Return actual MySQL name
       });
+      return setNoCacheHeaders(response);
     } else {
       // Handle specific MySQL errors
       let errorMessage = result.error || 'Failed to create database';
@@ -90,18 +96,20 @@ export async function POST(request: NextRequest) {
         errorMessage = `Database '${trimmedName}' already exists`;
       }
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: false,
         error: errorMessage,
         code: result.code,
         errno: result.errno,
       }, { status: 400 });
+      return setNoCacheHeaders(response);
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: errorMessage,
     }, { status: 500 });
+    return setNoCacheHeaders(response);
   }
 }

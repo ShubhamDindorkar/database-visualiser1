@@ -11,6 +11,9 @@ import DotGrid from '@/components/DotGrid';
 import { MacbookScroll } from '@/components/ui/macbook-scroll';
 import SmoothScroll from '@/components/SmoothScroll';
 
+// Cache revalidation: revalidate landing page every 24 hours
+export const revalidate = 86400;
+
 function CountUp({ value, suffix = '', duration = 1.5, decimals = 0 }: { value: number; suffix?: string; duration?: number; decimals?: number }) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true });

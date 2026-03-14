@@ -6,6 +6,7 @@ import {
   formatErrorForTerminal,
   isDatabaseOwnedByUser,
 } from '@/lib/mysql';
+import { setNoCacheHeaders } from '@/lib/cache-headers';
 
 interface ExecuteQueryRequest {
   database?: string;
@@ -94,11 +95,12 @@ export async function POST(request: NextRequest) {
     if (result.success) {
       const formattedOutput = formatResultsForTerminal(result.results, trimmedQuery);
       
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         results: result.results,
         formattedOutput,
       });
+      return setNoCacheHeaders(response);
     } else {
       const formattedError = formatErrorForTerminal(
         result.error || 'Unknown error',
@@ -106,7 +108,7 @@ export async function POST(request: NextRequest) {
         result.errno
       );
       
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: false,
         error: result.error,
         code: result.code,
@@ -114,13 +116,15 @@ export async function POST(request: NextRequest) {
         sqlState: result.sqlState,
         formattedOutput: [formattedError],
       });
+      return setNoCacheHeaders(response);
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: errorMessage,
       formattedOutput: [`ERROR: ${errorMessage}`],
     }, { status: 500 });
+    return setNoCacheHeaders(response);
   }
 }

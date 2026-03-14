@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery, getUserDatabasePrefix, getDisplayDatabaseName } from '@/lib/mysql';
+import { setNoCacheHeaders } from '@/lib/cache-headers';
 
 /**
  * GET /api/database/list
@@ -23,10 +24,11 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get('userId');
 
     if (!userId) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: false,
         error: 'User ID is required',
       }, { status: 400 });
+      return setNoCacheHeaders(response);
     }
 
     const result = await executeQuery('SHOW DATABASES');
@@ -46,22 +48,25 @@ export async function GET(request: NextRequest) {
           actualName: db, // Keep actual name for MySQL operations
         }));
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         databases: userDatabases,
       });
+      return setNoCacheHeaders(response);
     } else {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: false,
         error: result.error,
         code: result.code,
       }, { status: 500 });
+      return setNoCacheHeaders(response);
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: errorMessage,
     }, { status: 500 });
+    return setNoCacheHeaders(response);
   }
 }

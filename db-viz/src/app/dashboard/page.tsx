@@ -20,6 +20,10 @@ import 'reactflow/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 
+// Disable caching for dashboard (dynamic user data)
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
+
 // Firebase
 import {
   collection,
