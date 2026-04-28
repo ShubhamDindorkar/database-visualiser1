@@ -72,7 +72,7 @@ export default function DeleteDataModal({
     let query = '';
 
     if (mode === 'rows') {
-      query = `DELETE FROM \`${selectedTable}\``;
+      query = `DELETE FROM "${selectedTable}"`;
       if (whereClause.trim()) {
         query += ` WHERE ${whereClause}`;
       }
@@ -82,7 +82,7 @@ export default function DeleteDataModal({
         setIsLoading(false);
         return;
       }
-      query = `ALTER TABLE \`${selectedTable}\` DROP COLUMN \`${columnName}\``;
+      query = `ALTER TABLE "${selectedTable}" DROP COLUMN "${columnName}"`;
     }
 
     try {

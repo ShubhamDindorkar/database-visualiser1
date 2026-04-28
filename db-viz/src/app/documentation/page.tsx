@@ -67,7 +67,7 @@ export default function DocumentationPage() {
             content: [
                 {
                     subtitle: 'Export Options',
-                    text: 'Click the "Export SQL" button to generate SQL scripts for your schema. You can choose between MySQL, PostgreSQL, and SQLite formats.'
+                    text: 'Click the "Export SQL" button to generate SQL scripts for your schema in PostgreSQL format.'
                 },
                 {
                     subtitle: 'Customizing Output',

@@ -28,7 +28,7 @@ function getPool() {
 }
 
 /**
- * Generate the user-specific database prefix
+ * Generate the user-specific schema prefix
  * Format: user_{first8charsOfUserId}_
  */
 export function getUserDatabasePrefix(userId: string): string {
@@ -36,7 +36,7 @@ export function getUserDatabasePrefix(userId: string): string {
 }
 
 /**
- * Check if a database name belongs to a specific user
+ * Check if a schema name belongs to a specific user
  */
 export function isDatabaseOwnedByUser(databaseName: string, userId: string): boolean {
   const prefix = getUserDatabasePrefix(userId);
@@ -44,7 +44,7 @@ export function isDatabaseOwnedByUser(databaseName: string, userId: string): boo
 }
 
 /**
- * Get the actual MySQL database name with user prefix
+ * Get the actual PostgreSQL schema name with user prefix
  */
 export function getPrefixedDatabaseName(databaseName: string, userId: string): string {
   const prefix = getUserDatabasePrefix(userId);
@@ -56,31 +56,31 @@ export function getPrefixedDatabaseName(databaseName: string, userId: string): s
 }
 
 /**
- * Remove user prefix from database name for display
+ * Remove user prefix from schema name for display
  */
-export function getDisplayDatabaseName(mysqlName: string, userId: string): string {
+export function getDisplayDatabaseName(schemaName: string, userId: string): string {
   const prefix = getUserDatabasePrefix(userId);
-  if (mysqlName.startsWith(prefix)) {
-    return mysqlName.replace(prefix, '');
+  if (schemaName.startsWith(prefix)) {
+    return schemaName.replace(prefix, '');
   }
-  return mysqlName;
+  return schemaName;
 }
 
 /**
- * Create a PostgreSQL connection without specifying a database
- * Used for operations like CREATE DATABASE, SHOW DATABASES
+ * Create a PostgreSQL connection without specifying a schema
+ * Used for operations like CREATE SCHEMA, SHOW SCHEMAS
  */
 export async function getConnection() {
   return getPool().connect();
 }
 
 /**
- * Create a PostgreSQL connection to a specific database
- * Used for operations within a database like CREATE TABLE, INSERT, SELECT, etc.
+ * Create a PostgreSQL connection to a specific schema
+ * Used for operations within a schema like CREATE TABLE, INSERT, SELECT, etc.
  */
 export async function getConnectionWithDatabase(database: string) {
   const connection = await getPool().connect();
-  // For PostgreSQL, set the search_path to the specific database schema
+  // For PostgreSQL, set the search_path to the specific schema
   // Note: PostgreSQL doesn't have "databases" like MySQL, but schemas within a database
   // If using separate databases, create a new pool with the specific database
   try {
@@ -93,7 +93,7 @@ export async function getConnectionWithDatabase(database: string) {
 }
 
 /**
- * Execute a query without a specific database context
+ * Execute a query without a specific schema context
  */
 export async function executeQuery(query: string) {
   let connection: PoolClient | null = null;
@@ -118,7 +118,7 @@ export async function executeQuery(query: string) {
 }
 
 /**
- * Execute a query within a specific database context
+ * Execute a query within a specific schema context
  */
 export async function executeQueryInDatabase(database: string, query: string) {
   let connection: PoolClient | null = null;

@@ -21,9 +21,9 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "DB Visualiser - MySQL Database Design Tool",
-  description: "A visual MySQL database design tool for creating, managing, and visualizing database schemas with an intuitive drag-and-drop interface.",
-  keywords: ["MySQL", "database", "visualizer", "schema", "design", "tables", "relationships"],
+  title: "DB Visualiser - PostgreSQL Database Design Tool",
+  description: "A visual PostgreSQL database design tool for creating, managing, and visualizing database schemas with an intuitive drag-and-drop interface.",
+  keywords: ["PostgreSQL", "database", "visualizer", "schema", "design", "tables", "relationships"],
   viewport: {
     width: "device-width",
     initialScale: 1,

@@ -5,7 +5,7 @@ import {
   formatResultsForTerminal,
   formatErrorForTerminal,
   isDatabaseOwnedByUser,
-} from '@/lib/mysql';
+} from '@/lib/postgresql';
 import { setNoCacheHeaders } from '@/lib/cache-headers';
 
 interface ExecuteQueryRequest {
@@ -22,7 +22,7 @@ interface ExecuteQueryRequest {
  * 
  * Request body:
  * {
- *   "database": "optional_database_name",
+ *   "database": "optional_schema_name",
  *   "query": "SQL QUERY STRING"
  * }
  * 
@@ -37,7 +37,7 @@ interface ExecuteQueryRequest {
 export async function POST(request: NextRequest) {
   try {
     const body: ExecuteQueryRequest = await request.json();
-    const { database, query, userId } = body;
+    let { database, query, userId } = body;
 
     // Validate request
     if (!query || typeof query !== 'string') {
@@ -57,39 +57,69 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Validate database ownership if userId and database are provided
+    // Validate schema ownership if userId and database are provided
     if (userId && database && !isDatabaseOwnedByUser(database, userId)) {
       return NextResponse.json({
         success: false,
-        error: 'Access denied. You can only access your own databases.',
-        formattedOutput: ['ERROR 1044 (42000): Access denied. You can only access your own databases.'],
+        error: 'Access denied. You can only access your own schemas.',
+        formattedOutput: ['ERROR: Access denied. You can only access your own schemas.'],
       }, { status: 403 });
     }
 
-    // Determine if we need a database context
-    const upperQuery = trimmedQuery.toUpperCase();
-    const needsDatabase = !(
-      upperQuery.startsWith('CREATE DATABASE') ||
-      upperQuery.startsWith('DROP DATABASE') ||
-      upperQuery.startsWith('SHOW DATABASES') ||
-      upperQuery.startsWith('USE ')
+    // Handle special commands for PostgreSQL compatibility
+    let processedQuery = trimmedQuery;
+    let isSpecialCommand = false;
+    
+    // Convert SHOW DATABASES to information_schema query for PostgreSQL
+    if (trimmedQuery.toUpperCase() === 'SHOW DATABASES') {
+      processedQuery = `
+        SELECT schema_name as "Database"
+        FROM information_schema.schemata 
+        WHERE schema_name NOT LIKE 'pg_%' 
+        AND schema_name != 'information_schema'
+        ORDER BY schema_name
+      `;
+      isSpecialCommand = true;
+    }
+    
+    // Convert SHOW TABLES to PostgreSQL information_schema query
+    if (trimmedQuery.toUpperCase() === 'SHOW TABLES' || trimmedQuery.toUpperCase().startsWith('SHOW TABLES')) {
+      if (database) {
+        processedQuery = `
+          SELECT table_name as "Tables_in_${database}"
+          FROM information_schema.tables
+          WHERE table_schema = '${database}'
+          AND table_type = 'BASE TABLE'
+          ORDER BY table_name
+        `;
+      }
+      isSpecialCommand = false; // SHOW TABLES needs schema context
+    }
+
+    // Determine if we need a schema context
+    const upperQuery = processedQuery.toUpperCase();
+    const needsSchema = !(
+      upperQuery.includes('CREATE SCHEMA') ||
+      upperQuery.includes('DROP SCHEMA') ||
+      upperQuery.includes('INFORMATION_SCHEMA') ||
+      isSpecialCommand
     );
 
     let result;
     
-    if (needsDatabase && database) {
-      // Execute query within the specified database
-      result = await executeQueryInDatabase(database, trimmedQuery);
-    } else if (needsDatabase && !database) {
-      // Query needs a database but none specified
+    if (needsSchema && database) {
+      // Execute query within the specified schema
+      result = await executeQueryInDatabase(database, processedQuery);
+    } else if (needsSchema && !database) {
+      // Query needs a schema but none specified
       return NextResponse.json({
         success: false,
-        error: 'No database selected',
-        formattedOutput: ['ERROR 1046 (3D000): No database selected'],
+        error: 'No schema selected',
+        formattedOutput: ['ERROR: No schema selected'],
       }, { status: 400 });
     } else {
-      // Execute query without database context (CREATE DATABASE, SHOW DATABASES, etc.)
-      result = await executeQuery(trimmedQuery);
+      // Execute query without schema context
+      result = await executeQuery(processedQuery);
     }
 
     if (result.success) {
@@ -104,15 +134,13 @@ export async function POST(request: NextRequest) {
     } else {
       const formattedError = formatErrorForTerminal(
         result.error || 'Unknown error',
-        result.code,
-        result.errno
+        result.code
       );
       
       const response = NextResponse.json({
         success: false,
         error: result.error,
         code: result.code,
-        errno: result.errno,
         sqlState: result.sqlState,
         formattedOutput: [formattedError],
       });

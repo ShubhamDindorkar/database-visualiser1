@@ -101,9 +101,9 @@ export default function SelectDataModal({
     // Columns
     const cols = selectedColumns.length === 0 || selectedColumns.includes('*')
       ? '*'
-      : selectedColumns.map(c => `\`${c}\``).join(', ');
+      : selectedColumns.map(c => `"${c}"`).join(', ');
 
-    let query = `SELECT ${cols} FROM \`${selectedTable}\``;
+    let query = `SELECT ${cols} FROM "${selectedTable}"`;
 
     // WHERE clause
     if (whereConditions.length > 0) {
@@ -118,32 +118,32 @@ export default function SelectDataModal({
 
           // Handle operators that don't need value
           if (cond.operator === 'IS NULL' || cond.operator === 'IS NOT NULL') {
-            condStr += `\`${cond.column}\` ${cond.operator}`;
+            condStr += `"${cond.column}" ${cond.operator}`;
           }
           // Handle IN/NOT IN
           else if (cond.operator === 'IN' || cond.operator === 'NOT IN') {
             const values = cond.value.split(',').map(v => `'${v.trim()}'`).join(', ');
-            condStr += `\`${cond.column}\` ${cond.operator} (${values})`;
+            condStr += `"${cond.column}" ${cond.operator} (${values})`;
           }
           // Handle BETWEEN
           else if (cond.operator === 'BETWEEN') {
             const [val1, val2] = cond.value.split(',').map(v => v.trim());
-            condStr += `\`${cond.column}\` BETWEEN '${val1 || ''}' AND '${val2 || ''}'`;
+            condStr += `"${cond.column}" BETWEEN '${val1 || ''}' AND '${val2 || ''}'`;
           }
           // Handle ANY/ALL (simplified - user enters subquery)
           else if (cond.operator === 'ANY' || cond.operator === 'ALL') {
-            condStr += `\`${cond.column}\` = ${cond.operator} (${cond.value})`;
+            condStr += `"${cond.column}" = ${cond.operator} (${cond.value})`;
           }
           // Handle LIKE
           else if (cond.operator === 'LIKE' || cond.operator === 'NOT LIKE') {
-            condStr += `\`${cond.column}\` ${cond.operator} '${cond.value}'`;
+            condStr += `"${cond.column}" ${cond.operator} '${cond.value}'`;
           }
           // Standard operators
           else {
             // Try to detect if value is numeric
             const isNumeric = !isNaN(Number(cond.value)) && cond.value.trim() !== '';
             const formattedValue = isNumeric ? cond.value : `'${cond.value}'`;
-            condStr += `\`${cond.column}\` ${cond.operator} ${formattedValue}`;
+            condStr += `"${cond.column}" ${cond.operator} ${formattedValue}`;
           }
 
           return condStr;
@@ -153,7 +153,7 @@ export default function SelectDataModal({
 
     // ORDER BY
     if (orderBy) {
-      query += ` ORDER BY \`${orderBy}\` ${orderDirection}`;
+      query += ` ORDER BY "${orderBy}" ${orderDirection}`;
     }
 
     // LIMIT

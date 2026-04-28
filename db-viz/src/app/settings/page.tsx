@@ -326,9 +326,7 @@ export default function SettingsPage() {
                                     Default format for exporting SQL scripts.
                                 </p>
                                 <select className="px-4 py-2.5 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900">
-                                    <option value="mysql">MySQL</option>
                                     <option value="postgresql">PostgreSQL</option>
-                                    <option value="sqlite">SQLite</option>
                                 </select>
                             </div>
                         </div>

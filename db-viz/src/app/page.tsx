@@ -36,7 +36,7 @@ const features = [
     description: 'Design and manage multiple databases with visual tools',
     color: 'text-black',
     bg: 'bg-gray-100',
-    detailedDescription: 'Create and manage multiple MySQL databases with our intuitive visual interface. Each database is stored securely in Firebase with real-time synchronization. You can create, rename, and delete databases with just a few clicks. All your databases are organized in a clean sidebar for easy navigation.',
+    detailedDescription: 'Create and manage multiple PostgreSQL databases with our intuitive visual interface. Each database is stored securely in Firebase with real-time synchronization. You can create, rename, and delete databases with just a few clicks. All your databases are organized in a clean sidebar for easy navigation.',
     image: '/database-feature.svg',
   },
   {
@@ -225,7 +225,7 @@ const terminalQueries = [
     id: 1,
     command: "CREATE TABLE users",
     lines: [
-      { prefix: "mysql>", text: "CREATE TABLE users (", color: "text-gray-200" },
+      { prefix: "postgres>", text: "CREATE TABLE users (", color: "text-gray-200" },
       { prefix: "", text: "  id INT PRIMARY KEY AUTO_INCREMENT,", color: "text-gray-200" },
       { prefix: "", text: "  name VARCHAR(255) NOT NULL,", color: "text-gray-200" },
       { prefix: "", text: "  email VARCHAR(255) UNIQUE", color: "text-gray-200" },
@@ -237,7 +237,7 @@ const terminalQueries = [
     id: 2,
     command: "SELECT * FROM users",
     lines: [
-      { prefix: "mysql>", text: "SELECT * FROM users WHERE status = 'active';", color: "text-gray-200" },
+      { prefix: "postgres>", text: "SELECT * FROM users WHERE status = 'active';", color: "text-gray-200" },
       { prefix: "", text: "+----+----------+------------------+--------+", color: "text-gray-400" },
       { prefix: "", text: "| id | name     | email            | status |", color: "text-gray-400" },
       { prefix: "", text: "+----+----------+------------------+--------+", color: "text-gray-400" },
@@ -250,7 +250,7 @@ const terminalQueries = [
     id: 3,
     command: "INSERT INTO orders",
     lines: [
-      { prefix: "mysql>", text: "INSERT INTO orders (user_id, product_id, total)", color: "text-gray-200" },
+      { prefix: "postgres>", text: "INSERT INTO orders (user_id, product_id, total)", color: "text-gray-200" },
       { prefix: "", text: "VALUES (1, 42, 299.99);", color: "text-gray-200" },
       { prefix: "", text: "", color: "text-gray-200" },
       { prefix: "", text: "Query OK, 1 row affected (0.01 sec)", color: "text-green-500" },
@@ -260,7 +260,7 @@ const terminalQueries = [
     id: 4,
     command: "ALTER TABLE products",
     lines: [
-      { prefix: "mysql>", text: "ALTER TABLE products", color: "text-gray-200" },
+      { prefix: "postgres>", text: "ALTER TABLE products", color: "text-gray-200" },
       { prefix: "", text: "ADD COLUMN stock INT DEFAULT 0,", color: "text-gray-200" },
       { prefix: "", text: "ADD INDEX idx_stock (stock);", color: "text-gray-200" },
       { prefix: "", text: "", color: "text-gray-200" },
@@ -271,7 +271,7 @@ const terminalQueries = [
     id: 5,
     command: "JOIN query",
     lines: [
-      { prefix: "mysql>", text: "SELECT u.name, COUNT(o.id) as orders", color: "text-gray-200" },
+      { prefix: "postgres>", text: "SELECT u.name, COUNT(o.id) as orders", color: "text-gray-200" },
       { prefix: "", text: "FROM users u", color: "text-gray-200" },
       { prefix: "", text: "LEFT JOIN orders o ON u.id = o.user_id", color: "text-gray-200" },
       { prefix: "", text: "GROUP BY u.id;", color: "text-gray-200" },
@@ -282,7 +282,7 @@ const terminalQueries = [
     id: 6,
     command: "CREATE INDEX",
     lines: [
-      { prefix: "mysql>", text: "CREATE INDEX idx_email", color: "text-gray-200" },
+      { prefix: "postgres>", text: "CREATE INDEX idx_email", color: "text-gray-200" },
       { prefix: "", text: "ON users (email);", color: "text-gray-200" },
       { prefix: "", text: "", color: "text-gray-200" },
       { prefix: "", text: "Query OK, 0 rows affected (0.03 sec)", color: "text-green-500" },

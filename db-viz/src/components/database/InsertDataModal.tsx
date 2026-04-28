@@ -79,21 +79,31 @@ export default function InsertDataModal({
       const db = databases.find((d) => d.name === selectedDatabase);
       const mysqlDatabaseName = db?.mysqlName || selectedDatabase;
       
-      const response = await fetch('/api/query/execute', {
+      const response = await fetch('/api/table/describe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           database: mysqlDatabaseName,
-          query: `DESCRIBE \`${selectedTable}\``,
+          table: selectedTable,
+          userId: '', // Not used for this endpoint
         }),
       });
       const result = await response.json();
       
-      if (result.success && Array.isArray(result.results)) {
-        setColumns(result.results);
+      if (result.success && Array.isArray(result.columns)) {
+        // result.columns contains the table structure
+        const columnInfo = result.columns.map((col: any) => ({
+          Field: col.name,
+          Type: col.dataType,
+          Null: col.isNotNull ? 'NO' : 'YES',
+          Key: col.isPrimaryKey ? 'PRI' : '',
+          Default: col.defaultValue || null,
+          Extra: col.isAutoIncrement ? 'auto_increment' : '',
+        }));
+        setColumns(columnInfo);
         // Initialize first row with empty strings
         const initialValues: Record<string, string> = {};
-        result.results.forEach((col: ColumnInfo) => {
+        columnInfo.forEach((col: ColumnInfo) => {
           initialValues[col.Field] = '';
         });
         setRows([initialValues]);

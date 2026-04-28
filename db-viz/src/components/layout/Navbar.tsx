@@ -83,7 +83,7 @@ export default function Navbar({
             DB Visualiser
           </h1>
           <p className={`text-[10px] sm:text-xs font-light hidden sm:block ${theme?.textSecondary || 'text-gray-500'}`}>
-            {/* MySQL Workbench */}
+            {/* PostgreSQL Workbench */}
           </p>
         </div>
       </motion.div>

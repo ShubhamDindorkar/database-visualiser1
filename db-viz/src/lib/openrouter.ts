@@ -20,7 +20,7 @@ IMPORTANT RULES:
 1. You PRIMARILY answer questions related to SQL, databases, and DBMS concepts.
 2. You ALSO handle basic conversational greetings and pleasantries naturally. Respond warmly to "Hi", "Hello", "Hey", "Thanks", "Thank you", "Bye", "Good morning", etc. Keep greeting responses short and friendly, and gently mention you can help with SQL questions.
 3. Provide educational, accurate, and professional responses.
-4. Include SQL syntax examples when relevant, using standard SQL or MySQL syntax. Wrap SQL in markdown code blocks (e.g. \`\`\`sql ... \`\`\`).
+4. Include SQL syntax examples when relevant, using standard SQL or PostgreSQL syntax. Wrap SQL in markdown code blocks (e.g. \`\`\`sql ... \`\`\`).
 5. NEVER pretend to execute queries or access any actual database.
 6. If asked about non-database topics (other than basic greetings), politely redirect to SQL/DBMS topics.
 7. Keep responses concise but comprehensive.
@@ -90,44 +90,36 @@ function extractSQLQueries(text: string): { cleanedText: string; sqlQueries: str
 
     // Pattern 2: If no code blocks found, look for standalone SQL statements
     if (sqlQueries.length === 0) {
-        const sqlKeywords = /\b(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|GRANT|REVOKE|USE|SHOW|DESCRIBE|EXPLAIN)\b/i;
-        const lines = text.split('\n');
-        const potentialSQL: string[] = [];
-        let inStatement = false;
-        let currentStatement = '';
-
-        for (const line of lines) {
-            const trimmedLine = line.trim();
-
-            // Check if this line starts a SQL statement
-            if (sqlKeywords.test(trimmedLine) && !inStatement) {
-                inStatement = true;
-                currentStatement = trimmedLine;
-            } else if (inStatement) {
-                currentStatement += '\n' + trimmedLine;
+        const sqlKeywords = /\b(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|GRANT|REVOKE|USE|SHOW|DESCRIBE|EXPLAIN|WITH)\b/i;
+        
+        // Split text by semicolons first, then parse each block
+        const blocks = text.split(';');
+        
+        for (let block of blocks) {
+            block = block.trim();
+            if (!block) continue;
+            
+            // Add semicolon back if it had one originally
+            let testBlock = block;
+            if (!testBlock.endsWith(';')) {
+                testBlock = block + ';';
             }
-
-            // Check if statement ends (with semicolon or empty line)
-            if (inStatement && (trimmedLine.endsWith(';') || trimmedLine === '')) {
-                if (currentStatement.trim()) {
-                    potentialSQL.push(currentStatement.trim());
+            
+            // Check if this looks like SQL
+            if (sqlKeywords.test(testBlock)) {
+                // Clean up the block - remove extra whitespace but preserve structure
+                const cleanedBlock = block
+                    .split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0)
+                    .join('\n');
+                
+                if (cleanedBlock && isSQLStatement(cleanedBlock)) {
+                    sqlQueries.push(cleanedBlock);
                 }
-                inStatement = false;
-                currentStatement = '';
             }
         }
-
-        // Add any remaining statement
-        if (currentStatement.trim()) {
-            potentialSQL.push(currentStatement.trim());
-        }
-
-        // Validate and add to sqlQueries
-        for (const sql of potentialSQL) {
-            if (isSQLStatement(sql)) {
-                sqlQueries.push(sql);
-            }
-        }
+        
         // Remove extracted standalone SQL from the cleaned text
         for (const sql of sqlQueries) {
             // Escape special regex characters in the SQL

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { executeQueryInDatabase } from '@/lib/mysql';
+import { executeQueryInDatabase } from '@/lib/postgresql';
 
 interface Column {
   name: string;
@@ -28,12 +28,12 @@ interface CreateTableRequest {
 /**
  * POST /api/table/create
  * 
- * Create a new table in a MySQL database.
+ * Create a new table in a PostgreSQL schema.
  * Called when user creates a table from the UI.
  * 
  * Request body:
  * {
- *   "database": "database_name",
+ *   "database": "schema_name",
  *   "tableName": "table_name",
  *   "columns": [
  *     {
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     if (!database || typeof database !== 'string') {
       return NextResponse.json({
         success: false,
-        error: 'Database name is required',
+        error: 'Schema name is required',
       }, { status: 400 });
     }
 
@@ -86,21 +86,23 @@ export async function POST(request: NextRequest) {
     const primaryKeys: string[] = [];
 
     for (const column of columns) {
-      let definition = `\`${column.name}\` ${column.dataType}`;
+      let dataType = column.dataType.toUpperCase();
+      
+      // Convert MySQL types to PostgreSQL types
+      if (dataType === 'INT' && column.isAutoIncrement) {
+        dataType = 'SERIAL';
+      }
+      
+      let definition = `"${column.name}" ${dataType}`;
 
-      // Add length for VARCHAR
-      if (column.dataType.toUpperCase() === 'VARCHAR') {
+      // Add length for VARCHAR only (PostgreSQL supports VARCHAR without length)
+      if (dataType.includes('VARCHAR') && !dataType.includes('(')) {
         definition += '(255)';
       }
 
-      // Add constraints
-      if (column.isNotNull) {
+      // Add constraints (skip NOT NULL for SERIAL columns as they're implicitly NOT NULL)
+      if (column.isNotNull && dataType !== 'SERIAL') {
         definition += ' NOT NULL';
-      }
-
-      // Add AUTO_INCREMENT for auto increment columns
-      if (column.isAutoIncrement) {
-        definition += ' AUTO_INCREMENT';
       }
 
       if (column.isUnique && !column.isPrimaryKey) {
@@ -114,10 +116,11 @@ export async function POST(request: NextRequest) {
         } else if (column.defaultValue.toUpperCase() === 'CURRENT_TIMESTAMP') {
           definition += ' DEFAULT CURRENT_TIMESTAMP';
         } else if (
-          column.dataType.toUpperCase().includes('INT') ||
-          column.dataType.toUpperCase().includes('FLOAT') ||
-          column.dataType.toUpperCase().includes('DOUBLE') ||
-          column.dataType.toUpperCase().includes('DECIMAL')
+          dataType.includes('INT') ||
+          dataType.includes('FLOAT') ||
+          dataType.includes('DOUBLE') ||
+          dataType.includes('DECIMAL') ||
+          dataType.includes('NUMERIC')
         ) {
           definition += ` DEFAULT ${column.defaultValue}`;
         } else {
@@ -129,13 +132,13 @@ export async function POST(request: NextRequest) {
 
       // Track primary keys
       if (column.isPrimaryKey) {
-        primaryKeys.push(`\`${column.name}\``);
+        primaryKeys.push(`"${column.name}"`);
       }
 
       // Track foreign keys
       if (column.isForeignKey && column.foreignKeyReference) {
         foreignKeys.push(
-          `FOREIGN KEY (\`${column.name}\`) REFERENCES \`${column.foreignKeyReference.tableName}\`(\`${column.foreignKeyReference.columnName}\`)`
+          `FOREIGN KEY ("${column.name}") REFERENCES "${column.foreignKeyReference.tableName}"("${column.foreignKeyReference.columnName}")`
         );
       }
     }
@@ -150,31 +153,30 @@ export async function POST(request: NextRequest) {
       columnDefinitions.push(fk);
     });
 
-    const query = `CREATE TABLE \`${tableName.trim()}\` (\n  ${columnDefinitions.join(',\n  ')}\n)`;
+    const query = `CREATE TABLE "${tableName.trim()}" (\n  ${columnDefinitions.join(',\n  ')}\n)`;
 
     const result = await executeQueryInDatabase(database.trim(), query);
 
     if (result.success) {
       return NextResponse.json({
         success: true,
-        message: `Table '${tableName}' created successfully in database '${database}'`,
+        message: `Table '${tableName}' created successfully in schema '${database}'`,
         table: tableName,
       });
     } else {
-      // Handle specific MySQL errors
+      // Handle specific PostgreSQL errors
       let errorMessage = result.error || 'Failed to create table';
 
-      if (result.errno === 1050) {
+      if (result.code === 'DUPLICATE_TABLE') {
         errorMessage = `Table '${tableName}' already exists`;
-      } else if (result.errno === 1049) {
-        errorMessage = `Database '${database}' does not exist`;
+      } else if (result.code === 'INVALID_SCHEMA_NAME') {
+        errorMessage = `Schema '${database}' does not exist`;
       }
 
       return NextResponse.json({
         success: false,
         error: errorMessage,
         code: result.code,
-        errno: result.errno,
       }, { status: 400 });
     }
   } catch (error) {

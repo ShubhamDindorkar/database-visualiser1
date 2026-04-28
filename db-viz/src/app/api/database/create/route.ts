@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { executeQuery, getPrefixedDatabaseName } from '@/lib/mysql';
+import { executeQuery, getPrefixedDatabaseName } from '@/lib/postgresql';
 import { setNoCacheHeaders } from '@/lib/cache-headers';
 
 interface CreateDatabaseRequest {
@@ -10,12 +10,12 @@ interface CreateDatabaseRequest {
 /**
  * POST /api/database/create
  * 
- * Create a new MySQL database with user isolation.
- * Database names are prefixed with userId to ensure user isolation.
+ * Create a new PostgreSQL schema with user isolation.
+ * Schema names are prefixed with userId to ensure user isolation.
  * 
  * Request body:
  * {
- *   "name": "database_name",
+ *   "name": "schema_name",
  *   "userId": "user_firebase_uid"
  * }
  * 
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     if (!name || typeof name !== 'string') {
       const response = NextResponse.json({
         success: false,
-        error: 'Database name is required',
+        error: 'Schema name is required',
       }, { status: 400 });
       return setNoCacheHeaders(response);
     }
@@ -52,55 +52,54 @@ export async function POST(request: NextRequest) {
 
     const trimmedName = name.trim();
     
-    // Create prefixed database name for user isolation
-    // Format: user_{userId}_{databaseName}
+    // Create prefixed schema name for user isolation
+    // Format: user_{userId}_{schemaName}
     const prefixedName = getPrefixedDatabaseName(trimmedName, userId);
 
-    // Validate database name format (MySQL naming rules)
+    // Validate schema name format (PostgreSQL naming rules)
     // Must start with letter or underscore, contain only alphanumeric and underscores
     if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmedName)) {
       const response = NextResponse.json({
         success: false,
-        error: 'Invalid database name. Name must start with a letter or underscore and contain only letters, numbers, and underscores.',
+        error: 'Invalid schema name. Name must start with a letter or underscore and contain only letters, numbers, and underscores.',
       }, { status: 400 });
       return setNoCacheHeaders(response);
     }
 
-    // Check length (MySQL limit is 64 characters, accounting for prefix)
-    if (prefixedName.length > 64) {
+    // Check length (PostgreSQL limit is 63 characters)
+    if (prefixedName.length > 63) {
       const response = NextResponse.json({
         success: false,
-        error: 'Database name is too long',
+        error: 'Schema name is too long (max 63 characters including prefix)',
       }, { status: 400 });
       return setNoCacheHeaders(response);
     }
 
-    // Execute CREATE DATABASE query with prefixed name
-    // Using backticks to safely escape the database name
-    const query = `CREATE DATABASE \`${prefixedName}\``;
+    // Execute CREATE SCHEMA query with prefixed name
+    // Using quotes to safely escape the schema name
+    const query = `CREATE SCHEMA IF NOT EXISTS "${prefixedName}"`;
     const result = await executeQuery(query);
 
     if (result.success) {
       const response = NextResponse.json({
         success: true,
-        message: `Database '${trimmedName}' created successfully`,
+        message: `Schema '${trimmedName}' created successfully`,
         database: trimmedName, // Return user-friendly name
-        actualDatabaseName: prefixedName, // Return actual MySQL name
+        actualDatabaseName: prefixedName, // Return actual PostgreSQL schema name
       });
       return setNoCacheHeaders(response);
     } else {
-      // Handle specific MySQL errors
-      let errorMessage = result.error || 'Failed to create database';
+      // Handle specific PostgreSQL errors
+      let errorMessage = result.error || 'Failed to create schema';
       
-      if (result.errno === 1007) {
-        errorMessage = `Database '${trimmedName}' already exists`;
+      if (result.code === 'DUPLICATE_SCHEMA') {
+        errorMessage = `Schema '${trimmedName}' already exists`;
       }
 
       const response = NextResponse.json({
         success: false,
         error: errorMessage,
         code: result.code,
-        errno: result.errno,
       }, { status: 400 });
       return setNoCacheHeaders(response);
     }

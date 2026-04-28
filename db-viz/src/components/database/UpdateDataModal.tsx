@@ -85,7 +85,7 @@ export default function UpdateDataModal({
         setIsLoading(false);
         return;
       }
-      query = `UPDATE \`${selectedTable}\` SET ${setClause}`;
+      query = `UPDATE "${selectedTable}" SET ${setClause}`;
       if (whereClause.trim()) {
         query += ` WHERE ${whereClause}`;
       }
@@ -99,7 +99,7 @@ export default function UpdateDataModal({
         let typeStr: string = columnType;
         if (columnType === 'VARCHAR') typeStr = 'VARCHAR(255)';
         
-        query = `ALTER TABLE \`${selectedTable}\` ADD COLUMN \`${columnName}\` ${typeStr}`;
+        query = `ALTER TABLE "${selectedTable}" ADD COLUMN "${columnName}" ${typeStr}`;
         if (columnConstraints.notNull) query += ' NOT NULL';
         if (columnConstraints.unique) query += ' UNIQUE';
         if (columnConstraints.defaultValue) {
@@ -111,16 +111,15 @@ export default function UpdateDataModal({
           setIsLoading(false);
           return;
         }
-        let typeStr: string = columnType;
-        if (columnType === 'VARCHAR') typeStr = 'VARCHAR(255)';
-        query = `ALTER TABLE \`${selectedTable}\` CHANGE COLUMN \`${columnName}\` \`${newColumnName}\` ${typeStr}`;
+        // PostgreSQL doesn't use CHANGE COLUMN - use RENAME for column name change
+        query = `ALTER TABLE "${selectedTable}" RENAME COLUMN "${columnName}" TO "${newColumnName}"`;
       } else if (columnAction === 'drop') {
         if (!columnName.trim()) {
           setError('Column name is required');
           setIsLoading(false);
           return;
         }
-        query = `ALTER TABLE \`${selectedTable}\` DROP COLUMN \`${columnName}\``;
+        query = `ALTER TABLE "${selectedTable}" DROP COLUMN "${columnName}"`;
       }
     }
 

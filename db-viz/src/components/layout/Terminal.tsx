@@ -117,7 +117,7 @@ export default function Terminal({
           <div className="flex items-center gap-2">
             <TerminalIcon className="w-4 h-4 text-gray-400" />
             <span className="text-sm text-gray-300" style={{ fontFamily: 'var(--font-geist-sans)' }}>SQL Terminal</span>
-            <span className="text-xs text-gray-400 bg-gray-700/60 px-2 py-0.5 rounded-md" style={{ fontFamily: 'var(--font-geist-sans)' }}>MySQL</span>
+            <span className="text-xs text-gray-400 bg-gray-700/60 px-2 py-0.5 rounded-md" style={{ fontFamily: 'var(--font-geist-sans)' }}>PostgreSQL</span>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -158,7 +158,7 @@ export default function Terminal({
                 transition={{ delay: 0.1 }}
                 className="text-white mb-2"
               >
-                <p className="text-gray-300 text-sm">Connected to MySQL</p>
+                <p className="text-gray-300 text-sm">Connected to PostgreSQL</p>
                 <p className="text-gray-500 text-xs mt-1">Type SQL or &apos;help&apos;</p>
               </motion.div>
 

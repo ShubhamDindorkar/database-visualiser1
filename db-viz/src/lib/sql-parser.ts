@@ -61,9 +61,11 @@ export function parseSQLFile(sqlContent: string): ParsedSQL {
         /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([^`\s(]+)`?/i
       );
       if (match) {
+        // Convert MySQL syntax to PostgreSQL
+        const convertedSQL = convertMySQLToPgSQL(trimmed);
         result.createTableStatements.push({
           tableName: match[1],
-          sql: trimmed,
+          sql: convertedSQL,
         });
       }
     }
@@ -279,6 +281,70 @@ function splitByTopLevelComma(str: string): string[] {
 
   if (current) parts.push(current);
   return parts;
+}
+
+/**
+ * Convert MySQL DDL syntax to PostgreSQL DDL syntax
+ * Handles AUTO_INCREMENT, UNSIGNED, ENGINE, CHARSET, COLLATE, etc.
+ */
+export function convertMySQLToPgSQL(sqlStatement: string): string {
+  if (!sqlStatement.toUpperCase().startsWith('CREATE TABLE')) {
+    return sqlStatement;
+  }
+
+  let converted = sqlStatement;
+
+  // Convert AUTO_INCREMENT to SERIAL
+  // Handle both INT AUTO_INCREMENT and BIGINT AUTO_INCREMENT
+  converted = converted.replace(/\b(BIGINT|INT|INTEGER)\s+AUTO_INCREMENT\b/gi, 'SERIAL');
+  converted = converted.replace(/\bAUTO_INCREMENT\b/gi, 'SERIAL');
+
+  // Remove UNSIGNED (PostgreSQL handles this differently)
+  converted = converted.replace(/\bUNSIGNED\s+/gi, '');
+
+  // Remove ENGINE clauses
+  converted = converted.replace(/\s+ENGINE\s*=\s*[^\s;,]*/gi, '');
+
+  // Remove CHARSET clauses
+  converted = converted.replace(/\s+CHARSET\s*=\s*[^\s;,]*/gi, '');
+
+  // Remove COLLATE clauses
+  converted = converted.replace(/\s+COLLATE\s*=?\s*[^\s;,]*/gi, '');
+
+  // Remove COMMENT clauses
+  converted = converted.replace(/\s+COMMENT\s+'[^']*'/gi, '');
+  converted = converted.replace(/\s+COMMENT\s+"[^"]*"/gi, '');
+
+  // Remove ROW_FORMAT clauses
+  converted = converted.replace(/\s+ROW_FORMAT\s*=\s*[^\s;,]*/gi, '');
+
+  // Remove DEFAULT CHARSET clauses
+  converted = converted.replace(/\s+DEFAULT\s+CHARSET\s*=\s*[^\s;,]*/gi, '');
+
+  // Convert backticks to double quotes for PostgreSQL identifiers (they use double quotes)
+  // But preserve backticks inside string literals
+  let result = '';
+  let inString = false;
+  let stringChar = '';
+
+  for (let i = 0; i < converted.length; i++) {
+    const char = converted[i];
+
+    if ((char === "'" || char === '"') && !inString) {
+      inString = true;
+      stringChar = char;
+      result += char;
+    } else if (inString && char === stringChar && converted[i - 1] !== '\\') {
+      inString = false;
+      result += char;
+    } else if (!inString && char === '`') {
+      result += '"';
+    } else {
+      result += char;
+    }
+  }
+
+  return result;
 }
 
 /**

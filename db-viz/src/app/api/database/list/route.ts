@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { executeQuery, getUserDatabasePrefix, getDisplayDatabaseName } from '@/lib/mysql';
+import { executeQuery, getUserDatabasePrefix, getDisplayDatabaseName } from '@/lib/postgresql';
 import { setNoCacheHeaders } from '@/lib/cache-headers';
 
 /**
  * GET /api/database/list
  * 
- * List MySQL databases for a specific user.
- * Filters databases by user prefix for isolation.
+ * List PostgreSQL schemas for a specific user.
+ * Filters schemas by user prefix for isolation.
  * 
  * Query params:
  *   userId: User's Firebase UID
@@ -31,21 +31,28 @@ export async function GET(request: NextRequest) {
       return setNoCacheHeaders(response);
     }
 
-    const result = await executeQuery('SHOW DATABASES');
+    // Query PostgreSQL schemas
+    const result = await executeQuery(`
+      SELECT schema_name 
+      FROM information_schema.schemata 
+      WHERE schema_name NOT LIKE 'pg_%' 
+      AND schema_name != 'information_schema'
+      ORDER BY schema_name
+    `);
 
     if (result.success) {
-      // Extract database names from result
-      const allDatabases = (result.results as { Database: string }[]).map(
-        (row) => row.Database
+      // Extract schema names from result
+      const allDatabases = (result.results as { schema_name: string }[]).map(
+        (row) => row.schema_name
       );
 
-      // Filter databases by user prefix
+      // Filter schemas by user prefix
       const userPrefix = getUserDatabasePrefix(userId);
       const userDatabases = allDatabases
         .filter((db) => db.startsWith(userPrefix))
         .map((db) => ({
           name: getDisplayDatabaseName(db, userId), // Remove prefix for display
-          actualName: db, // Keep actual name for MySQL operations
+          actualName: db, // Keep actual name for PostgreSQL operations
         }));
 
       const response = NextResponse.json({

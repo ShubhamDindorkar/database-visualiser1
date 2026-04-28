@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { executeQuery, getPrefixedDatabaseName } from '@/lib/mysql';
+import { executeQuery, getPrefixedDatabaseName } from '@/lib/postgresql';
 
 interface DropDatabaseRequest {
   name: string;
@@ -9,12 +9,13 @@ interface DropDatabaseRequest {
 /**
  * POST /api/database/drop
  * 
- * Drop (delete) a MySQL database.
- * Called when user deletes a database from the UI.
+ * Drop (delete) a PostgreSQL schema.
+ * Called when user deletes a schema from the UI.
  * 
  * Request body:
  * {
- *   "name": "database_name"
+ *   "name": "schema_name",
+ *   "userId": "user_id"
  * }
  * 
  * Response:
@@ -29,11 +30,11 @@ export async function POST(request: NextRequest) {
     const body: DropDatabaseRequest = await request.json();
     const { name, userId } = body;
 
-    // Validate database name and userId
+    // Validate schema name and userId
     if (!name || typeof name !== 'string') {
       return NextResponse.json({
         success: false,
-        error: 'Database name is required',
+        error: 'Schema name is required',
       }, { status: 400 });
     }
 
@@ -46,34 +47,25 @@ export async function POST(request: NextRequest) {
 
     const trimmedName = name.trim();
     
-    // Create prefixed database name for user isolation
+    // Create prefixed schema name for user isolation
     const prefixedName = getPrefixedDatabaseName(trimmedName, userId);
 
-    // Execute DROP DATABASE query with prefixed name
-    // Using backticks to safely escape the database name
-    const query = `DROP DATABASE \`${prefixedName}\``;
+    // Execute DROP SCHEMA query with prefixed name
+    // Using CASCADE to drop all objects in the schema
+    // Using quotes to safely escape the schema name
+    const query = `DROP SCHEMA IF EXISTS "${prefixedName}" CASCADE`;
     const result = await executeQuery(query);
 
     if (result.success) {
       return NextResponse.json({
         success: true,
-        message: `Database '${trimmedName}' dropped successfully`,
+        message: `Schema '${trimmedName}' dropped successfully`,
       });
     } else {
-      // Handle specific MySQL errors
-      let errorMessage = result.error || 'Failed to drop database';
-      
-      if (result.errno === 1008) {
-        errorMessage = `Database '${trimmedName}' does not exist`;
-      } else if (result.errno === 1044) {
-        errorMessage = 'Access denied. You can only drop your own databases.';
-      }
-
       return NextResponse.json({
         success: false,
-        error: errorMessage,
+        error: result.error || 'Failed to drop schema',
         code: result.code,
-        errno: result.errno,
       }, { status: 400 });
     }
   } catch (error) {

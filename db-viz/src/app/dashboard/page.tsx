@@ -557,7 +557,7 @@ export default function DashboardPage() {
           updatedAt: Timestamp.now(),
         });
 
-        addLog('success', `Database '${name}' created successfully in MySQL`);
+        addLog('success', `Database '${name}' created successfully in PostgreSQL`);
         setSelectedDatabaseId(dbId);
         setIsCreateDbModalOpen(false);
       } catch (error) {
@@ -613,7 +613,7 @@ export default function DashboardPage() {
     [user, databases, tables, selectedDatabaseId, addLog]
   );
 
-  // ── Helper: sync MySQL tables → Firebase for a given database ────────────
+  // ── Helper: sync PostgreSQL tables → Firebase for a given database ────────────
   const syncTablesToFirebase = useCallback(
     async (actualDbName: string, firebaseDbId: string) => {
       if (!user) return;
@@ -627,7 +627,7 @@ export default function DashboardPage() {
 
       if (!showTablesResult.success || !showTablesResult.results) return;
 
-      const mysqlTableNames: string[] = showTablesResult.results.map(
+      const pgTableNames: string[] = showTablesResult.results.map(
         (row: Record<string, string>) => Object.values(row)[0]
       );
 
@@ -650,8 +650,8 @@ export default function DashboardPage() {
       // Collect new tables to be added
       const newTables: Array<{ name: string; columns: Column[] }> = [];
 
-      for (let i = 0; i < mysqlTableNames.length; i++) {
-        const tableName = mysqlTableNames[i];
+      for (let i = 0; i < pgTableNames.length; i++) {
+        const tableName = pgTableNames[i];
         if (existingNames.has(tableName)) continue; // Already in Firebase
 
         const descResponse = await fetch('/api/table/describe', {
@@ -742,16 +742,16 @@ export default function DashboardPage() {
         // Use extracted name if available, otherwise generate one
         dbName = extractedDbName || `chatbot_db_${Date.now().toString(36)}`;
 
-        const mysqlResponse = await fetch('/api/database/create', {
+        const dbResponse = await fetch('/api/database/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: dbName, userId: user.uid }),
         });
-        const mysqlResult = await mysqlResponse.json();
+        const dbResult = await dbResponse.json();
 
-        if (!mysqlResult.success) {
-          addLog('error', `MySQL Error: ${mysqlResult.error}`);
-          throw new Error(mysqlResult.error);
+        if (!dbResult.success) {
+          addLog('error', `Error: ${dbResult.error}`);
+          throw new Error(dbResult.error);
         }
 
         dbId = uuidv4();
@@ -759,12 +759,12 @@ export default function DashboardPage() {
           name: dbName,
           userId: user.uid,
           db_password_hash: '',
-          mysqlName: mysqlResult.actualDatabaseName,
+          mysqlName: dbResult.actualDatabaseName,
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
         });
 
-        actualDbName = mysqlResult.actualDatabaseName;
+        actualDbName = dbResult.actualDatabaseName;
         setChatbotDbId(dbId);
         setChatbotDbName(dbName);
 
@@ -805,7 +805,7 @@ export default function DashboardPage() {
         }
       }
 
-      // Sync tables from MySQL → Firebase (handles new tables only, skips existing)
+// Sync tables from PostgreSQL → Firebase (handles new tables only, skips existing)
       await syncTablesToFirebase(actualDbName, dbId);
 
       // Switch workflow to the chatbot database
@@ -829,7 +829,7 @@ export default function DashboardPage() {
           return;
         }
 
-        // Check if table already exists in MySQL
+        // Check if table already exists in PostgreSQL
         const checkResponse = await fetch('/api/query/execute', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -842,12 +842,12 @@ export default function DashboardPage() {
         const checkResult = await checkResponse.json();
 
         if (checkResult.success && checkResult.results && checkResult.results.length > 0) {
-          addLog('error', `Table '${name}' already exists in MySQL. Use DROP TABLE \`${name}\` to remove it first.`);
+          addLog('error', `Table '${name}' already exists. Use DROP TABLE \`${name}\` to remove it first.`);
           return;
         }
 
-        // First, create the table in MySQL
-        const mysqlColumns = columns.map((col) => {
+        // First, create the table in PostgreSQL
+        const pgColumns = columns.map((col) => {
           const fkTableName = col.isForeignKey ? getFKTableName(col.foreignKeyReference, tables) : null;
           const fkColumnName = col.isForeignKey ? getFKColumnName(col.foreignKeyReference, tables) : null;
           
@@ -867,23 +867,23 @@ export default function DashboardPage() {
           };
         });
 
-        const mysqlResponse = await fetch('/api/table/create', {
+        const response = await fetch('/api/table/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             database: databaseName,
             tableName: name,
-            columns: mysqlColumns,
+            columns: pgColumns,
           }),
         });
-        const mysqlResult = await mysqlResponse.json();
+        const result = await response.json();
 
-        if (!mysqlResult.success) {
-          addLog('error', `MySQL Error: ${mysqlResult.error}`);
+        if (!result.success) {
+          addLog('error', `Error: ${result.error}`);
           return;
         }
 
-        // If MySQL creation successful, save to Firebase
+        // If PostgreSQL creation successful, save to Firebase
         const tableId = uuidv4();
 
         // Calculate position for new table
@@ -898,7 +898,7 @@ export default function DashboardPage() {
           updatedAt: Timestamp.now(),
         });
 
-        addLog('success', `Table '${name}' created successfully in MySQL`);
+        addLog('success', `Table '${name}' created successfully in PostgreSQL`);
 
         // Log foreign key relationships
         columns.forEach((col) => {
@@ -1346,7 +1346,7 @@ export default function DashboardPage() {
         for (const tableStatement of parsedSQL.createTableStatements) {
           addLog('info', `📋 Creating table: ${tableStatement.tableName}`);
 
-          // Execute CREATE TABLE statement in MySQL
+          // Execute CREATE TABLE statement in PostgreSQL
           const createResponse = await fetch('/api/query/execute', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1977,7 +1977,7 @@ export default function DashboardPage() {
         return;
       }
 
-      // Handle CREATE DATABASE
+      // Handle CREATE DATABASE (convert to PostgreSQL CREATE SCHEMA)
       if (upperCommand.startsWith('CREATE DATABASE')) {
         const match = trimmedCommand.match(/CREATE\s+DATABASE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`"]?(\w+)[`"]?/i);
         if (match && match[1]) {
@@ -1986,7 +1986,7 @@ export default function DashboardPage() {
           try {
             addLog('info', `Executing: ${trimmedCommand}`);
 
-            // Create database in MySQL
+            // Create schema in PostgreSQL
             const response = await fetch('/api/database/create', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -1996,9 +1996,9 @@ export default function DashboardPage() {
             const result = await response.json();
 
             if (result.success) {
-              addLog('success', `Database '${dbName}' created successfully`);
+              addLog('success', `Schema '${dbName}' created successfully`);
 
-              // Create database in Firebase
+              // Create schema in Firebase
               const dbId = uuidv4();
               await setDoc(doc(db, 'databases', dbId), {
                 name: dbName,
@@ -2009,21 +2009,21 @@ export default function DashboardPage() {
                 updatedAt: Timestamp.now(),
               });
 
-              // Auto-select the newly created database
+              // Auto-select the newly created schema
               setSelectedDatabaseId(dbId);
-              // Also update terminal ref so subsequent queries use the correct database
+              // Also update terminal ref so subsequent queries use the correct schema
               terminalDbRef.current = {
                 id: dbId,
                 name: dbName,
                 mysqlName: result.actualDatabaseName,
               };
-              addLog('info', `Database '${dbName}' added to workflow and selected`);
+              addLog('info', `Schema '${dbName}' added to workflow and selected`);
             } else {
-              addLog('error', result.error || 'Failed to create database');
+              addLog('error', result.error || 'Failed to create schema');
             }
           } catch (error) {
-            console.error('Error creating database:', error);
-            addLog('error', 'Failed to create database');
+            console.error('Error creating schema:', error);
+            addLog('error', 'Failed to create schema');
           }
           return;
         }
@@ -2037,7 +2037,7 @@ export default function DashboardPage() {
       }
       const currentDatabaseName = terminalDbRef.current.mysqlName;
 
-      // Execute query against MySQL
+      // Execute query against PostgreSQL
       try {
         addLog('info', `Executing: ${trimmedCommand}`);
 
@@ -2080,123 +2080,104 @@ export default function DashboardPage() {
           }
 
           // Handle schema-changing queries to update UI immediately
-          if (upperCommand.startsWith('CREATE TABLE') && selectedDatabaseId) {
+          if (upperCommand.startsWith('CREATE TABLE')) {
             // Extract table name from CREATE TABLE query
             const match = trimmedCommand.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`"]?(\w+)[`"]?/i);
             if (match && match[1]) {
               const tableName = match[1];
+              const dbId = terminalDbRef.current?.id || selectedDatabaseId;
 
-              // Fetch table structure from MySQL
+              if (!dbId) {
+                addLog('error', 'Error: No database selected. Use "USE <database>" first.');
+                return;
+              }
+
+              // Fetch table structure from PostgreSQL
               try {
-                const describeResponse = await fetch('/api/query/execute', {
+                const describeResponse = await fetch('/api/table/describe', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     database: currentDatabaseName,
-                    query: `DESCRIBE \`${tableName}\``,
+                    table: tableName,
                     userId: user?.uid,
                   }),
                 });
                 const describeResult = await describeResponse.json();
 
-                if (describeResult.success && Array.isArray(describeResult.results)) {
-                  // Get foreign key information from INFORMATION_SCHEMA
-                  const fkResponse = await fetch('/api/query/execute', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      database: 'information_schema',
-                      query: `
-                        SELECT 
-                          COLUMN_NAME,
-                          REFERENCED_TABLE_NAME,
-                          REFERENCED_COLUMN_NAME
-                        FROM KEY_COLUMN_USAGE
-                        WHERE TABLE_SCHEMA = '${currentDatabaseName}'
-                          AND TABLE_NAME = '${tableName}'
-                          AND REFERENCED_TABLE_NAME IS NOT NULL
-                      `,
-                    }),
-                  });
-                  const fkResult = await fkResponse.json();
-                  const foreignKeys = fkResult.success && Array.isArray(fkResult.results) ? fkResult.results : [];
-
-                  // Create a map of column name -> foreign key reference
-                  const fkMap = new Map<string, { tableName: string; columnName: string }>();
-                  foreignKeys.forEach((fk: any) => {
-                    fkMap.set(fk.COLUMN_NAME, {
-                      tableName: fk.REFERENCED_TABLE_NAME,
-                      columnName: fk.REFERENCED_COLUMN_NAME,
-                    });
-                  });
-
-                  // Convert MySQL column info to our Column format
-                  const columns = describeResult.results.map((col: any) => {
-                    const column: Column = {
-                      id: uuidv4(),
-                      name: col.Field,
-                      dataType: col.Type,
-                      isPrimaryKey: col.Key === 'PRI',
-                      isNotNull: col.Null === 'NO',
-                      isUnique: col.Key === 'UNI',
-                      defaultValue: col.Default,
-                      isForeignKey: col.Key === 'MUL' || fkMap.has(col.Field),
-                    };
-
-                    // Add foreign key reference if exists
-                    const fkRef = fkMap.get(col.Field);
-                    if (fkRef) {
-                      // Find the referenced table in our tables array
-                      const referencedTable = tables.find((t) =>
-                        t.name === fkRef.tableName && t.databaseId === selectedDatabaseId
-                      );
-
-                      if (referencedTable) {
-                        // Find the referenced column in that table
-                        const referencedColumn = referencedTable.columns.find((c) =>
-                          c.name === fkRef.columnName
-                        );
-
-                        if (referencedColumn) {
-                          column.foreignKeyReference = {
-                            tableId: referencedTable.id,
-                            columnId: referencedColumn.id,
-                          };
-                        }
-                      }
-                    }
-
-                    return column;
-                  });
-
-                  // Add table to Firebase
-                  const tableId = uuidv4();
-                  const position = calculateTablePosition(selectedDatabaseId);
-
-                  await setDoc(doc(db, 'tables', tableId), {
-                    name: tableName,
-                    databaseId: selectedDatabaseId,
-                    columns,
-                    position,
-                    createdAt: Timestamp.now(),
-                    updatedAt: Timestamp.now(),
-                  });
-
-                  addLog('info', `Table '${tableName}' added to workflow`);
-
-                  // Log foreign key relationships
-                  columns.forEach((col: Column) => {
-                    if (col.isForeignKey && col.foreignKeyReference) {
-                      const fkTableName = getFKTableName(col.foreignKeyReference, tables);
-                      const fkColumnName = getFKColumnName(col.foreignKeyReference, tables);
-                      if (fkTableName && fkColumnName) {
-                        addLog('info', `Foreign key linked: ${tableName}.${col.name} → ${fkTableName}.${fkColumnName}`);
-                      }
-                    }
-                  });
+                if (!describeResult.success) {
+                  addLog('error', `Failed to describe table '${tableName}': ${describeResult.error || 'Unknown error'}`);
+                  return;
                 }
+
+                if (!Array.isArray(describeResult.columns) || describeResult.columns.length === 0) {
+                  addLog('warning', `Table '${tableName}' has no columns or couldn't be read`);
+                  return;
+                }
+
+                // Convert PostgreSQL column info to our Column format
+                // describeResult.columns already includes key information from the API
+                const columns = describeResult.columns.map((col: any) => {
+                  const column: Column = {
+                    id: uuidv4(),
+                    name: col.Field,
+                    dataType: col.Type,
+                    isPrimaryKey: col.Key === 'PRI',
+                    isNotNull: col.Null === 'NO',
+                    isUnique: col.Key === 'UNI',
+                    defaultValue: col.Default,
+                    isForeignKey: col.Key === 'MUL',
+                    isAutoIncrement: (col.Extra || '').includes('auto_increment'),
+                  };
+                  return column;
+                });
+
+                // Add table to Firebase
+                const tableId = uuidv4();
+                const position = calculateTablePosition(dbId);
+
+                const newTable: TableType = {
+                  id: tableId,
+                  name: tableName,
+                  databaseId: dbId,
+                  columns,
+                  position,
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                };
+
+                await setDoc(doc(db, 'tables', tableId), {
+                  name: tableName,
+                  databaseId: dbId,
+                  columns,
+                  position,
+                  createdAt: Timestamp.now(),
+                  updatedAt: Timestamp.now(),
+                });
+
+                addLog('info', `Table '${tableName}' added to workflow`);
+
+                // Update React state immediately to show table in canvas
+                setTables((prevTables) => [...prevTables, newTable]);
+
+                // Ensure selectedDatabaseId matches so Firebase listener picks up future updates
+                if (selectedDatabaseId !== dbId) {
+                  setSelectedDatabaseId(dbId);
+                }
+
+                // Log foreign key relationships
+                columns.forEach((col: Column) => {
+                  if (col.isForeignKey && col.foreignKeyReference) {
+                    const fkTableName = getFKTableName(col.foreignKeyReference, tables);
+                    const fkColumnName = getFKColumnName(col.foreignKeyReference, tables);
+                    if (fkTableName && fkColumnName) {
+                      addLog('info', `Foreign key linked: ${tableName}.${col.name} → ${fkTableName}.${fkColumnName}`);
+                    }
+                  }
+                });
               } catch (err) {
                 console.error('Error syncing table to Firebase:', err);
+                addLog('error', `Failed to add table to workflow: ${err instanceof Error ? err.message : 'Unknown error'}`);
               }
             }
           } else if (upperCommand.startsWith('ALTER TABLE')) {
@@ -2210,53 +2191,23 @@ export default function DashboardPage() {
               );
 
               if (tableToUpdate) {
-                // Fetch updated table structure from MySQL
+                // Fetch updated table structure from PostgreSQL
                 try {
-                  const describeResponse = await fetch('/api/query/execute', {
+                  const describeResponse = await fetch('/api/table/describe', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                       database: currentDatabaseName,
-                      query: `DESCRIBE \`${tableName}\``,
+                      table: tableName,
                       userId: user?.uid,
                     }),
                   });
                   const describeResult = await describeResponse.json();
 
-                  if (describeResult.success && Array.isArray(describeResult.results)) {
-                    // Get foreign key information from INFORMATION_SCHEMA
-                    const fkResponse = await fetch('/api/query/execute', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        database: 'information_schema',
-                        query: `
-                          SELECT 
-                            COLUMN_NAME,
-                            REFERENCED_TABLE_NAME,
-                            REFERENCED_COLUMN_NAME
-                          FROM KEY_COLUMN_USAGE
-                          WHERE TABLE_SCHEMA = '${currentDatabaseName}'
-                            AND TABLE_NAME = '${tableName}'
-                            AND REFERENCED_TABLE_NAME IS NOT NULL
-                        `,
-                      }),
-                    });
-                    const fkResult = await fkResponse.json();
-                    const foreignKeys = fkResult.success && Array.isArray(fkResult.results) ? fkResult.results : [];
-
-                    // Create a map of column name -> foreign key reference
-                    const fkMap = new Map<string, { tableName: string; columnName: string }>();
-                    foreignKeys.forEach((fk: any) => {
-                      fkMap.set(fk.COLUMN_NAME, {
-                        tableName: fk.REFERENCED_TABLE_NAME,
-                        columnName: fk.REFERENCED_COLUMN_NAME,
-                      });
-                    });
-
-                    // Convert MySQL column info to our Column format
+                  if (describeResult.success && Array.isArray(describeResult.columns)) {
+                    // Convert PostgreSQL column info to our Column format
                     // IMPORTANT: Preserve original column IDs to maintain canvas integrity and relationships
-                    const updatedColumns = describeResult.results.map((col: any) => {
+                    const updatedColumns = describeResult.columns.map((col: any) => {
                       // Find if this column existed before (match by name)
                       const existingColumn = tableToUpdate.columns.find((c) => c.name === col.Field);
                       
@@ -2268,31 +2219,9 @@ export default function DashboardPage() {
                         isNotNull: col.Null === 'NO',
                         isUnique: col.Key === 'UNI',
                         defaultValue: col.Default,
-                        isForeignKey: col.Key === 'MUL' || fkMap.has(col.Field),
+                        isForeignKey: col.Key === 'MUL',
+                        isAutoIncrement: (col.Extra || '').includes('auto_increment'),
                       };
-
-                      // Add foreign key reference if exists
-                      const fkRef = fkMap.get(col.Field);
-                      if (fkRef) {
-                        // Find the referenced table in our tables array
-                        const referencedTable = tables.find((t) =>
-                          t.name === fkRef.tableName && t.databaseId === selectedDatabaseId
-                        );
-
-                        if (referencedTable) {
-                          // Find the referenced column in that table
-                          const referencedColumn = referencedTable.columns.find((c) =>
-                            c.name === fkRef.columnName
-                          );
-
-                          if (referencedColumn) {
-                            column.foreignKeyReference = {
-                              tableId: referencedTable.id,
-                              columnId: referencedColumn.id,
-                            };
-                          }
-                        }
-                      }
 
                       return column;
                     });

@@ -431,7 +431,7 @@ function TerminalModeContent() {
                   transition={{ delay: 0.6 }}
                   className="text-green-400 mb-2"
                 >
-                  mysql&gt; <span className="text-white">SELECT * FROM users;</span>
+                  postgres&gt; <span className="text-white">SELECT * FROM users;</span>
                 </motion.div>
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -471,7 +471,7 @@ function TerminalModeContent() {
                   transition={{ repeat: Infinity, duration: 1, delay: 1.6 }}
                   className="text-green-400 mt-2"
                 >
-                  mysql&gt; <span className="bg-green-400 text-slate-900 px-0.5">_</span>
+                  postgres&gt; <span className="bg-green-400 text-slate-900 px-0.5">_</span>
                 </motion.div>
               </div>
             </motion.div>
