@@ -4,14 +4,15 @@ import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Terminal, Play, Loader2, Database, Clock, CheckCircle, XCircle, Trash2 } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
 
 // Firebase
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, getDocs, query, collection, where, deleteDoc, updateDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 // Hooks and Types
 import { useAuth } from '@/hooks/useAuth';
-import { Database as DatabaseType } from '@/types/database';
+import { Database as DatabaseType, Column } from '@/types/database';
 
 interface QueryHistoryItem {
   id: string;
@@ -44,7 +45,7 @@ function TerminalModeContent() {
   const [database, setDatabase] = useState<DatabaseType | null>(null);
 
   // Terminal State
-  const [query, setQuery] = useState('');
+  const [queryInput, setQueryInput] = useState('');
   const [isExecuting, setIsExecuting] = useState(false);
   const [queryResult, setQueryResult] = useState<QueryResult | null>(null);
   const [queryHistory, setQueryHistory] = useState<QueryHistoryItem[]>([]);
@@ -103,9 +104,10 @@ function TerminalModeContent() {
     return () => unsubscribe();
   }, [user, databaseId]);
 
-  // Execute query
-  const executeQuery = useCallback(async () => {
-    if (!query.trim() || !database || isExecuting) return;
+  // Execute query with proper query parsing and Firebase syncing
+  const executeQuery = useCallback(async (queryToExecute?: string) => {
+    const queryText = (queryToExecute || queryInput).trim();
+    if (!queryText || !database || isExecuting) return;
 
     const startTime = Date.now();
     setIsExecuting(true);
@@ -117,7 +119,7 @@ function TerminalModeContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           database: database.mysqlName || database.name,
-          query: query.trim(),
+          query: queryText,
           userId: user?.uid,
         }),
       });
@@ -130,7 +132,7 @@ function TerminalModeContent() {
       // Add to history
       const historyItem: QueryHistoryItem = {
         id: Date.now().toString(),
-        query: query.trim(),
+        query: queryText,
         timestamp: new Date(),
         success: result.success,
         duration,
@@ -142,6 +144,200 @@ function TerminalModeContent() {
       setTimeout(() => {
         outputRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
+
+      // Firebase syncing for schema changes
+      if (result.success && database && databaseId) {
+        const upperQuery = queryText.toUpperCase();
+        const currentDatabaseName = database.mysqlName || database.name;
+
+        try {
+          // Handle CREATE TABLE - sync new table to Firebase
+          if (upperQuery.startsWith('CREATE TABLE')) {
+            const match = queryText.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`"]?(\w+)[`"]?/i);
+            if (match && match[1]) {
+              const tableName = match[1];
+
+              // Fetch table structure from MySQL
+              const describeResponse = await fetch('/api/query/execute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  database: currentDatabaseName,
+                  query: `DESCRIBE \`${tableName}\``,
+                  userId: user?.uid,
+                }),
+              });
+              const describeResult = await describeResponse.json();
+
+              if (describeResult.success && Array.isArray(describeResult.results)) {
+                // Get foreign key information
+                const fkResponse = await fetch('/api/query/execute', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    database: 'information_schema',
+                    query: `
+                      SELECT 
+                        COLUMN_NAME,
+                        REFERENCED_TABLE_NAME,
+                        REFERENCED_COLUMN_NAME
+                      FROM KEY_COLUMN_USAGE
+                      WHERE TABLE_SCHEMA = '${currentDatabaseName}'
+                        AND TABLE_NAME = '${tableName}'
+                        AND REFERENCED_TABLE_NAME IS NOT NULL
+                    `,
+                  }),
+                });
+                const fkResult = await fkResponse.json();
+                const foreignKeys = fkResult.success && Array.isArray(fkResult.results) ? fkResult.results : [];
+
+                // Create a map of column name -> foreign key reference
+                const fkMap = new Map<string, { tableName: string; columnName: string }>();
+                foreignKeys.forEach((fk: any) => {
+                  fkMap.set(fk.COLUMN_NAME, {
+                    tableName: fk.REFERENCED_TABLE_NAME,
+                    columnName: fk.REFERENCED_COLUMN_NAME,
+                  });
+                });
+
+                // Convert MySQL column info to Column format
+                const columns: Column[] = describeResult.results.map((col: any) => {
+                  const column: Column = {
+                    id: uuidv4(),
+                    name: col.Field,
+                    dataType: col.Type,
+                    isPrimaryKey: col.Key === 'PRI',
+                    isNotNull: col.Null === 'NO',
+                    isUnique: col.Key === 'UNI',
+                    defaultValue: col.Default,
+                    isForeignKey: col.Key === 'MUL' || fkMap.has(col.Field),
+                  };
+
+                  // Note: FK reference will need to be resolved in the dashboard
+                  // by looking up the referenced table and column IDs
+                  // For now, we mark isForeignKey but don't populate the reference
+
+                  return column;
+                });
+
+                // Add table to Firebase
+                const tableId = uuidv4();
+                await setDoc(doc(db, 'tables', tableId), {
+                  name: tableName,
+                  databaseId: databaseId,
+                  columns,
+                  position: { x: 100, y: 100 },
+                  createdAt: Timestamp.now(),
+                  updatedAt: Timestamp.now(),
+                });
+              }
+            }
+          }
+          // Handle DROP TABLE - remove from Firebase
+          else if (upperQuery.startsWith('DROP TABLE')) {
+            const match = queryText.match(/DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?[`"]?(\w+)[`"]?/i);
+            if (match && match[1]) {
+              const tableName = match[1];
+
+              // Find and delete the table from Firebase
+              const tablesSnap = await getDocs(
+                query(collection(db, 'tables'), where('databaseId', '==', databaseId))
+              );
+              tablesSnap.docs.forEach((tableDoc) => {
+                if (tableDoc.data().name.toLowerCase() === tableName.toLowerCase()) {
+                  deleteDoc(doc(db, 'tables', tableDoc.id));
+                }
+              });
+            }
+          }
+          // Handle ALTER TABLE - update table structure in Firebase
+          else if (upperQuery.startsWith('ALTER TABLE')) {
+            const match = queryText.match(/ALTER\s+TABLE\s+[`"]?(\w+)[`"]?/i);
+            if (match && match[1]) {
+              const tableName = match[1];
+
+              // Fetch updated table structure
+              const describeResponse = await fetch('/api/query/execute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  database: currentDatabaseName,
+                  query: `DESCRIBE \`${tableName}\``,
+                  userId: user?.uid,
+                }),
+              });
+              const describeResult = await describeResponse.json();
+
+              if (describeResult.success && Array.isArray(describeResult.results)) {
+                // Get foreign key information
+                const fkResponse = await fetch('/api/query/execute', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    database: 'information_schema',
+                    query: `
+                      SELECT 
+                        COLUMN_NAME,
+                        REFERENCED_TABLE_NAME,
+                        REFERENCED_COLUMN_NAME
+                      FROM KEY_COLUMN_USAGE
+                      WHERE TABLE_SCHEMA = '${currentDatabaseName}'
+                        AND TABLE_NAME = '${tableName}'
+                        AND REFERENCED_TABLE_NAME IS NOT NULL
+                    `,
+                  }),
+                });
+                const fkResult = await fkResponse.json();
+                const foreignKeys = fkResult.success && Array.isArray(fkResult.results) ? fkResult.results : [];
+
+                // Create a map of column name -> foreign key reference
+                const fkMap = new Map<string, { tableName: string; columnName: string }>();
+                foreignKeys.forEach((fk: any) => {
+                  fkMap.set(fk.COLUMN_NAME, {
+                    tableName: fk.REFERENCED_TABLE_NAME,
+                    columnName: fk.REFERENCED_COLUMN_NAME,
+                  });
+                });
+
+                // Convert MySQL column info to Column format
+                const updatedColumns: Column[] = describeResult.results.map((col: any) => {
+                  const column: Column = {
+                    id: uuidv4(),
+                    name: col.Field,
+                    dataType: col.Type,
+                    isPrimaryKey: col.Key === 'PRI',
+                    isNotNull: col.Null === 'NO',
+                    isUnique: col.Key === 'UNI',
+                    defaultValue: col.Default,
+                    isForeignKey: col.Key === 'MUL' || fkMap.has(col.Field),
+                  };
+
+                  // Note: FK reference will need to be resolved in the dashboard
+                  // by looking up the referenced table and column IDs
+
+                  return column;
+                });
+
+                // Find and update the table in Firebase
+                const tablesSnap = await getDocs(
+                  query(collection(db, 'tables'), where('databaseId', '==', databaseId))
+                );
+                tablesSnap.docs.forEach((tableDoc) => {
+                  if (tableDoc.data().name.toLowerCase() === tableName.toLowerCase()) {
+                    updateDoc(doc(db, 'tables', tableDoc.id), {
+                      columns: updatedColumns,
+                      updatedAt: Timestamp.now(),
+                    });
+                  }
+                });
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Error syncing to Firebase:', err);
+          // Don't fail the query execution if Firebase sync fails
+        }
+      }
     } catch (error) {
       setQueryResult({
         success: false,
@@ -150,22 +346,38 @@ function TerminalModeContent() {
     } finally {
       setIsExecuting(false);
     }
-  }, [query, database, user, isExecuting]);
+  }, [queryInput, database, user, isExecuting, databaseId]);
 
   // Handle keyboard shortcuts
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      // Cmd/Ctrl + Enter to execute
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
         e.preventDefault();
         executeQuery();
       }
+      // Enter with semicolon at the end - auto-execute
+      else if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+        const currentQuery = queryInput.trim();
+        // Check if the line being entered ends with a semicolon
+        if (currentQuery.endsWith(';')) {
+          e.preventDefault();
+          // Execute the query without the trailing semicolon and newline
+          const queryToRun = currentQuery.slice(0, -1).trim();
+          if (queryToRun) {
+            executeQuery(queryToRun);
+            // Clear the input after execution
+            setQueryInput('');
+          }
+        }
+      }
     },
-    [executeQuery]
+    [executeQuery, queryInput]
   );
 
   // Load query from history
   const loadFromHistory = (item: QueryHistoryItem) => {
-    setQuery(item.query);
+    setQueryInput(item.query);
     textareaRef.current?.focus();
   };
 
@@ -369,15 +581,15 @@ function TerminalModeContent() {
 
               <div className="relative">
                 <div className="absolute left-0 top-0 bottom-0 w-12 bg-slate-800/50 flex flex-col items-center py-3 text-slate-600 text-xs font-mono rounded-l-lg">
-                  {query.split('\n').map((_, i) => (
+                  {queryInput.split('\n').map((_, i) => (
                     <div key={i} className="leading-6">{i + 1}</div>
                   ))}
-                  {query.split('\n').length === 0 && <div className="leading-6">1</div>}
+                  {queryInput.split('\n').length === 0 && <div className="leading-6">1</div>}
                 </div>
                 <textarea
                   ref={textareaRef}
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  value={queryInput}
+                  onChange={(e) => setQueryInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Enter your SQL query here..."
                   className="w-full h-40 pl-14 pr-4 py-3 bg-slate-800/30 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50"
@@ -387,13 +599,13 @@ function TerminalModeContent() {
 
               <div className="flex items-center justify-between mt-3">
                 <div className="text-xs text-slate-500">
-                  {query.length} characters
+                  {queryInput.length} characters
                 </div>
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={executeQuery}
-                  disabled={isExecuting || !query.trim()}
+                  onClick={() => executeQuery()}
+                  disabled={isExecuting || !queryInput.trim()}
                   className="flex items-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors shadow-lg shadow-green-600/20"
                 >
                   {isExecuting ? (

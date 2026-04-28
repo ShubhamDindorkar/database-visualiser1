@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Link, Unlink, Key, ArrowRight, AlertCircle, Check, Database, Table as TableIcon } from 'lucide-react';
 import Button from '@/components/common/Button';
 import { Table as TableType, Column, areTypesCompatible } from '@/types/database';
+import { formatFKDisplay } from '@/lib/fk-helpers';
 
 interface ForeignKeyModalProps {
   isOpen: boolean;
@@ -533,7 +534,7 @@ export default function ForeignKeyModal({
                             <option value="">Select foreign key column...</option>
                             {sourceColumns.map((column) => (
                               <option key={column.id} value={column.id}>
-                                {column.name} → {column.foreignKeyReference?.tableName}.{column.foreignKeyReference?.columnName}
+                                {column.name} → {column.foreignKeyReference ? formatFKDisplay(column.foreignKeyReference, tables) : 'Unknown'}
                               </option>
                             ))}
                           </select>

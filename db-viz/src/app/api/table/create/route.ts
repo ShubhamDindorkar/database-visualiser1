@@ -11,6 +11,9 @@ interface Column {
   defaultValue?: string;
   isForeignKey?: boolean;
   foreignKeyReference?: {
+    tableId: string;
+    columnId: string;
+    // Resolved names for SQL generation (from frontend lookup)
     tableName: string;
     columnName: string;
   };

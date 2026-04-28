@@ -39,6 +39,7 @@ export default function Terminal({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Handle command history navigation
     if (e.key === 'ArrowUp') {
       e.preventDefault();
       if (commandHistory.length > 0) {
@@ -58,6 +59,23 @@ export default function Terminal({
           setInput(commandHistory[newIndex]);
         }
       }
+    }
+    // Handle Enter key - execute if semicolon is present or Enter in form submission
+    else if (e.key === 'Enter') {
+      const currentInput = input.trim();
+      // Auto-execute if input ends with semicolon
+      if (currentInput.endsWith(';')) {
+        e.preventDefault();
+        // Remove trailing semicolon and execute
+        const queryToExecute = currentInput.slice(0, -1).trim();
+        if (queryToExecute) {
+          onCommand(queryToExecute);
+          setCommandHistory((prev) => [...prev, currentInput]);
+          setInput('');
+          setHistoryIndex(-1);
+        }
+      }
+      // Otherwise, let the form handle it normally (for single-line Enter behavior)
     }
   };
 

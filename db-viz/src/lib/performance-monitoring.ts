@@ -3,14 +3,14 @@
  * Tracks cache effectiveness and Core Web Vitals metrics
  */
 
-import { getCLS, getFCP, getINP, getLCP, getTTFB } from 'web-vitals';
+import { onCLS, onFCP, onINP, onLCP, onTTFB } from 'web-vitals';
 
 // Initialize web vitals tracking
 export function initializeWebVitalsTracking() {
   if (typeof window === 'undefined') return;
 
   // Largest Contentful Paint - how quickly main content loads (target: < 2.5s)
-  getLCP((metric) => {
+  onLCP((metric) => {
     logWebVital('LCP', metric);
     if (metric.value > 2500) {
       console.warn('⚠️ LCP exceeds 2.5s:', metric.value);
@@ -18,7 +18,7 @@ export function initializeWebVitalsTracking() {
   });
 
   // Interaction to Next Paint - responsiveness (target: < 200ms)
-  getINP((metric) => {
+  onINP((metric) => {
     logWebVital('INP', metric);
     if (metric.value > 200) {
       console.warn('⚠️ INP exceeds 200ms:', metric.value);
@@ -26,7 +26,7 @@ export function initializeWebVitalsTracking() {
   });
 
   // Cumulative Layout Shift - visual stability (target: < 0.1)
-  getCLS((metric) => {
+  onCLS((metric) => {
     logWebVital('CLS', metric);
     if (metric.value > 0.1) {
       console.warn('⚠️ CLS exceeds 0.1:', metric.value);
@@ -34,7 +34,7 @@ export function initializeWebVitalsTracking() {
   });
 
   // First Contentful Paint - when first content appears (target: < 1.8s)
-  getFCP((metric) => {
+  onFCP((metric) => {
     logWebVital('FCP', metric);
     if (metric.value > 1800) {
       console.warn('⚠️ FCP exceeds 1.8s:', metric.value);
@@ -42,7 +42,7 @@ export function initializeWebVitalsTracking() {
   });
 
   // Time to First Byte - server response time (target: < 600ms)
-  getTTFB((metric) => {
+  onTTFB((metric) => {
     logWebVital('TTFB', metric);
     if (metric.value > 600) {
       console.warn('⚠️ TTFB exceeds 600ms:', metric.value);

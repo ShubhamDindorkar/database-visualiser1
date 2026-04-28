@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import Button from '@/components/common/Button';
 import { Table as TableType } from '@/types/database';
+import { formatFKDisplay } from '@/lib/fk-helpers';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, HeadingLevel, AlignmentType, ImageRun } from 'docx';
@@ -126,7 +127,7 @@ export default function ExportModal({
       table.columns.forEach((col) => {
         let colInfo = `  • ${col.name} (${col.dataType})`;
         if (col.isPrimaryKey) colInfo += ' [PK]';
-        if (col.isForeignKey) colInfo += ` [FK → ${col.foreignKeyReference?.tableName}.${col.foreignKeyReference?.columnName}]`;
+        if (col.isForeignKey) colInfo += ` [FK → ${col.foreignKeyReference ? formatFKDisplay(col.foreignKeyReference, tables) : 'Unknown'}]`;
         if (col.isNotNull) colInfo += ' NOT NULL';
         if (col.isUnique && !col.isPrimaryKey) colInfo += ' UNIQUE';
         info += colInfo + '\n';
@@ -213,7 +214,10 @@ export default function ExportModal({
               let colText = `• ${col.name} (${col.dataType})`;
               const badges: string[] = [];
               if (col.isPrimaryKey) badges.push('PK');
-              if (col.isForeignKey) badges.push(`FK → ${col.foreignKeyReference?.tableName}`);
+              if (col.isForeignKey) {
+                const fkDisplay = col.foreignKeyReference ? formatFKDisplay(col.foreignKeyReference, tables) : 'Unknown';
+                badges.push(`FK → ${fkDisplay.split('.')[0]}`);
+              }
               if (col.isNotNull) badges.push('NN');
               if (col.isUnique && !col.isPrimaryKey) badges.push('UQ');
               
@@ -357,7 +361,7 @@ export default function ExportModal({
             table.columns.forEach((col) => {
               const constraints: string[] = [];
               if (col.isPrimaryKey) constraints.push('Primary Key');
-              if (col.isForeignKey) constraints.push(`Foreign Key → ${col.foreignKeyReference?.tableName}.${col.foreignKeyReference?.columnName}`);
+              if (col.isForeignKey) constraints.push(`Foreign Key → ${col.foreignKeyReference ? formatFKDisplay(col.foreignKeyReference, tables) : 'Unknown'}`);
               if (col.isNotNull) constraints.push('NOT NULL');
               if (col.isUnique && !col.isPrimaryKey) constraints.push('UNIQUE');
 

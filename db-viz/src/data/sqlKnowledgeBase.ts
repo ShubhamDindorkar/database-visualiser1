@@ -1013,6 +1013,166 @@ export const sqlKnowledgeBase: SQLIntent[] = [
 export function findMatchingIntent(userInput: string): SQLIntent | null {
     const normalizedInput = userInput.toLowerCase().trim();
 
+    // Check for comprehensive database schema pattern: "create database of X and create tables and insert values"
+    const comprehensivePattern = /create\s+(?:a\s+)?database\s+(?:of\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\s+.*(?:create|add).*table.*(?:insert|with).*(?:sample\s+)?data/i;
+    const comprehensiveMatch = userInput.match(comprehensivePattern);
+    if (comprehensiveMatch && comprehensiveMatch[1]) {
+        const dbName = comprehensiveMatch[1];
+        
+        // Generate contextual tables and data based on database name
+        let tables: string[] = [];
+        let inserts: string[] = [];
+        
+        const dbNameLower = dbName.toLowerCase();
+        
+        if (dbNameLower.includes('car') || dbNameLower.includes('vehicle') || dbNameLower.includes('auto')) {
+            tables = ['Cars', 'Manufacturers', 'Dealerships'];
+            inserts = [
+                `INSERT INTO Cars (name, manufacturer_id, model_year, price) VALUES ('Toyota Camry', 1, 2023, 35000), ('Honda Accord', 2, 2023, 38000);`,
+                `INSERT INTO Manufacturers (name, country, founded_year) VALUES ('Toyota', 'Japan', 1937), ('Honda', 'Japan', 1948);`,
+                `INSERT INTO Dealerships (name, city, phone) VALUES ('Downtown Motors', 'New York', '555-0101'), ('Suburban Motors', 'Boston', '555-0102');`
+            ];
+        } else if (dbNameLower.includes('airline') || dbNameLower.includes('flight') || dbNameLower.includes('airport')) {
+            tables = ['Aircraft', 'Flights', 'Passengers'];
+            inserts = [
+                `INSERT INTO Aircraft (model, capacity, manufacturer) VALUES ('Boeing 747', 450, 'Boeing'), ('Airbus A380', 555, 'Airbus');`,
+                `INSERT INTO Flights (flight_number, aircraft_id, departure_city, arrival_city, departure_time) VALUES ('AA100', 1, 'New York', 'London', '2024-01-15 08:00:00'), ('UA200', 2, 'Los Angeles', 'Tokyo', '2024-01-15 10:30:00');`,
+                `INSERT INTO Passengers (first_name, last_name, flight_id, seat_number) VALUES ('John', 'Doe', 1, '12A'), ('Jane', 'Smith', 1, '12B');`
+            ];
+        } else if (dbNameLower.includes('company') || dbNameLower.includes('office') || dbNameLower.includes('employee')) {
+            tables = ['Departments', 'Employees', 'Projects'];
+            inserts = [
+                `INSERT INTO Departments (name, manager, budget) VALUES ('Engineering', 'Alice Johnson', 500000), ('Sales', 'Bob Williams', 300000);`,
+                `INSERT INTO Employees (name, department_id, salary, hire_date) VALUES ('Alice Johnson', 1, 120000, '2020-01-15'), ('Bob Williams', 2, 100000, '2019-06-01');`,
+                `INSERT INTO Projects (name, department_id, start_date, budget) VALUES ('Product A', 1, '2024-01-01', 250000), ('Product B', 1, '2024-02-01', 280000);`
+            ];
+        } else if (dbNameLower.includes('store') || dbNameLower.includes('shop') || dbNameLower.includes('retail')) {
+            tables = ['Products', 'Categories', 'Orders'];
+            inserts = [
+                `INSERT INTO Categories (name, description) VALUES ('Electronics', 'Electronic devices'), ('Clothing', 'Apparel and accessories');`,
+                `INSERT INTO Products (name, category_id, price, stock) VALUES ('Laptop', 1, 999.99, 50), ('T-Shirt', 2, 29.99, 200);`,
+                `INSERT INTO Orders (product_id, quantity, order_date, total_price) VALUES (1, 2, '2024-01-10', 1999.98), (2, 5, '2024-01-11', 149.95);`
+            ];
+        } else if (dbNameLower.includes('school') || dbNameLower.includes('university') || dbNameLower.includes('student')) {
+            tables = ['Students', 'Courses', 'Enrollments'];
+            inserts = [
+                `INSERT INTO Students (first_name, last_name, email, enrollment_date) VALUES ('John', 'Smith', 'john@school.edu', '2023-09-01'), ('Maria', 'Garcia', 'maria@school.edu', '2023-09-01');`,
+                `INSERT INTO Courses (course_code, title, instructor, credits) VALUES ('CS101', 'Introduction to Programming', 'Dr. Johnson', 3), ('MATH201', 'Calculus II', 'Dr. Lee', 4);`,
+                `INSERT INTO Enrollments (student_id, course_id, grade, semester) VALUES (1, 1, 'A', 'Fall 2023'), (2, 1, 'B+', 'Fall 2023');`
+            ];
+        } else {
+            // Generic tables for unknown database names
+            tables = ['Items', 'Users', 'Transactions'];
+            inserts = [
+                `INSERT INTO Items (name, description, value) VALUES ('Item 1', 'Description 1', 100.00), ('Item 2', 'Description 2', 200.00);`,
+                `INSERT INTO Users (username, email, created_at) VALUES ('user1', 'user1@example.com', NOW()), ('user2', 'user2@example.com', NOW());`,
+                `INSERT INTO Transactions (user_id, item_id, quantity, transaction_date) VALUES (1, 1, 2, NOW()), (2, 2, 1, NOW());`
+            ];
+        }
+        
+        // Build comprehensive SQL
+        const sql = [
+            `CREATE DATABASE ${dbName};`,
+            `USE ${dbName};`,
+            ...tables.map(table => {
+                const tableLower = table.toLowerCase();
+                if (tableLower === 'cars') {
+                    return `CREATE TABLE Cars (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  name VARCHAR(100) NOT NULL,\n  manufacturer_id INT,\n  model_year INT,\n  price DECIMAL(10,2),\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);`;
+                } else if (tableLower === 'manufacturers') {
+                    return `CREATE TABLE Manufacturers (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  name VARCHAR(100) NOT NULL,\n  country VARCHAR(50),\n  founded_year INT\n);`;
+                } else if (tableLower === 'dealerships') {
+                    return `CREATE TABLE Dealerships (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  name VARCHAR(100) NOT NULL,\n  city VARCHAR(50),\n  phone VARCHAR(15)\n);`;
+                } else if (tableLower === 'aircraft') {
+                    return `CREATE TABLE Aircraft (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  model VARCHAR(50) NOT NULL,\n  capacity INT,\n  manufacturer VARCHAR(50)\n);`;
+                } else if (tableLower === 'flights') {
+                    return `CREATE TABLE Flights (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  flight_number VARCHAR(10) NOT NULL UNIQUE,\n  aircraft_id INT,\n  departure_city VARCHAR(50),\n  arrival_city VARCHAR(50),\n  departure_time DATETIME\n);`;
+                } else if (tableLower === 'passengers') {
+                    return `CREATE TABLE Passengers (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  first_name VARCHAR(50) NOT NULL,\n  last_name VARCHAR(50) NOT NULL,\n  flight_id INT,\n  seat_number VARCHAR(5)\n);`;
+                } else if (tableLower === 'departments') {
+                    return `CREATE TABLE Departments (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  name VARCHAR(100) NOT NULL,\n  manager VARCHAR(100),\n  budget DECIMAL(12,2)\n);`;
+                } else if (tableLower === 'employees') {
+                    return `CREATE TABLE Employees (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  name VARCHAR(100) NOT NULL,\n  department_id INT,\n  salary DECIMAL(10,2),\n  hire_date DATE\n);`;
+                } else if (tableLower === 'projects') {
+                    return `CREATE TABLE Projects (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  name VARCHAR(100) NOT NULL,\n  department_id INT,\n  start_date DATE,\n  budget DECIMAL(10,2)\n);`;
+                } else if (tableLower === 'products') {
+                    return `CREATE TABLE Products (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  name VARCHAR(100) NOT NULL,\n  category_id INT,\n  price DECIMAL(10,2),\n  stock INT\n);`;
+                } else if (tableLower === 'categories') {
+                    return `CREATE TABLE Categories (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  name VARCHAR(50) NOT NULL,\n  description TEXT\n);`;
+                } else if (tableLower === 'orders') {
+                    return `CREATE TABLE Orders (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  product_id INT,\n  quantity INT,\n  order_date DATETIME,\n  total_price DECIMAL(10,2)\n);`;
+                } else if (tableLower === 'students') {
+                    return `CREATE TABLE Students (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  first_name VARCHAR(50) NOT NULL,\n  last_name VARCHAR(50) NOT NULL,\n  email VARCHAR(100),\n  enrollment_date DATE\n);`;
+                } else if (tableLower === 'courses') {
+                    return `CREATE TABLE Courses (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  course_code VARCHAR(10) UNIQUE,\n  title VARCHAR(100),\n  instructor VARCHAR(100),\n  credits INT\n);`;
+                } else if (tableLower === 'enrollments') {
+                    return `CREATE TABLE Enrollments (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  student_id INT,\n  course_id INT,\n  grade VARCHAR(2),\n  semester VARCHAR(20)\n);`;
+                } else if (tableLower === 'items') {
+                    return `CREATE TABLE Items (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  name VARCHAR(100) NOT NULL,\n  description TEXT,\n  value DECIMAL(10,2)\n);`;
+                } else if (tableLower === 'users') {
+                    return `CREATE TABLE Users (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  username VARCHAR(50) NOT NULL UNIQUE,\n  email VARCHAR(100),\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);`;
+                } else if (tableLower === 'transactions') {
+                    return `CREATE TABLE Transactions (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  user_id INT,\n  item_id INT,\n  quantity INT,\n  transaction_date DATETIME\n);`;
+                } else {
+                    return `CREATE TABLE ${table} (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  name VARCHAR(100),\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);`;
+                }
+            }),
+            ...inserts
+        ];
+        
+        return {
+            intent: "create_comprehensive_schema",
+            patterns: ["create database with tables and data"],
+            response: {
+                sql,
+                explanation: `Created comprehensive database '${dbName}' with ${tables.length} tables (${tables.join(', ')}) and sample data. You can now query, modify, and explore the database using SQL commands.`
+            }
+        };
+    }
+
+    // Check for dynamic database creation pattern: "create a database of X" or "create database X"
+    const dynamicDbPattern = /create\s+(?:a\s+)?database\s+(?:of\s+)?([a-zA-Z_][a-zA-Z0-9_]*)/i;
+    const dbMatch = userInput.match(dynamicDbPattern);
+    if (dbMatch && dbMatch[1]) {
+        const dbName = dbMatch[1];
+        return {
+            intent: "create_dynamic_database",
+            patterns: ["create database"],
+            response: {
+                sql: [
+                    `CREATE DATABASE ${dbName};`,
+                    `USE ${dbName};`
+                ],
+                explanation: `Created database '${dbName}'. You can now create tables in this database. Try saying "create a table for..." to add tables.`
+            }
+        };
+    }
+
+    // Check for dynamic table creation pattern: "create a table for X" or "create table X"
+    const dynamicTablePattern = /create\s+(?:a\s+)?table\s+(?:for\s+)?([a-zA-Z_][a-zA-Z0-9_]*)/i;
+    const tableMatch = userInput.match(dynamicTablePattern);
+    if (tableMatch && tableMatch[1]) {
+        const tableName = tableMatch[1];
+        const singularForm = tableName.endsWith('s') ? tableName.slice(0, -1) : tableName;
+        
+        // Create a basic table structure for the entity
+        return {
+            intent: "create_dynamic_table",
+            patterns: ["create table"],
+            response: {
+                sql: [
+                    `CREATE TABLE ${tableName} (`,
+                    `  id INT PRIMARY KEY AUTO_INCREMENT,`,
+                    `  name VARCHAR(100) NOT NULL,`,
+                    `  description TEXT,`,
+                    `  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,`,
+                    `  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`,
+                    `);`
+                ],
+                explanation: `Created table '${tableName}' with basic columns (id, name, description, timestamps). You can modify this table or ask for specific columns.`
+            }
+        };
+    }
+
     // Score each intent based on pattern matches
     let bestMatch: SQLIntent | null = null;
     let highestScore = 0;

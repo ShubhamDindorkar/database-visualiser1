@@ -34,9 +34,9 @@ export interface Table {
 
 export interface ForeignKeyReference {
   tableId: string;
-  tableName: string;
   columnId: string;
-  columnName: string;
+  // Note: tableName and columnName should be derived via JOINs (3NF compliant)
+  // When needed in UI, resolve from tables array by looking up tableId and columnId
 }
 
 export interface Relationship {

@@ -60,6 +60,7 @@ export default function SelectDataModal({
   const [orderBy, setOrderBy] = useState<string>('');
   const [orderDirection, setOrderDirection] = useState<'ASC' | 'DESC'>('ASC');
   const [limit, setLimit] = useState<string>('');
+  const [offset, setOffset] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generatedQuery, setGeneratedQuery] = useState<string>('');
@@ -92,7 +93,7 @@ export default function SelectDataModal({
     } else {
       setGeneratedQuery('');
     }
-  }, [selectedDatabase, selectedTable, selectedColumns, whereConditions, orderBy, orderDirection, limit]);
+  }, [selectedDatabase, selectedTable, selectedColumns, whereConditions, orderBy, orderDirection, limit, offset]);
 
   const buildQuery = () => {
     if (!selectedTable) return '';
@@ -160,6 +161,11 @@ export default function SelectDataModal({
       query += ` LIMIT ${limit}`;
     }
 
+    // OFFSET
+    if (offset && !isNaN(Number(offset)) && Number(offset) > 0) {
+      query += ` OFFSET ${offset}`;
+    }
+
     return query;
   };
 
@@ -220,6 +226,7 @@ export default function SelectDataModal({
     setOrderBy('');
     setOrderDirection('ASC');
     setLimit('');
+    setOffset('');
     setError(null);
     setGeneratedQuery('');
     onClose();
@@ -466,7 +473,7 @@ export default function SelectDataModal({
                       )}
                     </div>
 
-                    {/* ORDER BY & LIMIT */}
+                    {/* ORDER BY & LIMIT & OFFSET */}
                     <div className="flex gap-4 mb-6">
                       <div className="flex-1">
                         <label className={`block text-sm font-medium ${theme?.text || 'text-gray-700'} mb-2`}>
@@ -496,7 +503,7 @@ export default function SelectDataModal({
                           </select>
                         </div>
                       </div>
-                      <div className="w-32">
+                      <div className="w-28">
                         <label className={`block text-sm font-medium ${theme?.text || 'text-gray-700'} mb-2`}>
                           Limit
                         </label>
@@ -506,6 +513,19 @@ export default function SelectDataModal({
                           onChange={(e) => setLimit(e.target.value)}
                           placeholder="All"
                           min="1"
+                          className={`w-full px-3 py-2 border rounded-xl text-sm ${theme?.navbar?.includes('slate') ? 'bg-slate-800 border-slate-600 text-white placeholder-slate-400' : 'border-gray-300'}`}
+                        />
+                      </div>
+                      <div className="w-28">
+                        <label className={`block text-sm font-medium ${theme?.text || 'text-gray-700'} mb-2`}>
+                          Offset
+                        </label>
+                        <input
+                          type="number"
+                          value={offset}
+                          onChange={(e) => setOffset(e.target.value)}
+                          placeholder="0"
+                          min="0"
                           className={`w-full px-3 py-2 border rounded-xl text-sm ${theme?.navbar?.includes('slate') ? 'bg-slate-800 border-slate-600 text-white placeholder-slate-400' : 'border-gray-300'}`}
                         />
                       </div>

@@ -228,9 +228,7 @@ export default function CreateTableModal({
           if (refTable && refColumn) {
             column.foreignKeyReference = {
               tableId: col.foreignKeyTableId,
-              tableName: refTable.name,
               columnId: col.foreignKeyColumnId,
-              columnName: refColumn.name,
             };
           }
         }
