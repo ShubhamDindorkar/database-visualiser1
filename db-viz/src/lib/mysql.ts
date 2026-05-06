@@ -4,14 +4,13 @@ import { Pool, PoolClient, QueryResult } from 'pg';
 // Supports Neon, Railway, and other PostgreSQL hosting
 const DATABASE_URL = process.env.DATABASE_URL;
 
-if (!DATABASE_URL) {
-  console.error('DATABASE_URL environment variable is not set');
-}
-
 // Connection pool for better performance
 let pool: Pool | null = null;
 
 function getPool() {
+  if (!DATABASE_URL) {
+    throw new Error('DATABASE_URL environment variable is not set');
+  }
   if (!pool) {
     pool = new Pool({
       connectionString: DATABASE_URL,

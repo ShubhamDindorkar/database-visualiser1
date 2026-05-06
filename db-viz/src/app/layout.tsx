@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { WebVitalsMonitor } from "@/components/WebVitalsMonitor";
@@ -24,12 +24,13 @@ export const metadata: Metadata = {
   title: "DB Visualiser - PostgreSQL Database Design Tool",
   description: "A visual PostgreSQL database design tool for creating, managing, and visualizing database schemas with an intuitive drag-and-drop interface.",
   keywords: ["PostgreSQL", "database", "visualizer", "schema", "design", "tables", "relationships"],
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: true,
-  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
 };
 
 export default function RootLayout({
@@ -39,10 +40,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        {/* Light mode by default - dark mode only applies in dashboard */}
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} antialiased`}
       >

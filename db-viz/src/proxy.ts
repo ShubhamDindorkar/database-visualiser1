@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const response = NextResponse.next();
 
   // Cache static assets (JS, CSS) indefinitely
@@ -16,9 +16,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Cache images for 1 year
-  if (
-    request.nextUrl.pathname.match(/\.(png|jpg|jpeg|gif|webp|svg)$/)
-  ) {
+  if (request.nextUrl.pathname.match(/\.(png|jpg|jpeg|gif|webp|svg)$/)) {
     response.headers.set(
       'Cache-Control',
       'public, max-age=31536000, immutable'
@@ -26,8 +24,12 @@ export function middleware(request: NextRequest) {
   }
 
   // Cache HTML pages - use ISR/stale-while-revalidate
-  if (request.nextUrl.pathname === '/' || 
-      request.nextUrl.pathname.match(/^\/(pricing|privacy-policy|terms-of-service|documentation)$/)) {
+  if (
+    request.nextUrl.pathname === '/' ||
+    request.nextUrl.pathname.match(
+      /^\/(pricing|privacy-policy|terms-of-service|documentation)$/
+    )
+  ) {
     response.headers.set(
       'Cache-Control',
       'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400'
@@ -66,3 +68,4 @@ export const config = {
     '/((?!_next/image|_next/static|favicon.ico|public).*)',
   ],
 };
+
