@@ -353,7 +353,6 @@ export default function DashboardPage() {
           name: data.name,
           userId: data.userId,
           db_password_hash: data.db_password_hash,
-          mysqlName: data.mysqlName, // Include actual MySQL name
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
         });
@@ -532,27 +531,26 @@ export default function DashboardPage() {
       if (!user) return;
 
       try {
-        // First, create the database in MySQL with user isolation
-        const mysqlResponse = await fetch('/api/database/create', {
+        // First, create the database/schema in PostgreSQL with user isolation
+        const postgresResponse = await fetch('/api/database/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, userId: user.uid }),
         });
-        const mysqlResult = await mysqlResponse.json();
+        const postgresResult = await postgresResponse.json();
 
-        if (!mysqlResult.success) {
-          addLog('error', `MySQL Error: ${mysqlResult.error}`);
+        if (!postgresResult.success) {
+          addLog('error', `PostgreSQL Error: ${postgresResult.error}`);
           return;
         }
 
-        // If MySQL creation successful, save to Firebase (no password)
+        // If PostgreSQL creation successful, save to Firebase (no password)
         const dbId = uuidv4();
 
         await setDoc(doc(db, 'databases', dbId), {
           name,
           userId: user.uid,
           db_password_hash: '',
-          mysqlName: mysqlResult.actualDatabaseName, // Store actual MySQL name
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
         });
@@ -578,17 +576,17 @@ export default function DashboardPage() {
         const dbName = dbToDelete?.name;
 
         if (dbName) {
-          // First, drop the database in MySQL with user isolation
-          const mysqlResponse = await fetch('/api/database/drop', {
+          // First, drop the schema in PostgreSQL with user isolation
+          const postgresResponse = await fetch('/api/database/drop', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: dbName, userId: user.uid }),
           });
-          const mysqlResult = await mysqlResponse.json();
+          const postgresResult = await postgresResponse.json();
 
-          if (!mysqlResult.success) {
+          if (!postgresResult.success) {
             // Log warning but continue with Firebase deletion
-            addLog('warning', `MySQL: ${mysqlResult.error}`);
+            addLog('warning', `PostgreSQL: ${postgresResult.error}`);
           }
         }
 
@@ -661,7 +659,13 @@ export default function DashboardPage() {
         });
         const descResult = await descResponse.json();
 
-        if (descResult.success && descResult.columns) {
+        if (!descResult.success) {
+          // Skip tables that can't be described (might not exist or access denied)
+          console.warn(`Could not describe table '${tableName}':`, descResult.error);
+          continue;
+        }
+
+        if (descResult.columns) {
           const columns: Column[] = descResult.columns.map(
             (col: { Field: string; Type: string; Null: string; Key: string; Default: string | null; Extra: string }) => {
               const column: Record<string, unknown> = {
@@ -759,12 +763,11 @@ export default function DashboardPage() {
           name: dbName,
           userId: user.uid,
           db_password_hash: '',
-          mysqlName: dbResult.actualDatabaseName,
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
         });
 
-        actualDbName = dbResult.actualDatabaseName;
+        actualDbName = dbName;
         setChatbotDbId(dbId);
         setChatbotDbName(dbName);
 
@@ -782,7 +785,7 @@ export default function DashboardPage() {
         if (!existingDb) {
           throw new Error('Chatbot database not found. It may have been deleted.');
         }
-        actualDbName = existingDb.mysqlName || existingDb.name;
+        actualDbName = existingDb.name;
       }
 
       // Execute each SQL statement
@@ -822,7 +825,7 @@ export default function DashboardPage() {
 
       try {
         const selectedDatabase = databases.find((d) => d.id === selectedDatabaseId);
-        const databaseName = selectedDatabase?.mysqlName || selectedDatabase?.name;
+        const databaseName = selectedDatabase?.name;
 
         if (!databaseName) {
           addLog('error', 'No database selected');
@@ -835,7 +838,7 @@ export default function DashboardPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             database: databaseName,
-            query: `SHOW TABLES LIKE '${name}'`,
+            query: `SELECT COUNT(*) as count FROM information_schema.tables WHERE table_name = '${name}'`,
             userId: user?.uid,
           }),
         });
@@ -874,6 +877,7 @@ export default function DashboardPage() {
             database: databaseName,
             tableName: name,
             columns: pgColumns,
+            userId: user?.uid,
           }),
         });
         const result = await response.json();
@@ -931,24 +935,24 @@ export default function DashboardPage() {
         const tableName = tableToDelete?.name;
         const databaseId = tableToDelete?.databaseId;
         const selectedDatabase = databases.find((d) => d.id === databaseId);
-        const databaseName = selectedDatabase?.mysqlName || selectedDatabase?.name;
+        const databaseName = selectedDatabase?.name;
 
         if (tableName && databaseName) {
-          // First, drop the table in MySQL
-          const mysqlResponse = await fetch('/api/query/execute', {
+          // First, drop the table in PostgreSQL
+          const response = await fetch('/api/query/execute', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               database: databaseName,
-              query: `DROP TABLE \`${tableName}\``,
+              query: `DROP TABLE "${tableName}"`,
               userId: user?.uid,
             }),
           });
-          const mysqlResult = await mysqlResponse.json();
+          const result = await response.json();
 
-          if (!mysqlResult.success) {
+          if (!result.success) {
             // Log warning but continue with Firebase deletion
-            addLog('warning', `MySQL: ${mysqlResult.error}`);
+            addLog('warning', `PostgreSQL: ${result.error}`);
           }
         }
 
@@ -988,7 +992,7 @@ export default function DashboardPage() {
 
         const tableName = table.name;
         const selectedDatabase = databases.find((d) => d.id === table.databaseId);
-        const databaseName = selectedDatabase?.mysqlName || selectedDatabase?.name;
+        const databaseName = selectedDatabase?.name;
 
         if (!databaseName) {
           addLog('error', 'Database not found');
@@ -1023,7 +1027,7 @@ export default function DashboardPage() {
 
         // Add new columns
         for (const col of addedColumns) {
-          let colDef = `ADD COLUMN \`${col.name}\` ${col.dataType}`;
+          let colDef = `ADD COLUMN "${col.name}" ${col.dataType}`;
           if (col.isNotNull) colDef += ' NOT NULL';
           if (col.isUnique) colDef += ' UNIQUE';
           if (col.defaultValue) colDef += ` DEFAULT '${col.defaultValue}'`;
@@ -1032,12 +1036,12 @@ export default function DashboardPage() {
 
         // Drop removed columns
         for (const col of removedColumns) {
-          alterCommands.push(`DROP COLUMN \`${col.name}\``);
+          alterCommands.push(`DROP COLUMN "${col.name}"`);
         }
 
         // Modify existing columns
         for (const col of modifiedColumns) {
-          let colDef = `MODIFY COLUMN \`${col.name}\` ${col.dataType}`;
+          let colDef = `ALTER COLUMN "${col.name}" TYPE ${col.dataType}`;
           if (col.isNotNull) colDef += ' NOT NULL';
           if (col.isUnique) colDef += ' UNIQUE';
           if (col.defaultValue) colDef += ` DEFAULT '${col.defaultValue}'`;
@@ -1046,7 +1050,7 @@ export default function DashboardPage() {
 
         // If there are changes, execute with schema sync
         if (alterCommands.length > 0) {
-          const alterQuery = `ALTER TABLE \`${tableName}\` ${alterCommands.join(', ')}`;
+          const alterQuery = `ALTER TABLE "${tableName}" ${alterCommands.join(', ')}`;
           
           // Use schema-aware execution to automatically sync to Firebase and canvas
           const result = await executeQueryWithSchemaSync(databaseName, alterQuery);
@@ -1082,16 +1086,16 @@ export default function DashboardPage() {
       const sourceColumn = sourceTable?.columns.find((c) => c.id === sourceColumnId);
       const targetColumn = targetTable?.columns.find((c) => c.id === targetColumnId);
       const selectedDatabase = databases.find((d) => d.id === selectedDatabaseId);
-      const databaseName = selectedDatabase?.mysqlName || selectedDatabase?.name;
+      const databaseName = selectedDatabase?.name;
 
       if (!sourceTable || !targetTable || !sourceColumn || !targetColumn || !databaseName) {
         throw new Error('Invalid table or column selection');
       }
 
       try {
-        // First, add the foreign key constraint in MySQL
+        // Add the foreign key constraint in PostgreSQL
         const constraintName = `fk_${sourceTable.name}_${sourceColumn.name}`;
-        const alterQuery = `ALTER TABLE \`${sourceTable.name}\` ADD CONSTRAINT \`${constraintName}\` FOREIGN KEY (\`${sourceColumn.name}\`) REFERENCES \`${targetTable.name}\`(\`${targetColumn.name}\`)`;
+        const alterQuery = `ALTER TABLE "${sourceTable.name}" ADD CONSTRAINT "${constraintName}" FOREIGN KEY ("${sourceColumn.name}") REFERENCES "${targetTable.name}"("${targetColumn.name}")`;
 
         const response = await fetch('/api/query/execute', {
           method: 'POST',
@@ -1105,7 +1109,7 @@ export default function DashboardPage() {
         const result = await response.json();
 
         if (!result.success) {
-          throw new Error(result.error || 'Failed to add foreign key in MySQL');
+          throw new Error(result.error || 'Failed to add foreign key in PostgreSQL');
         }
 
         // Update Firebase with the foreign key reference
@@ -1160,16 +1164,16 @@ export default function DashboardPage() {
       const table = tables.find((t) => t.id === tableId);
       const column = table?.columns.find((c) => c.id === columnId);
       const selectedDatabase = databases.find((d) => d.id === selectedDatabaseId);
-      const databaseName = selectedDatabase?.mysqlName || selectedDatabase?.name;
+      const databaseName = selectedDatabase?.name;
 
       if (!table || !column || !databaseName) {
         throw new Error('Invalid table or column');
       }
 
       try {
-        // First, remove the foreign key constraint from MySQL
+        // Remove the foreign key constraint from PostgreSQL
         const constraintName = `fk_${table.name}_${column.name}`;
-        const alterQuery = `ALTER TABLE \`${table.name}\` DROP FOREIGN KEY \`${constraintName}\``;
+        const alterQuery = `ALTER TABLE "${table.name}" DROP CONSTRAINT "${constraintName}"`;
 
         const response = await fetch('/api/query/execute', {
           method: 'POST',
@@ -1183,9 +1187,9 @@ export default function DashboardPage() {
 
         const result = await response.json();
 
-        // Even if MySQL fails (constraint might have different name), update Firebase
+        // Even if PostgreSQL fails (constraint might have different name), update Firebase
         if (!result.success) {
-          addLog('warning', `MySQL: ${result.error}. Updating workflow...`);
+          addLog('warning', `PostgreSQL: ${result.error}. Updating workflow...`);
         }
 
         // Update Firebase to remove the foreign key reference
@@ -1278,7 +1282,6 @@ export default function DashboardPage() {
             const newDb: DatabaseType = {
               id: uuidv4(),
               name: targetDatabaseName,
-              mysqlName: dbResult.actualDatabaseName || targetDatabaseName,
               userId: user.uid,
               db_password_hash: '',
               createdAt: new Date(Timestamp.now().toMillis()),
@@ -1318,7 +1321,6 @@ export default function DashboardPage() {
             const newDb: DatabaseType = {
               id: uuidv4(),
               name: generatedDbName,
-              mysqlName: dbResult.actualDatabaseName || generatedDbName,
               userId: user.uid,
               db_password_hash: '',
               createdAt: new Date(Timestamp.now().toMillis()),
@@ -1339,8 +1341,7 @@ export default function DashboardPage() {
           }
         }
 
-        const actualDatabaseName = databases.find((d) => d.id === targetDatabaseId)?.mysqlName ||
-          databases.find((d) => d.id === targetDatabaseId)?.name || targetDatabaseName;
+        const actualDatabaseName = databases.find((d) => d.id === targetDatabaseId)?.name || targetDatabaseName;
 
         // Create tables by executing the CREATE TABLE statements
         for (const tableStatement of parsedSQL.createTableStatements) {
@@ -1418,7 +1419,7 @@ export default function DashboardPage() {
           }
         }
 
-        // Sync tables from MySQL to Firebase (after all tables are created)
+        // Sync tables from PostgreSQL to Firebase (after all tables are created)
         addLog('info', `🔄 Syncing tables to workflow...`);
         await syncTablesToFirebase(actualDatabaseName, targetDatabaseId);
 
@@ -1438,10 +1439,13 @@ export default function DashboardPage() {
   const executeQuery = useCallback(
     async (database: string, query: string): Promise<{ success: boolean; results?: unknown[]; error?: string }> => {
       try {
+        const userId = user?.uid;
+        console.log('[executeQuery] Database:', database, 'UserId:', userId, 'HasUser:', !!user);
+        
         const response = await fetch('/api/query/execute', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ database, query, userId: user?.uid }),
+          body: JSON.stringify({ database, query, userId }),
         });
         const result = await response.json();
 
@@ -1461,7 +1465,7 @@ export default function DashboardPage() {
         return { success: false, error: errMsg };
       }
     },
-    [addLog]
+    [addLog, user?.uid]
   );
 
   // Execute query with automatic schema synchronization to Firebase/Canvas
@@ -1482,13 +1486,13 @@ export default function DashboardPage() {
           if (match && match[1] && selectedDatabaseId) {
             const tableName = match[1];
             
-            // Fetch table structure from MySQL
+            // Fetch table structure from PostgreSQL
             const describeResponse = await fetch('/api/query/execute', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 database: currentDatabaseName,
-                query: `DESCRIBE \`${tableName}\``,
+                query: `DESCRIBE "${tableName}"`,
                 userId: user?.uid,
               }),
             });
@@ -1699,40 +1703,56 @@ export default function DashboardPage() {
   // Handle view data from table node arrow button
   const handleViewData = useCallback(
     async (tableId: string, tableName: string) => {
-      const db = databases.find((d) => d.id === selectedDatabaseId);
-      if (!db) return;
+      // Use terminalDbRef which has the ACTUAL prefixed schema name from terminal
+      const db = terminalDbRef.current;
+      
+      if (!db) {
+        addLog('error', `No database found in terminalDbRef`);
+        console.error('[handleViewData] Database not found in terminalDbRef');
+        return;
+      }
 
-      const mysqlDatabaseName = db.mysqlName || db.name;
-      const query = `SELECT * FROM \`${tableName}\``;
+      console.log('[handleViewData] Executing query with prefixed database:', { dbName: db.name, tableName });
 
-      const result = await executeQuery(mysqlDatabaseName, query);
+      // Query table data - quote the table name to preserve case and handle special chars
+      const query = `SELECT * FROM "${tableName}"`;
+
+      const result = await executeQuery(db.name, query);
+
       if (result.success && result.results) {
+        addLog('success', `Retrieved ${result.results.length} rows from "${tableName}"`);
         setQueryResults({
           results: result.results,
           query,
         });
+      } else {
+        addLog('error', result.error || `Failed to retrieve data from "${tableName}"`);
+        console.error('[handleViewData] Query failed:', result.error);
       }
     },
-    [databases, selectedDatabaseId, executeQuery]
+    [executeQuery, addLog]
   );
 
   // Track terminal's current database separately from UI selection
   // This allows USE command to work correctly even with async state updates
-  const terminalDbRef = useRef<{ id: string; name: string; mysqlName: string } | null>(null);
+  const terminalDbRef = useRef<{ id: string; name: string } | null>(null);
 
   // Initialize terminal database ref when selected database changes
   useEffect(() => {
-    if (selectedDatabaseId) {
+    if (selectedDatabaseId && user?.uid) {
       const db = databases.find((d) => d.id === selectedDatabaseId);
       if (db) {
+        // Compute prefixed database name (same logic as PostgreSQL uses: user_{first8chars}_{dbName})
+        const prefix = `user_${user.uid.substring(0, 8)}_`;
+        const prefixedName = `${prefix}${db.name}`;
         terminalDbRef.current = {
           id: db.id,
-          name: db.name,
-          mysqlName: db.mysqlName || db.name,
+          name: prefixedName,
         };
+        console.log('[Dashboard] Initialized terminalDbRef with prefixed name:', prefixedName);
       }
     }
-  }, [selectedDatabaseId, databases]);
+  }, [selectedDatabaseId, databases, user?.uid]);
 
   // Convert tables to React Flow nodes with persisted layout positions
   useEffect(() => {
@@ -1787,7 +1807,7 @@ export default function DashboardPage() {
         throw new Error('At least one value is required');
       }
 
-      const query = `INSERT INTO \`${table}\` (\`${columns.join('`, `')}\`) VALUES (${vals.join(', ')})`;
+      const query = `INSERT INTO "${table}" (${columns.map((col) => `"${col}"`).join(', ')}) VALUES (${vals.join(', ')})`;
       const result = await executeQueryWithSchemaSync(database, query);
 
       if (!result.success) {
@@ -1800,26 +1820,43 @@ export default function DashboardPage() {
   // Handle DROP table from modal
   const handleDropTable = useCallback(
     async (database: string, tableName: string) => {
-      // Find the table in Firebase
-      const tableToDelete = tables.find((t) => t.name === tableName);
-      const dbObject = databases.find((d) => d.name === database || d.mysqlName === database);
+      console.log('[handleDropTable] Input database:', database, 'tableName:', tableName);
+      console.log('[handleDropTable] Available databases:', databases.map(d => ({ id: d.id, name: d.name })));
+      console.log('[handleDropTable] Available tables (allTables):', allTables.map(t => ({ id: t.id, name: t.name, databaseId: t.databaseId })));
+      
+      // Find the table in Firebase - use allTables instead of tables
+      const tableToDelete = allTables.find((t) => t.name === tableName);
+      const dbObject = databases.find((d) => d.name === database);
 
+      console.log('[handleDropTable] tableToDelete found:', !!tableToDelete, tableToDelete);
+      console.log('[handleDropTable] dbObject found:', !!dbObject, dbObject);
+      console.log('[handleDropTable] Match check:', tableToDelete?.databaseId === dbObject?.id);
+      
       if (tableToDelete && dbObject && tableToDelete.databaseId === dbObject.id) {
-        // Drop from MySQL with schema sync
-        const result = await executeQueryWithSchemaSync(database, `DROP TABLE \`${tableName}\``);
+        // Drop from PostgreSQL
+        const dropQuery = `DROP TABLE "${tableName}"`;
+        console.log('[handleDropTable] Executing query:', dropQuery, 'in database:', database, 'with userId:', user?.uid);
+        const result = await executeQueryWithSchemaSync(database, dropQuery);
+        console.log('[handleDropTable] Query result:', result);
+        
         if (!result.success) {
           throw new Error(result.error);
         }
 
         addLog('success', `Table '${tableName}' dropped successfully`);
       } else {
+        console.error('[handleDropTable] Table or database not found!', {
+          tableFound: !!tableToDelete,
+          dbFound: !!dbObject,
+          tableDbMatch: tableToDelete?.databaseId === dbObject?.id,
+        });
         throw new Error('Table not found');
       }
     },
-    [tables, databases, executeQueryWithSchemaSync, addLog]
+    [allTables, databases, executeQueryWithSchemaSync, addLog, user?.uid]
   );
 
-  // Handle terminal command - Execute real MySQL queries
+  // Handle terminal command - Execute real PostgreSQL queries
   const handleTerminalCommand = useCallback(
     async (command: string) => {
       const upperCommand = command.toUpperCase().trim();
@@ -1827,7 +1864,7 @@ export default function DashboardPage() {
 
       // Handle local commands (HELP, CLEAR)
       if (upperCommand === 'HELP' || upperCommand === '\\H') {
-        addLog('info', 'Available commands (connected to MySQL):');
+        addLog('info', 'Available commands (connected to PostgreSQL):');
         addLog('info', '  SHOW DATABASES    - List all databases');
         addLog('info', '  SHOW TABLES       - List tables in current database');
         addLog('info', '  USE <database>    - Select a database');
@@ -1866,7 +1903,7 @@ export default function DashboardPage() {
         return;
       }
 
-      // Handle SHOW DATABASES - fetch from MySQL with user filter
+      // Handle SHOW DATABASES - fetch from PostgreSQL with user filter
       if (upperCommand === 'SHOW DATABASES' || upperCommand === 'SHOW DATABASES;') {
         addLog('info', 'Executing: SHOW DATABASES');
 
@@ -1875,9 +1912,9 @@ export default function DashboardPage() {
           const result = await response.json();
 
           if (result.success && result.databases) {
-            const mysqlDatabases = result.databases;
+            const postgresDatabases = result.databases;
 
-            if (mysqlDatabases.length === 0) {
+            if (postgresDatabases.length === 0) {
               addLog('info', '+--------------------+');
               addLog('info', '| Database           |');
               addLog('info', '+--------------------+');
@@ -1892,14 +1929,14 @@ export default function DashboardPage() {
               addLog('info', '+--------------------+');
               addLog('info', '| Database           |');
               addLog('info', '+--------------------+');
-              mysqlDatabases.forEach((db: { name: string }) => {
+              postgresDatabases.forEach((db: { name: string }) => {
                 addLog('info', `| ${db.name.padEnd(18)} |`);
               });
               addLog('info', '+--------------------+');
-              addLog('info', `${mysqlDatabases.length} row${mysqlDatabases.length !== 1 ? 's' : ''} in set`);
+              addLog('info', `${postgresDatabases.length} row${postgresDatabases.length !== 1 ? 's' : ''} in set`);
 
               // Show in workflow area
-              const dbData = mysqlDatabases.map((db: { name: string }) => ({ Database: db.name }));
+              const dbData = postgresDatabases.map((db: { name: string }) => ({ Database: db.name }));
               setQueryResults({
                 results: dbData,
                 query: 'SHOW DATABASES',
@@ -1909,7 +1946,7 @@ export default function DashboardPage() {
             addLog('error', `Error fetching databases: ${result.error || 'Unknown error'}`);
           }
         } catch (error) {
-          addLog('error', 'Failed to fetch databases from MySQL');
+          addLog('error', 'Failed to fetch databases from PostgreSQL');
           console.error('Error fetching databases:', error);
         }
         return;
@@ -1968,7 +2005,6 @@ export default function DashboardPage() {
           terminalDbRef.current = {
             id: targetDb.id,
             name: targetDb.name,
-            mysqlName: targetDb.mysqlName || targetDb.name,
           };
           addLog('success', 'Database changed');
         } else {
@@ -2004,7 +2040,6 @@ export default function DashboardPage() {
                 name: dbName,
                 userId: user?.uid,
                 db_password_hash: '',
-                mysqlName: result.actualDatabaseName,
                 createdAt: Timestamp.now(),
                 updatedAt: Timestamp.now(),
               });
@@ -2015,7 +2050,6 @@ export default function DashboardPage() {
               terminalDbRef.current = {
                 id: dbId,
                 name: dbName,
-                mysqlName: result.actualDatabaseName,
               };
               addLog('info', `Schema '${dbName}' added to workflow and selected`);
             } else {
@@ -2035,7 +2069,7 @@ export default function DashboardPage() {
         addLog('error', 'No database selected. Use "USE <database>" first.');
         return;
       }
-      const currentDatabaseName = terminalDbRef.current.mysqlName;
+      const currentDatabaseName = terminalDbRef.current.name;
 
       // Execute query against PostgreSQL
       try {
@@ -2275,10 +2309,10 @@ export default function DashboardPage() {
                   addLog('warning', `Failed to remove table '${tableName}' from workflow`);
                 }
               } else {
-                addLog('info', `Table '${tableName}' not found in workflow (dropped from MySQL only)`);
+                addLog('info', `Table '${tableName}' not found in workflow (dropped from PostgreSQL only)`);
               }
 
-              // Small delay to ensure MySQL has committed the DROP
+              // Small delay to ensure PostgreSQL has committed the DROP
               await new Promise(resolve => setTimeout(resolve, 200));
             }
           } else if (upperCommand.startsWith('DROP DATABASE')) {
@@ -2321,7 +2355,7 @@ export default function DashboardPage() {
         }
       } catch (error) {
         console.error('Error executing query:', error);
-        addLog('error', 'Failed to execute query. Check if MySQL is running.');
+        addLog('error', 'Failed to execute query. Check if PostgreSQL is running.');
       }
     },
     [databases, selectedDatabaseId, tables, selectedTableId, addLog]
@@ -2768,7 +2802,6 @@ export default function DashboardPage() {
         existingTables={tablesForSelectedDb}
         databaseName={selectedDatabaseName}
         onInsertData={handleInsertData}
-        mysqlDatabaseName={databases.find((d) => d.id === selectedDatabaseId)?.mysqlName || selectedDatabaseName}
         theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
       />
 
@@ -2792,6 +2825,7 @@ export default function DashboardPage() {
         databases={databases}
         tables={tables}
         selectedDatabaseId={selectedDatabaseId}
+        userId={user?.uid}
         onInsert={handleInsertData}
         theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
       />
@@ -2803,6 +2837,7 @@ export default function DashboardPage() {
         databases={databases}
         tables={tables}
         selectedDatabaseId={selectedDatabaseId}
+        userId={user?.uid}
         onExecuteQuery={executeQuery}
         theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
       />
@@ -2814,6 +2849,7 @@ export default function DashboardPage() {
         databases={databases}
         tables={tables}
         selectedDatabaseId={selectedDatabaseId}
+        userId={user?.uid}
         onExecuteQuery={executeQuery}
         theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}
       />
@@ -2825,6 +2861,7 @@ export default function DashboardPage() {
         databases={databases}
         tables={tables}
         selectedDatabaseId={selectedDatabaseId}
+        userId={user?.uid}
         onExecuteQuery={executeQuery}
         onShowResults={(results, query) => {
           setQueryResults({ results, query });
@@ -2837,8 +2874,9 @@ export default function DashboardPage() {
         isOpen={isDropModalOpen}
         onClose={() => setIsDropModalOpen(false)}
         databases={databases}
-        tables={tables}
+        tables={allTables}
         selectedDatabaseId={selectedDatabaseId}
+        userId={user?.uid}
         onDropDatabase={handleDeleteDatabase}
         onDropTable={handleDropTable}
         theme={THEMES[currentTheme as keyof typeof THEMES] || THEMES.light}

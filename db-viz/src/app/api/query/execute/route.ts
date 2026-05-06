@@ -4,7 +4,7 @@ import {
   executeQueryInDatabase,
   formatResultsForTerminal,
   formatErrorForTerminal,
-  isDatabaseOwnedByUser,
+  getPrefixedDatabaseName,
 } from '@/lib/postgresql';
 import { setNoCacheHeaders } from '@/lib/cache-headers';
 
@@ -57,13 +57,14 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Validate schema ownership if userId and database are provided
-    if (userId && database && !isDatabaseOwnedByUser(database, userId)) {
-      return NextResponse.json({
-        success: false,
-        error: 'Access denied. You can only access your own schemas.',
-        formattedOutput: ['ERROR: Access denied. You can only access your own schemas.'],
-      }, { status: 403 });
+    console.log('[Query Execute] Input database:', database, 'UserId:', userId);
+
+    // Auto-prefix database name if userId is provided
+    if (userId && database) {
+      database = getPrefixedDatabaseName(database, userId);
+      console.log('[Query Execute] Prefixed database to:', database);
+    } else {
+      console.log('[Query Execute] NO PREFIX - UserId:', userId, 'Database:', database);
     }
 
     // Handle special commands for PostgreSQL compatibility
@@ -109,6 +110,7 @@ export async function POST(request: NextRequest) {
     
     if (needsSchema && database) {
       // Execute query within the specified schema
+      console.log(`[Query Execute] Running query in schema "${database}":`, processedQuery.substring(0, 100));
       result = await executeQueryInDatabase(database, processedQuery);
     } else if (needsSchema && !database) {
       // Query needs a schema but none specified
@@ -119,6 +121,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     } else {
       // Execute query without schema context
+      console.log(`[Query Execute] Running query without schema context:`, processedQuery.substring(0, 100));
       result = await executeQuery(processedQuery);
     }
 

@@ -20,6 +20,7 @@ interface SelectDataModalProps {
   databases: DatabaseType[];
   tables: TableType[];
   selectedDatabaseId: string | null;
+  userId?: string;
   onExecuteQuery: (database: string, query: string) => Promise<{ success: boolean; results?: unknown[]; error?: string }>;
   onShowResults: (results: unknown[], query: string) => void;
   theme?: any;
@@ -49,6 +50,7 @@ export default function SelectDataModal({
   databases,
   tables,
   selectedDatabaseId,
+  userId,
   onExecuteQuery,
   onShowResults,
   theme,
@@ -173,7 +175,7 @@ export default function SelectDataModal({
     setWhereConditions([
       ...whereConditions,
       {
-        id: Date.now().toString(),
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         column: availableColumns[0]?.name || '',
         operator: '=',
         value: '',
@@ -199,11 +201,16 @@ export default function SelectDataModal({
     setError(null);
 
     try {
-      const db = databases.find((d) => d.name === selectedDatabase);
-      const mysqlDatabaseName = db?.mysqlName || selectedDatabase;
-
       const query = buildQuery();
-      const result = await onExecuteQuery(mysqlDatabaseName, query);
+      
+      // Compute prefixed database name if userId is provided
+      let databaseToUse = selectedDatabase;
+      if (userId) {
+        const prefix = `user_${userId.substring(0, 8)}_`;
+        databaseToUse = `${prefix}${selectedDatabase}`;
+      }
+      
+      const result = await onExecuteQuery(databaseToUse, query);
 
       if (result.success && Array.isArray(result.results)) {
         onShowResults(result.results, query);

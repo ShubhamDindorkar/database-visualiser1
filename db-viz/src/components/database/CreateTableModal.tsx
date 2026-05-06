@@ -15,7 +15,6 @@ interface CreateTableModalProps {
   existingTables: TableType[];
   databaseName: string;
   onInsertData?: (database: string, table: string, values: Record<string, string>) => Promise<void>;
-  mysqlDatabaseName?: string;
   theme?: any;
 }
 
@@ -43,7 +42,6 @@ export default function CreateTableModal({
   existingTables,
   databaseName,
   onInsertData,
-  mysqlDatabaseName,
   theme,
 }: CreateTableModalProps) {
   const [tableName, setTableName] = useState('');
@@ -239,7 +237,7 @@ export default function CreateTableModal({
       await onCreate(tableName, formattedColumns);
 
       // Insert data if user wants to add data
-      if (wantsToAddData && rows.length > 0 && onInsertData && mysqlDatabaseName) {
+      if (wantsToAddData && rows.length > 0 && onInsertData && databaseName) {
         // Get primary key columns (they should be auto-increment and not included unless explicitly provided)
         const primaryKeyColumns = columns
           .filter(col => col.isPrimaryKey && col.name)
@@ -257,7 +255,7 @@ export default function CreateTableModal({
           // Only insert if at least one value is provided
           const hasValues = Object.values(filteredValues).some((v) => v !== '');
           if (hasValues) {
-            await onInsertData(mysqlDatabaseName, tableName, filteredValues);
+            await onInsertData(databaseName, tableName, filteredValues);
           }
         }
       }
@@ -577,7 +575,7 @@ export default function CreateTableModal({
                 </div>
 
                 {/* Optional Data Insertion Section */}
-                {onInsertData && mysqlDatabaseName && (
+                {onInsertData && databaseName && (
                   <div className="space-y-4 border-t border-gray-200 pt-4">
                     <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                       <input

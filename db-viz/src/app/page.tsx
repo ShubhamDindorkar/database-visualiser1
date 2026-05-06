@@ -226,7 +226,7 @@ const terminalQueries = [
     command: "CREATE TABLE users",
     lines: [
       { prefix: "postgres>", text: "CREATE TABLE users (", color: "text-gray-200" },
-      { prefix: "", text: "  id INT PRIMARY KEY AUTO_INCREMENT,", color: "text-gray-200" },
+      { prefix: "", text: "  id SERIAL PRIMARY KEY,", color: "text-gray-200" },
       { prefix: "", text: "  name VARCHAR(255) NOT NULL,", color: "text-gray-200" },
       { prefix: "", text: "  email VARCHAR(255) UNIQUE", color: "text-gray-200" },
       { prefix: "", text: ");", color: "text-gray-200" },
@@ -292,7 +292,7 @@ const terminalQueries = [
     id: 7,
     command: "UPDATE records",
     lines: [
-      { prefix: "mysql>", text: "UPDATE products SET", color: "text-gray-200" },
+      { prefix: "postgres=>", text: "UPDATE products SET", color: "text-gray-200" },
       { prefix: "", text: "price = price * 1.1", color: "text-gray-200" },
       { prefix: "", text: "WHERE category = 'electronics';", color: "text-gray-200" },
       { prefix: "", text: "Query OK, 23 rows affected (0.04 sec)", color: "text-green-500" },
@@ -302,7 +302,7 @@ const terminalQueries = [
     id: 8,
     command: "DESCRIBE table",
     lines: [
-      { prefix: "mysql>", text: "DESCRIBE orders;", color: "text-gray-200" },
+      { prefix: "postgres=>", text: "DESCRIBE orders;", color: "text-gray-200" },
       { prefix: "", text: "+----------+--------------+------+-----+", color: "text-gray-400" },
       { prefix: "", text: "| Field    | Type         | Null | Key |", color: "text-gray-400" },
       { prefix: "", text: "+----------+--------------+------+-----+", color: "text-gray-400" },
@@ -314,7 +314,7 @@ const terminalQueries = [
     id: 9,
     command: "DELETE query",
     lines: [
-      { prefix: "mysql>", text: "DELETE FROM sessions", color: "text-gray-200" },
+      { prefix: "postgres=>", text: "DELETE FROM sessions", color: "text-gray-200" },
       { prefix: "", text: "WHERE expires_at < NOW();", color: "text-gray-200" },
       { prefix: "", text: "", color: "text-gray-200" },
       { prefix: "", text: "Query OK, 156 rows affected (0.08 sec)", color: "text-green-500" },
@@ -324,7 +324,7 @@ const terminalQueries = [
     id: 10,
     command: "FOREIGN KEY",
     lines: [
-      { prefix: "mysql>", text: "ALTER TABLE orders ADD CONSTRAINT", color: "text-gray-200" },
+      { prefix: "postgres=>", text: "ALTER TABLE orders ADD CONSTRAINT", color: "text-gray-200" },
       { prefix: "", text: "fk_user FOREIGN KEY (user_id)", color: "text-gray-200" },
       { prefix: "", text: "REFERENCES users(id);", color: "text-gray-200" },
       { prefix: "", text: "Query OK, 0 rows affected (0.06 sec)", color: "text-green-500" },
@@ -334,7 +334,7 @@ const terminalQueries = [
     id: 11,
     command: "SHOW TABLES",
     lines: [
-      { prefix: "mysql>", text: "SHOW TABLES;", color: "text-gray-200" },
+      { prefix: "postgres=>", text: "SHOW TABLES;", color: "text-gray-200" },
       { prefix: "", text: "+------------------+", color: "text-gray-400" },
       { prefix: "", text: "| Tables_in_mydb   |", color: "text-gray-400" },
       { prefix: "", text: "+------------------+", color: "text-gray-400" },
@@ -347,7 +347,7 @@ const terminalQueries = [
     id: 12,
     command: "COUNT query",
     lines: [
-      { prefix: "mysql>", text: "SELECT COUNT(*) as total,", color: "text-gray-200" },
+      { prefix: "postgres=>", text: "SELECT COUNT(*) as total,", color: "text-gray-200" },
       { prefix: "", text: "status FROM orders", color: "text-gray-200" },
       { prefix: "", text: "GROUP BY status;", color: "text-gray-200" },
       { prefix: "", text: "3 rows in set (0.01 sec)", color: "text-green-500" },

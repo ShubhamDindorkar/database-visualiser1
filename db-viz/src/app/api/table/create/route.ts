@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { executeQueryInDatabase } from '@/lib/postgresql';
+import { executeQueryInDatabase, getPrefixedDatabaseName } from '@/lib/postgresql';
 
 interface Column {
   name: string;
@@ -23,6 +23,7 @@ interface CreateTableRequest {
   database: string;
   tableName: string;
   columns: Column[];
+  userId?: string;
 }
 
 /**
@@ -56,7 +57,7 @@ interface CreateTableRequest {
 export async function POST(request: NextRequest) {
   try {
     const body: CreateTableRequest = await request.json();
-    const { database, tableName, columns } = body;
+    let { database, tableName, columns, userId } = body;
 
     // Validate request
     if (!database || typeof database !== 'string') {
@@ -64,6 +65,13 @@ export async function POST(request: NextRequest) {
         success: false,
         error: 'Schema name is required',
       }, { status: 400 });
+    }
+
+    // Auto-prefix database name if userId is provided
+    if (userId && typeof userId === 'string') {
+      database = getPrefixedDatabaseName(database.trim(), userId);
+    } else {
+      database = database.trim();
     }
 
     if (!tableName || typeof tableName !== 'string') {
@@ -88,7 +96,7 @@ export async function POST(request: NextRequest) {
     for (const column of columns) {
       let dataType = column.dataType.toUpperCase();
       
-      // Convert MySQL types to PostgreSQL types
+      // Convert column definitions to PostgreSQL types
       if (dataType === 'INT' && column.isAutoIncrement) {
         dataType = 'SERIAL';
       }
@@ -153,6 +161,7 @@ export async function POST(request: NextRequest) {
       columnDefinitions.push(fk);
     });
 
+    // Table is created in the specified schema (search_path is set by executeQueryInDatabase)
     const query = `CREATE TABLE "${tableName.trim()}" (\n  ${columnDefinitions.join(',\n  ')}\n)`;
 
     const result = await executeQueryInDatabase(database.trim(), query);

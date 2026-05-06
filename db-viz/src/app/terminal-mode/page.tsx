@@ -94,7 +94,6 @@ function TerminalModeContent() {
           name: data.name,
           userId: data.userId,
           db_password_hash: data.db_password_hash,
-          mysqlName: data.mysqlName,
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
         });
@@ -118,7 +117,7 @@ function TerminalModeContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          database: database.mysqlName || database.name,
+          database: database.name,
           query: queryText,
           userId: user?.uid,
         }),
@@ -148,7 +147,7 @@ function TerminalModeContent() {
       // Firebase syncing for schema changes
       if (result.success && database && databaseId) {
         const upperQuery = queryText.toUpperCase();
-        const currentDatabaseName = database.mysqlName || database.name;
+        const currentDatabaseName = database.name;
 
         try {
           // Handle CREATE TABLE - sync new table to Firebase
@@ -157,7 +156,7 @@ function TerminalModeContent() {
             if (match && match[1]) {
               const tableName = match[1];
 
-              // Fetch table structure from MySQL
+              // Fetch table structure from PostgreSQL
               const describeResponse = await fetch('/api/query/execute', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -200,7 +199,7 @@ function TerminalModeContent() {
                   });
                 });
 
-                // Convert MySQL column info to Column format
+                // Convert PostgreSQL column info to Column format
                 const columns: Column[] = describeResult.results.map((col: any) => {
                   const column: Column = {
                     id: uuidv4(),
@@ -299,7 +298,7 @@ function TerminalModeContent() {
                   });
                 });
 
-                // Convert MySQL column info to Column format
+                // Convert PostgreSQL column info to Column format
                 const updatedColumns: Column[] = describeResult.results.map((col: any) => {
                   const column: Column = {
                     id: uuidv4(),

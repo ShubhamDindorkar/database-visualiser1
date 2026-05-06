@@ -131,7 +131,6 @@ function PresentationContent() {
           name: data.name,
           userId: data.userId,
           db_password_hash: data.db_password_hash,
-          mysqlName: data.mysqlName,
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
         });
@@ -233,15 +232,15 @@ function PresentationContent() {
     async (tableId: string, tableName: string) => {
       if (!database) return;
 
-      const mysqlDatabaseName = database.mysqlName || database.name;
-      const queryStr = `SELECT * FROM \`${tableName}\``;
+      // Query table data (search_path is already set by executeQueryInDatabase)
+      const queryStr = `SELECT * FROM "${tableName}"`;
 
       try {
         const response = await fetch('/api/query/execute', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            database: mysqlDatabaseName,
+            database: database.name,
             query: queryStr,
             userId: user?.uid,
           }),

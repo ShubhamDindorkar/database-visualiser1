@@ -81,13 +81,16 @@ export async function getConnection() {
 export async function getConnectionWithDatabase(database: string) {
   const connection = await getPool().connect();
   // For PostgreSQL, set the search_path to the specific schema
-  // Note: PostgreSQL doesn't have "databases" like MySQL, but schemas within a database
-  // If using separate databases, create a new pool with the specific database
+  // Each "database" in the app is actually a schema in PostgreSQL
   try {
+    // First ensure the schema exists
+    await connection.query(`CREATE SCHEMA IF NOT EXISTS "${database}"`);
+    // Then set search_path to use this schema
     await connection.query(`SET search_path TO "${database}"`);
+    console.log(`[PostgreSQL] Connected to schema: "${database}"`);
   } catch (err) {
-    // If schema doesn't exist, just continue with default
-    console.log(`Schema ${database} not found, using default`);
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error(`[PostgreSQL] Error setting schema "${database}": ${errorMsg}`);
   }
   return connection;
 }
@@ -123,8 +126,10 @@ export async function executeQuery(query: string) {
 export async function executeQueryInDatabase(database: string, query: string) {
   let connection: PoolClient | null = null;
   try {
+    console.log(`[executeQueryInDatabase] Executing in schema "${database}":`, query.substring(0, 150));
     connection = await getConnectionWithDatabase(database);
     const result = await connection.query(query);
+    console.log(`[executeQueryInDatabase] Query succeeded in schema "${database}"`);
     
     // Format the result to include field information
     const fields = result.fields || Object.keys(result.rows[0] || {}).map(name => ({ name }));
@@ -132,6 +137,7 @@ export async function executeQueryInDatabase(database: string, query: string) {
     return { success: true, results: result.rows, fields };
   } catch (error: unknown) {
     const pgError = error as { message: string; code?: string; errno?: number; sqlState?: string };
+    console.error(`[executeQueryInDatabase] Error in schema "${database}":`, pgError.message);
     return {
       success: false,
       error: pgError.message,

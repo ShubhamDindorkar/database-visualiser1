@@ -23,10 +23,10 @@ export const sqlKnowledgeBase: SQLIntent[] = [
         ],
         response: {
             sql: [
-                "CREATE DATABASE database_name;",
-                "USE database_name;"
+                "CREATE SCHEMA schema_name;",
+                "SET search_path TO schema_name;"
             ],
-            explanation: "Use CREATE DATABASE to create a new database. The USE statement selects it as the active database for subsequent operations."
+            explanation: "Use CREATE SCHEMA to create a new schema in PostgreSQL. SET search_path selects it as the active schema for subsequent operations."
         }
     },
     {
@@ -40,19 +40,9 @@ export const sqlKnowledgeBase: SQLIntent[] = [
         ],
         response: {
             sql: [
-                "CREATE DATABASE students_db;",
-                "USE students_db;",
-                "CREATE TABLE students (",
-                "  student_id INT PRIMARY KEY AUTO_INCREMENT,",
-                "  first_name VARCHAR(50) NOT NULL,",
-                "  last_name VARCHAR(50) NOT NULL,",
-                "  email VARCHAR(100) UNIQUE,",
-                "  date_of_birth DATE,",
-                "  enrollment_date DATE DEFAULT CURRENT_DATE,",
-                "  gpa DECIMAL(3,2)",
-                ");"
+                "CREATE TABLE students (\n  student_id SERIAL PRIMARY KEY,\n  first_name VARCHAR(50) NOT NULL,\n  last_name VARCHAR(50) NOT NULL,\n  email VARCHAR(100) UNIQUE,\n  date_of_birth DATE,\n  enrollment_date DATE DEFAULT CURRENT_DATE,\n  gpa DECIMAL(3,2)\n);"
             ],
-            explanation: "This creates a students database with a comprehensive students table including auto-incrementing ID, personal info, email with unique constraint, and academic details."
+            explanation: "This creates a students table with auto-incrementing ID, personal info, email with unique constraint, and academic details."
         }
     },
     {
@@ -65,15 +55,7 @@ export const sqlKnowledgeBase: SQLIntent[] = [
         ],
         response: {
             sql: [
-                "CREATE TABLE users (",
-                "  user_id INT PRIMARY KEY AUTO_INCREMENT,",
-                "  username VARCHAR(50) NOT NULL UNIQUE,",
-                "  email VARCHAR(100) NOT NULL UNIQUE,",
-                "  password_hash VARCHAR(255) NOT NULL,",
-                "  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,",
-                "  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,",
-                "  is_active BOOLEAN DEFAULT TRUE",
-                ");"
+                "CREATE TABLE users (\n  user_id SERIAL PRIMARY KEY,\n  username VARCHAR(50) NOT NULL UNIQUE,\n  email VARCHAR(100) NOT NULL UNIQUE,\n  password_hash VARCHAR(255) NOT NULL,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  is_active BOOLEAN DEFAULT TRUE\n);"
             ],
             explanation: "A standard users table with authentication fields, timestamps for tracking, and an active status flag. Passwords should always be stored as hashes."
         }
@@ -89,17 +71,9 @@ export const sqlKnowledgeBase: SQLIntent[] = [
         ],
         response: {
             sql: [
-                "CREATE TABLE orders (",
-                "  order_id INT PRIMARY KEY AUTO_INCREMENT,",
-                "  user_id INT NOT NULL,",
-                "  order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,",
-                "  total_amount DECIMAL(10,2) NOT NULL,",
-                "  status ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled') DEFAULT 'pending',",
-                "  shipping_address TEXT,",
-                "  FOREIGN KEY (user_id) REFERENCES users(user_id)",
-                ");"
+                "CREATE TABLE orders (\n  order_id SERIAL PRIMARY KEY,\n  user_id INT NOT NULL,\n  order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  total_amount DECIMAL(10,2) NOT NULL,\n  status VARCHAR(20) DEFAULT 'pending',\n  shipping_address TEXT,\n  FOREIGN KEY (user_id) REFERENCES users(user_id)\n);"
             ],
-            explanation: "An orders table for e-commerce with status tracking using ENUM, foreign key to users, and automatic timestamp for order date."
+            explanation: "An orders table for e-commerce with status tracking using VARCHAR, foreign key to users, and automatic timestamp for order date."
         }
     },
     {
@@ -113,16 +87,7 @@ export const sqlKnowledgeBase: SQLIntent[] = [
         ],
         response: {
             sql: [
-                "CREATE TABLE products (",
-                "  product_id INT PRIMARY KEY AUTO_INCREMENT,",
-                "  name VARCHAR(100) NOT NULL,",
-                "  description TEXT,",
-                "  price DECIMAL(10,2) NOT NULL,",
-                "  stock_quantity INT DEFAULT 0,",
-                "  category_id INT,",
-                "  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,",
-                "  FOREIGN KEY (category_id) REFERENCES categories(category_id)",
-                ");"
+                "CREATE TABLE products (\n  product_id SERIAL PRIMARY KEY,\n  name VARCHAR(100) NOT NULL,\n  description TEXT,\n  price DECIMAL(10,2) NOT NULL,\n  stock_quantity INT DEFAULT 0,\n  category_id INT,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  FOREIGN KEY (category_id) REFERENCES categories(category_id)\n);"
             ],
             explanation: "A products table for inventory management with pricing, stock tracking, and category relationships."
         }
@@ -138,19 +103,7 @@ export const sqlKnowledgeBase: SQLIntent[] = [
         ],
         response: {
             sql: [
-                "CREATE TABLE employees (",
-                "  employee_id INT PRIMARY KEY AUTO_INCREMENT,",
-                "  first_name VARCHAR(50) NOT NULL,",
-                "  last_name VARCHAR(50) NOT NULL,",
-                "  email VARCHAR(100) UNIQUE,",
-                "  phone VARCHAR(20),",
-                "  hire_date DATE NOT NULL,",
-                "  department_id INT,",
-                "  salary DECIMAL(10,2),",
-                "  manager_id INT,",
-                "  FOREIGN KEY (department_id) REFERENCES departments(department_id),",
-                "  FOREIGN KEY (manager_id) REFERENCES employees(employee_id)",
-                ");"
+                "CREATE TABLE employees (\n  employee_id SERIAL PRIMARY KEY,\n  first_name VARCHAR(50) NOT NULL,\n  last_name VARCHAR(50) NOT NULL,\n  email VARCHAR(100) UNIQUE,\n  phone VARCHAR(20),\n  hire_date DATE NOT NULL,\n  department_id INT,\n  salary DECIMAL(10,2),\n  manager_id INT,\n  FOREIGN KEY (department_id) REFERENCES departments(department_id),\n  FOREIGN KEY (manager_id) REFERENCES employees(employee_id)\n);"
             ],
             explanation: "An employees table with self-referencing foreign key for manager hierarchy and department relationship. Includes essential HR fields."
         }
@@ -166,17 +119,7 @@ export const sqlKnowledgeBase: SQLIntent[] = [
         ],
         response: {
             sql: [
-                "CREATE TABLE cars (",
-                "  car_id INT PRIMARY KEY AUTO_INCREMENT,",
-                "  make VARCHAR(50) NOT NULL,",
-                "  model VARCHAR(50) NOT NULL,",
-                "  year INT NOT NULL,",
-                "  color VARCHAR(30),",
-                "  price DECIMAL(10,2),",
-                "  mileage INT,",
-                "  vin VARCHAR(17) UNIQUE,",
-                "  is_available BOOLEAN DEFAULT TRUE",
-                ");"
+                "CREATE TABLE cars (\n  car_id SERIAL PRIMARY KEY,\n  make VARCHAR(50) NOT NULL,\n  model VARCHAR(50) NOT NULL,\n  year INT NOT NULL,\n  color VARCHAR(30),\n  price DECIMAL(10,2),\n  mileage INT,\n  vin VARCHAR(17) UNIQUE,\n  is_available BOOLEAN DEFAULT TRUE\n);"
             ],
             explanation: "A cars table for dealership or rental management with VIN (Vehicle Identification Number) as unique identifier and availability tracking."
         }
@@ -322,13 +265,8 @@ export const sqlKnowledgeBase: SQLIntent[] = [
         ],
         response: {
             sql: [
-                "-- Count all rows:",
                 "SELECT COUNT(*) FROM table_name;",
-                "",
-                "-- Count non-null values:",
                 "SELECT COUNT(column_name) FROM table_name;",
-                "",
-                "-- Count with condition:",
                 "SELECT COUNT(*) FROM orders WHERE status = 'completed';"
             ],
             explanation: "COUNT() returns the number of rows. COUNT(*) counts all rows, while COUNT(column) counts non-NULL values in that column."
@@ -346,17 +284,9 @@ export const sqlKnowledgeBase: SQLIntent[] = [
         ],
         response: {
             sql: [
-                "-- Sum:",
                 "SELECT SUM(amount) FROM orders;",
-                "",
-                "-- Average:",
                 "SELECT AVG(price) FROM products;",
-                "",
-                "-- Combined:",
-                "SELECT ",
-                "  SUM(total_amount) as total_sales,",
-                "  AVG(total_amount) as avg_order_value",
-                "FROM orders;"
+                "SELECT SUM(total_amount) as total_sales, AVG(total_amount) as avg_order_value FROM orders;"
             ],
             explanation: "SUM() calculates the total of numeric values. AVG() calculates the arithmetic mean. Both ignore NULL values."
         }
@@ -371,15 +301,8 @@ export const sqlKnowledgeBase: SQLIntent[] = [
         ],
         response: {
             sql: [
-                "SELECT category, COUNT(*) as item_count",
-                "FROM products",
-                "GROUP BY category;",
-                "",
-                "-- With HAVING (filter groups):",
-                "SELECT category, COUNT(*) as item_count",
-                "FROM products",
-                "GROUP BY category",
-                "HAVING COUNT(*) > 5;"
+                "SELECT category, COUNT(*) as item_count FROM products GROUP BY category;",
+                "SELECT category, COUNT(*) as item_count FROM products GROUP BY category HAVING COUNT(*) > 5;"
             ],
             explanation: "GROUP BY groups rows with the same values. Use aggregate functions with GROUP BY. HAVING filters groups (unlike WHERE which filters rows)."
         }
@@ -397,18 +320,10 @@ export const sqlKnowledgeBase: SQLIntent[] = [
         ],
         response: {
             sql: [
-                "-- Insert single row:",
-                "INSERT INTO table_name (column1, column2, column3)",
-                "VALUES ('value1', 'value2', 'value3');",
-                "",
-                "-- Insert multiple rows:",
-                "INSERT INTO table_name (column1, column2)",
-                "VALUES ",
-                "  ('value1a', 'value2a'),",
-                "  ('value1b', 'value2b'),",
-                "  ('value1c', 'value2c');"
+                "INSERT INTO table_name (column1, column2, column3) VALUES ('value1', 'value2', 'value3');",
+                "INSERT INTO table_name (column1, column2) VALUES ('value1a', 'value2a'), ('value1b', 'value2b'), ('value1c', 'value2c');"
             ],
-            explanation: "INSERT INTO adds new rows to a table. You can insert single or multiple rows. Column order must match value order."
+            explanation: "INSERT INTO adds new rows to a table. You can insert single or multiple rows at once. Column order must match value order."
         }
     },
     {
@@ -468,15 +383,8 @@ export const sqlKnowledgeBase: SQLIntent[] = [
         ],
         response: {
             sql: [
-                "-- During table creation:",
-                "CREATE TABLE users (",
-                "  user_id INT PRIMARY KEY AUTO_INCREMENT,",
-                "  username VARCHAR(50)",
-                ");",
-                "",
-                "-- Add to existing table:",
-                "ALTER TABLE table_name",
-                "ADD PRIMARY KEY (column_name);"
+                "CREATE TABLE users (user_id SERIAL PRIMARY KEY, username VARCHAR(50));",
+                "ALTER TABLE table_name ADD PRIMARY KEY (column_name);"
             ],
             explanation: "PRIMARY KEY uniquely identifies each row. It must be unique and NOT NULL. A table can have only one primary key, but it can consist of multiple columns (composite key)."
         }
@@ -492,17 +400,8 @@ export const sqlKnowledgeBase: SQLIntent[] = [
         ],
         response: {
             sql: [
-                "-- During table creation:",
-                "CREATE TABLE orders (",
-                "  order_id INT PRIMARY KEY,",
-                "  user_id INT,",
-                "  FOREIGN KEY (user_id) REFERENCES users(user_id)",
-                ");",
-                "",
-                "-- With ON DELETE/UPDATE actions:",
-                "FOREIGN KEY (user_id) REFERENCES users(user_id)",
-                "  ON DELETE CASCADE",
-                "  ON UPDATE CASCADE"
+                "CREATE TABLE orders (order_id INT PRIMARY KEY, user_id INT, FOREIGN KEY (user_id) REFERENCES users(user_id));",
+                "ALTER TABLE orders ADD FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE;"
             ],
             explanation: "FOREIGN KEY links two tables together. It references a PRIMARY KEY in another table. CASCADE options automatically propagate changes to related records."
         }
@@ -517,16 +416,8 @@ export const sqlKnowledgeBase: SQLIntent[] = [
         ],
         response: {
             sql: [
-                "-- During table creation:",
-                "email VARCHAR(100) UNIQUE,",
-                "",
-                "-- Add to existing table:",
-                "ALTER TABLE table_name",
-                "ADD UNIQUE (column_name);",
-                "",
-                "-- Composite unique:",
-                "ALTER TABLE table_name",
-                "ADD UNIQUE (column1, column2);"
+                "ALTER TABLE table_name ADD UNIQUE (column_name);",
+                "ALTER TABLE table_name ADD UNIQUE (column1, column2);"
             ],
             explanation: "UNIQUE constraint ensures all values in a column are different. Unlike PRIMARY KEY, you can have multiple UNIQUE constraints and they allow NULL values."
         }
@@ -546,7 +437,7 @@ export const sqlKnowledgeBase: SQLIntent[] = [
                 "",
                 "-- Add to existing column:",
                 "ALTER TABLE table_name",
-                "MODIFY column_name VARCHAR(50) NOT NULL;"
+                "ALTER COLUMN column_name SET NOT NULL;"
             ],
             explanation: "NOT NULL constraint ensures a column cannot have NULL values. Use it for mandatory fields like usernames, emails, or IDs."
         }
@@ -561,14 +452,8 @@ export const sqlKnowledgeBase: SQLIntent[] = [
         ],
         response: {
             sql: [
-                "-- During table creation:",
-                "CREATE TABLE products (",
-                "  price DECIMAL(10,2) CHECK (price > 0),",
-                "  quantity INT CHECK (quantity >= 0)",
-                ");",
-                "",
-                "-- Named constraint:",
-                "CONSTRAINT chk_age CHECK (age >= 18 AND age <= 120)"
+                "CREATE TABLE products (product_id SERIAL PRIMARY KEY, price DECIMAL(10,2) CHECK (price > 0), quantity INT CHECK (quantity >= 0));",
+                "ALTER TABLE table_name ADD CONSTRAINT chk_age CHECK (age >= 18 AND age <= 120);"
             ],
             explanation: "CHECK constraint limits the values that can be placed in a column. It's useful for enforcing business rules at the database level."
         }
@@ -584,16 +469,16 @@ export const sqlKnowledgeBase: SQLIntent[] = [
         ],
         response: {
             sql: [
-                "-- MySQL:",
-                "id INT PRIMARY KEY AUTO_INCREMENT",
+                "-- PostgreSQL uses SERIAL for auto-increment:",
+                "id SERIAL PRIMARY KEY",
                 "",
-                "-- Set starting value:",
-                "ALTER TABLE table_name AUTO_INCREMENT = 1000;",
+                "-- Create sequence (advanced):",
+                "CREATE SEQUENCE table_name_id_seq START 1000;",
                 "",
-                "-- PostgreSQL uses SERIAL:",
-                "id SERIAL PRIMARY KEY"
+                "-- Use sequence for existing column:",
+                "ALTER TABLE table_name ALTER COLUMN id SET DEFAULT nextval('table_name_id_seq');"
             ],
-            explanation: "AUTO_INCREMENT automatically generates unique numbers for new rows. It's commonly used for primary keys. Each new row gets the last value + 1."
+            explanation: "SERIAL automatically generates unique numbers for new rows. It's the PostgreSQL equivalent of MySQL's AUTO_INCREMENT. Each new row gets the next sequence value."
         }
     },
 
@@ -611,21 +496,21 @@ export const sqlKnowledgeBase: SQLIntent[] = [
             sql: [
                 "-- Add column:",
                 "ALTER TABLE table_name",
-                "ADD column_name datatype;",
+                "ADD COLUMN column_name datatype;",
                 "",
                 "-- Drop column:",
                 "ALTER TABLE table_name",
                 "DROP COLUMN column_name;",
                 "",
-                "-- Modify column:",
+                "-- Modify column type:",
                 "ALTER TABLE table_name",
-                "MODIFY column_name new_datatype;",
+                "ALTER COLUMN column_name TYPE new_datatype;",
                 "",
                 "-- Rename column:",
                 "ALTER TABLE table_name",
                 "RENAME COLUMN old_name TO new_name;"
             ],
-            explanation: "ALTER TABLE changes table structure. You can add, remove, or modify columns. Be careful with DROP COLUMN on production databases."
+            explanation: "ALTER TABLE changes table structure. Use ALTER COLUMN for modifications. You can add, remove, or modify columns. Be careful with DROP COLUMN on production databases."
         }
     },
     {
@@ -660,9 +545,9 @@ export const sqlKnowledgeBase: SQLIntent[] = [
         ],
         response: {
             sql: [
-                "TRUNCATE TABLE table_name;"
+                "TRUNCATE TABLE table_name CASCADE;"
             ],
-            explanation: "TRUNCATE removes all rows from a table quickly. It's faster than DELETE because it doesn't log individual row deletions. It also resets AUTO_INCREMENT."
+            explanation: "TRUNCATE removes all rows from a table quickly. It's faster than DELETE because it doesn't log individual row deletions. Use CASCADE to truncate tables with foreign keys."
         }
     },
 
@@ -785,13 +670,13 @@ export const sqlKnowledgeBase: SQLIntent[] = [
                 "-- Ends with:",
                 "SELECT * FROM users WHERE email LIKE '%@gmail.com';",
                 "",
-                "-- Contains:",
-                "SELECT * FROM products WHERE description LIKE '%sale%';",
+                "-- Contains (case-insensitive):",
+                "SELECT * FROM products WHERE description ILIKE '%sale%';",
                 "",
                 "-- Single character wildcard:",
                 "SELECT * FROM users WHERE name LIKE 'J_hn';"
             ],
-            explanation: "LIKE is used for pattern matching. % matches any sequence of characters. _ matches exactly one character. Use ILIKE for case-insensitive matching (PostgreSQL)."
+            explanation: "LIKE is used for pattern matching. % matches any sequence of characters. _ matches exactly one character. ILIKE is case-insensitive (PostgreSQL standard)."
         }
     },
 
@@ -816,10 +701,10 @@ export const sqlKnowledgeBase: SQLIntent[] = [
                 "-- Replace NULL with default:",
                 "SELECT COALESCE(phone, 'N/A') FROM users;",
                 "",
-                "-- IFNULL (MySQL):",
-                "SELECT IFNULL(phone, 'No phone') FROM users;"
+                "-- Multiple fallbacks:",
+                "SELECT COALESCE(phone, mobile, 'No phone') FROM users;"
             ],
-            explanation: "NULL represents missing or unknown data. Use IS NULL or IS NOT NULL to check (not = NULL). COALESCE returns the first non-NULL value."
+            explanation: "NULL represents missing or unknown data. Use IS NULL or IS NOT NULL to check (not = NULL). COALESCE returns the first non-NULL value in PostgreSQL."
         }
     },
 
@@ -890,14 +775,14 @@ export const sqlKnowledgeBase: SQLIntent[] = [
         ],
         response: {
             sql: [
-                "-- Numeric: INT, BIGINT, DECIMAL(10,2), FLOAT",
+                "-- Numeric: INT, BIGINT, DECIMAL(10,2), FLOAT, SERIAL",
                 "-- String: VARCHAR(255), CHAR(10), TEXT",
-                "-- Date/Time: DATE, DATETIME, TIMESTAMP, TIME",
-                "-- Boolean: BOOLEAN, TINYINT(1)",
-                "-- Binary: BLOB, BINARY",
-                "-- Special: JSON, ENUM('a','b','c')"
+                "-- Date/Time: DATE, TIMESTAMP, TIME",
+                "-- Boolean: BOOLEAN",
+                "-- Binary: BYTEA",
+                "-- Special: JSON, JSONB, UUID"
             ],
-            explanation: "Choose data types based on data nature and size. VARCHAR for variable text, DECIMAL for money, TIMESTAMP for auto-updating times, ENUM for predefined choices."
+            explanation: "Choose data types based on data nature and size. VARCHAR for variable text, DECIMAL for money, TIMESTAMP for dates, SERIAL for auto-incrementing IDs. Use JSONB for JSON data."
         }
     },
 
@@ -962,19 +847,19 @@ export const sqlKnowledgeBase: SQLIntent[] = [
         response: {
             sql: [
                 "-- Current date/time:",
-                "SELECT NOW(), CURDATE(), CURTIME();",
+                "SELECT NOW(), CURRENT_DATE, CURRENT_TIME;",
                 "",
                 "-- Extract parts:",
-                "SELECT YEAR(date_col), MONTH(date_col), DAY(date_col);",
+                "SELECT EXTRACT(YEAR FROM date_col), EXTRACT(MONTH FROM date_col), EXTRACT(DAY FROM date_col);",
                 "",
                 "-- Date arithmetic:",
-                "SELECT DATE_ADD(date_col, INTERVAL 7 DAY);",
-                "SELECT DATEDIFF(end_date, start_date);",
+                "SELECT date_col + INTERVAL '7 days';",
+                "SELECT end_date - start_date;",
                 "",
                 "-- Format date:",
-                "SELECT DATE_FORMAT(date_col, '%Y-%m-%d');"
+                "SELECT TO_CHAR(date_col, 'YYYY-MM-DD');"
             ],
-            explanation: "Date functions manipulate date/time values. NOW() returns current datetime, DATE_ADD/SUB for arithmetic, DATEDIFF for differences, DATE_FORMAT for custom display."
+            explanation: "Date functions manipulate date/time values. NOW() returns current datetime, EXTRACT() gets date parts, date arithmetic uses + INTERVAL, TO_CHAR() formats dates."
         }
     },
 
@@ -1072,48 +957,48 @@ export function findMatchingIntent(userInput: string): SQLIntent | null {
         
         // Build comprehensive SQL
         const sql = [
-            `CREATE DATABASE ${dbName};`,
-            `USE ${dbName};`,
+            `CREATE SCHEMA ${dbName};`,
+            `SET search_path TO ${dbName};`,
             ...tables.map(table => {
                 const tableLower = table.toLowerCase();
                 if (tableLower === 'cars') {
-                    return `CREATE TABLE Cars (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  name VARCHAR(100) NOT NULL,\n  manufacturer_id INT,\n  model_year INT,\n  price DECIMAL(10,2),\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);`;
+                    return `CREATE TABLE Cars (\n  id SERIAL PRIMARY KEY,\n  name VARCHAR(100) NOT NULL,\n  manufacturer_id INT,\n  model_year INT,\n  price DECIMAL(10,2),\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);`;
                 } else if (tableLower === 'manufacturers') {
-                    return `CREATE TABLE Manufacturers (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  name VARCHAR(100) NOT NULL,\n  country VARCHAR(50),\n  founded_year INT\n);`;
+                    return `CREATE TABLE Manufacturers (\n  id SERIAL PRIMARY KEY,\n  name VARCHAR(100) NOT NULL,\n  country VARCHAR(50),\n  founded_year INT\n);`;
                 } else if (tableLower === 'dealerships') {
-                    return `CREATE TABLE Dealerships (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  name VARCHAR(100) NOT NULL,\n  city VARCHAR(50),\n  phone VARCHAR(15)\n);`;
+                    return `CREATE TABLE Dealerships (\n  id SERIAL PRIMARY KEY,\n  name VARCHAR(100) NOT NULL,\n  city VARCHAR(50),\n  phone VARCHAR(15)\n);`;
                 } else if (tableLower === 'aircraft') {
-                    return `CREATE TABLE Aircraft (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  model VARCHAR(50) NOT NULL,\n  capacity INT,\n  manufacturer VARCHAR(50)\n);`;
+                    return `CREATE TABLE Aircraft (\n  id SERIAL PRIMARY KEY,\n  model VARCHAR(50) NOT NULL,\n  capacity INT,\n  manufacturer VARCHAR(50)\n);`;
                 } else if (tableLower === 'flights') {
-                    return `CREATE TABLE Flights (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  flight_number VARCHAR(10) NOT NULL UNIQUE,\n  aircraft_id INT,\n  departure_city VARCHAR(50),\n  arrival_city VARCHAR(50),\n  departure_time DATETIME\n);`;
+                    return `CREATE TABLE Flights (\n  id SERIAL PRIMARY KEY,\n  flight_number VARCHAR(10) NOT NULL UNIQUE,\n  aircraft_id INT,\n  departure_city VARCHAR(50),\n  arrival_city VARCHAR(50),\n  departure_time TIMESTAMP\n);`;
                 } else if (tableLower === 'passengers') {
-                    return `CREATE TABLE Passengers (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  first_name VARCHAR(50) NOT NULL,\n  last_name VARCHAR(50) NOT NULL,\n  flight_id INT,\n  seat_number VARCHAR(5)\n);`;
+                    return `CREATE TABLE Passengers (\n  id SERIAL PRIMARY KEY,\n  first_name VARCHAR(50) NOT NULL,\n  last_name VARCHAR(50) NOT NULL,\n  flight_id INT,\n  seat_number VARCHAR(5)\n);`;
                 } else if (tableLower === 'departments') {
-                    return `CREATE TABLE Departments (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  name VARCHAR(100) NOT NULL,\n  manager VARCHAR(100),\n  budget DECIMAL(12,2)\n);`;
+                    return `CREATE TABLE Departments (\n  id SERIAL PRIMARY KEY,\n  name VARCHAR(100) NOT NULL,\n  manager VARCHAR(100),\n  budget DECIMAL(12,2)\n);`;
                 } else if (tableLower === 'employees') {
-                    return `CREATE TABLE Employees (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  name VARCHAR(100) NOT NULL,\n  department_id INT,\n  salary DECIMAL(10,2),\n  hire_date DATE\n);`;
+                    return `CREATE TABLE Employees (\n  id SERIAL PRIMARY KEY,\n  name VARCHAR(100) NOT NULL,\n  department_id INT,\n  salary DECIMAL(10,2),\n  hire_date DATE\n);`;
                 } else if (tableLower === 'projects') {
-                    return `CREATE TABLE Projects (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  name VARCHAR(100) NOT NULL,\n  department_id INT,\n  start_date DATE,\n  budget DECIMAL(10,2)\n);`;
+                    return `CREATE TABLE Projects (\n  id SERIAL PRIMARY KEY,\n  name VARCHAR(100) NOT NULL,\n  department_id INT,\n  start_date DATE,\n  budget DECIMAL(10,2)\n);`;
                 } else if (tableLower === 'products') {
-                    return `CREATE TABLE Products (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  name VARCHAR(100) NOT NULL,\n  category_id INT,\n  price DECIMAL(10,2),\n  stock INT\n);`;
+                    return `CREATE TABLE Products (\n  id SERIAL PRIMARY KEY,\n  name VARCHAR(100) NOT NULL,\n  category_id INT,\n  price DECIMAL(10,2),\n  stock INT\n);`;
                 } else if (tableLower === 'categories') {
-                    return `CREATE TABLE Categories (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  name VARCHAR(50) NOT NULL,\n  description TEXT\n);`;
+                    return `CREATE TABLE Categories (\n  id SERIAL PRIMARY KEY,\n  name VARCHAR(50) NOT NULL,\n  description TEXT\n);`;
                 } else if (tableLower === 'orders') {
-                    return `CREATE TABLE Orders (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  product_id INT,\n  quantity INT,\n  order_date DATETIME,\n  total_price DECIMAL(10,2)\n);`;
+                    return `CREATE TABLE Orders (\n  id SERIAL PRIMARY KEY,\n  product_id INT,\n  quantity INT,\n  order_date TIMESTAMP,\n  total_price DECIMAL(10,2)\n);`;
                 } else if (tableLower === 'students') {
-                    return `CREATE TABLE Students (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  first_name VARCHAR(50) NOT NULL,\n  last_name VARCHAR(50) NOT NULL,\n  email VARCHAR(100),\n  enrollment_date DATE\n);`;
+                    return `CREATE TABLE Students (\n  id SERIAL PRIMARY KEY,\n  first_name VARCHAR(50) NOT NULL,\n  last_name VARCHAR(50) NOT NULL,\n  email VARCHAR(100),\n  enrollment_date DATE\n);`;
                 } else if (tableLower === 'courses') {
-                    return `CREATE TABLE Courses (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  course_code VARCHAR(10) UNIQUE,\n  title VARCHAR(100),\n  instructor VARCHAR(100),\n  credits INT\n);`;
+                    return `CREATE TABLE Courses (\n  id SERIAL PRIMARY KEY,\n  course_code VARCHAR(10) UNIQUE,\n  title VARCHAR(100),\n  instructor VARCHAR(100),\n  credits INT\n);`;
                 } else if (tableLower === 'enrollments') {
-                    return `CREATE TABLE Enrollments (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  student_id INT,\n  course_id INT,\n  grade VARCHAR(2),\n  semester VARCHAR(20)\n);`;
+                    return `CREATE TABLE Enrollments (\n  id SERIAL PRIMARY KEY,\n  student_id INT,\n  course_id INT,\n  grade VARCHAR(2),\n  semester VARCHAR(20)\n);`;
                 } else if (tableLower === 'items') {
-                    return `CREATE TABLE Items (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  name VARCHAR(100) NOT NULL,\n  description TEXT,\n  value DECIMAL(10,2)\n);`;
+                    return `CREATE TABLE Items (\n  id SERIAL PRIMARY KEY,\n  name VARCHAR(100) NOT NULL,\n  description TEXT,\n  value DECIMAL(10,2)\n);`;
                 } else if (tableLower === 'users') {
-                    return `CREATE TABLE Users (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  username VARCHAR(50) NOT NULL UNIQUE,\n  email VARCHAR(100),\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);`;
+                    return `CREATE TABLE Users (\n  id SERIAL PRIMARY KEY,\n  username VARCHAR(50) NOT NULL UNIQUE,\n  email VARCHAR(100),\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);`;
                 } else if (tableLower === 'transactions') {
-                    return `CREATE TABLE Transactions (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  user_id INT,\n  item_id INT,\n  quantity INT,\n  transaction_date DATETIME\n);`;
+                    return `CREATE TABLE Transactions (\n  id SERIAL PRIMARY KEY,\n  user_id INT,\n  item_id INT,\n  quantity INT,\n  transaction_date TIMESTAMP\n);`;
                 } else {
-                    return `CREATE TABLE ${table} (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  name VARCHAR(100),\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);`;
+                    return `CREATE TABLE ${table} (\n  id SERIAL PRIMARY KEY,\n  name VARCHAR(100),\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);`;
                 }
             }),
             ...inserts
@@ -1139,10 +1024,10 @@ export function findMatchingIntent(userInput: string): SQLIntent | null {
             patterns: ["create database"],
             response: {
                 sql: [
-                    `CREATE DATABASE ${dbName};`,
-                    `USE ${dbName};`
+                    `CREATE SCHEMA ${dbName};`,
+                    `SET search_path TO ${dbName};`
                 ],
-                explanation: `Created database '${dbName}'. You can now create tables in this database. Try saying "create a table for..." to add tables.`
+                explanation: `Created schema '${dbName}'. You can now create tables in this schema. Try saying "create a table for..." to add tables.`
             }
         };
     }
@@ -1161,11 +1046,10 @@ export function findMatchingIntent(userInput: string): SQLIntent | null {
             response: {
                 sql: [
                     `CREATE TABLE ${tableName} (`,
-                    `  id INT PRIMARY KEY AUTO_INCREMENT,`,
+                    `  id SERIAL PRIMARY KEY,`,
                     `  name VARCHAR(100) NOT NULL,`,
                     `  description TEXT,`,
-                    `  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,`,
-                    `  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`,
+                    `  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`,
                     `);`
                 ],
                 explanation: `Created table '${tableName}' with basic columns (id, name, description, timestamps). You can modify this table or ask for specific columns.`

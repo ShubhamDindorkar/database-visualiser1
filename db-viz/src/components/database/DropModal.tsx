@@ -12,6 +12,7 @@ interface DropModalProps {
   databases: DatabaseType[];
   tables: TableType[];
   selectedDatabaseId: string | null;
+  userId?: string;
   onDropDatabase: (databaseId: string) => Promise<void>;
   onDropTable: (database: string, tableName: string) => Promise<void>;
   theme?: any;
@@ -25,6 +26,7 @@ export default function DropModal({
   databases,
   tables,
   selectedDatabaseId,
+  userId,
   onDropDatabase,
   onDropTable,
   theme,
@@ -92,6 +94,21 @@ export default function DropModal({
       setError(null);
 
       try {
+        console.log('[DropModal] About to call onDropTable with:', {
+          selectedDatabase,
+          selectedTable,
+          userId,
+        });
+        console.log('[DropModal] Available tables:', tables.map(t => ({
+          name: t.name,
+          databaseId: t.databaseId,
+          id: t.id,
+        })));
+        console.log('[DropModal] Available databases:', databases.map(d => ({
+          name: d.name,
+          id: d.id,
+        })));
+        
         await onDropTable(selectedDatabase, selectedTable);
         handleClose();
       } catch (err) {

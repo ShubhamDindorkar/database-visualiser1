@@ -12,6 +12,7 @@ interface UpdateDataModalProps {
   databases: DatabaseType[];
   tables: TableType[];
   selectedDatabaseId: string | null;
+  userId?: string;
   onExecuteQuery: (database: string, query: string) => Promise<{ success: boolean; error?: string }>;
   theme?: any;
 }
@@ -25,6 +26,7 @@ export default function UpdateDataModal({
   databases,
   tables,
   selectedDatabaseId,
+  userId,
   onExecuteQuery,
   theme,
 }: UpdateDataModalProps) {
@@ -124,10 +126,14 @@ export default function UpdateDataModal({
     }
 
     try {
-      const db = databases.find((d) => d.name === selectedDatabase);
-      const mysqlDatabaseName = db?.mysqlName || selectedDatabase;
-      
-      const result = await onExecuteQuery(mysqlDatabaseName, query);
+      // Compute prefixed database name if userId is provided
+      let databaseToUse = selectedDatabase;
+      if (userId) {
+        const prefix = `user_${userId.substring(0, 8)}_`;
+        databaseToUse = `${prefix}${selectedDatabase}`;
+      }
+
+      const result = await onExecuteQuery(databaseToUse, query);
       if (result.success) {
         setSuccess('Update executed successfully');
         setTimeout(() => {

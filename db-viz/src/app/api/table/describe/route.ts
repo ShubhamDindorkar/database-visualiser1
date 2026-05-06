@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { executeQueryInDatabase, isDatabaseOwnedByUser } from '@/lib/postgresql';
+import { executeQueryInDatabase, getPrefixedDatabaseName } from '@/lib/postgresql';
 import { setNoCacheHeaders } from '@/lib/cache-headers';
 
 interface DescribeTableRequest {
@@ -30,7 +30,7 @@ interface DescribeTableRequest {
 export async function POST(request: NextRequest) {
   try {
     const body: DescribeTableRequest = await request.json();
-    const { database, table, userId } = body;
+    let { database, table, userId } = body;
 
     // Validate request
     if (!database || typeof database !== 'string') {
@@ -49,16 +49,14 @@ export async function POST(request: NextRequest) {
       return setNoCacheHeaders(response);
     }
 
-    // Validate schema ownership if userId is provided
-    if (userId && !isDatabaseOwnedByUser(database, userId)) {
-      const response = NextResponse.json({
-        success: false,
-        error: 'Access denied. You can only access your own schemas.',
-      }, { status: 403 });
-      return setNoCacheHeaders(response);
+    // Auto-prefix database name if userId is provided
+    if (userId) {
+      database = getPrefixedDatabaseName(database, userId);
     }
 
-    // Query PostgreSQL information_schema to get table structure
+    console.log(`[Table Describe] Database: "${database}", Table: "${table}"`);
+
+    // Query PostgreSQL information_schema to get table structure from the specified schema
     const result = await executeQueryInDatabase(database, `
       SELECT 
         c.column_name as "Field",
@@ -94,6 +92,7 @@ export async function POST(request: NextRequest) {
       });
       return setNoCacheHeaders(response);
     } else {
+      console.error(`[Table Describe] Error: ${result.error} (Schema: ${database}, Table: ${table})`);
       const response = NextResponse.json({
         success: false,
         error: result.error,

@@ -12,6 +12,7 @@ interface InsertDataModalProps {
   databases: DatabaseType[];
   tables: TableType[];
   selectedDatabaseId: string | null;
+  userId?: string;
   onInsert: (database: string, table: string, values: Record<string, string>) => Promise<void>;
   theme?: any;
 }
@@ -35,13 +36,14 @@ export default function InsertDataModal({
   databases,
   tables,
   selectedDatabaseId,
+  userId,
   onInsert,
   theme,
 }: InsertDataModalProps) {
   const [selectedDatabase, setSelectedDatabase] = useState<string>('');
   const [selectedTable, setSelectedTable] = useState<string>('');
   const [columns, setColumns] = useState<ColumnInfo[]>([]);
-  const [rows, setRows] = useState<RowValues[]>([{}]);
+  const [rows, setRows] = useState<Array<{ id: string; values: RowValues }>>([{ id: '0', values: {} }]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingColumns, setIsFetchingColumns] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,7 +70,7 @@ export default function InsertDataModal({
       fetchColumns();
     } else {
       setColumns([]);
-      setRows([{}]);
+      setRows([{ id: '0', values: {} }]);
     }
   }, [selectedDatabase, selectedTable]);
 
@@ -76,37 +78,44 @@ export default function InsertDataModal({
     setIsFetchingColumns(true);
     setError(null);
     try {
-      const db = databases.find((d) => d.name === selectedDatabase);
-      const mysqlDatabaseName = db?.mysqlName || selectedDatabase;
-      
+      // Compute prefixed database name if userId is provided
+      let databaseToUse = selectedDatabase;
+      if (userId) {
+        const prefix = `user_${userId.substring(0, 8)}_`;
+        databaseToUse = `${prefix}${selectedDatabase}`;
+      }
+
       const response = await fetch('/api/table/describe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          database: mysqlDatabaseName,
+          database: databaseToUse,
           table: selectedTable,
-          userId: '', // Not used for this endpoint
+          userId: userId,
         }),
       });
       const result = await response.json();
       
       if (result.success && Array.isArray(result.columns)) {
-        // result.columns contains the table structure
-        const columnInfo = result.columns.map((col: any) => ({
-          Field: col.name,
-          Type: col.dataType,
-          Null: col.isNotNull ? 'NO' : 'YES',
-          Key: col.isPrimaryKey ? 'PRI' : '',
-          Default: col.defaultValue || null,
-          Extra: col.isAutoIncrement ? 'auto_increment' : '',
-        }));
+        // result.columns contains the table structure from PostgreSQL information_schema
+        // Already has the right format: Field, Type, Null, Key, Default, Extra
+        const columnInfo = result.columns
+          .filter((col: any) => col.Field) // Only keep columns with valid Field names
+          .map((col: any) => ({
+            Field: col.Field || '',
+            Type: col.Type || 'VARCHAR',
+            Null: col.Null || 'YES',
+            Key: col.Key || '',
+            Default: col.Default || null,
+            Extra: col.Extra || '',
+          }));
         setColumns(columnInfo);
-        // Initialize first row with empty strings
+        // Initialize first row with empty strings and unique ID
         const initialValues: Record<string, string> = {};
         columnInfo.forEach((col: ColumnInfo) => {
           initialValues[col.Field] = '';
         });
-        setRows([initialValues]);
+        setRows([{ id: `${Date.now()}-0`, values: initialValues }]);
       } else {
         setError(result.error || 'Failed to fetch columns');
       }
@@ -124,16 +133,21 @@ export default function InsertDataModal({
     setIsLoading(true);
     setError(null);
     try {
-      const db = databases.find((d) => d.name === selectedDatabase);
-      const mysqlDatabaseName = db?.mysqlName || selectedDatabase;
-      
+      // Compute prefixed database name if userId is provided
+      let databaseToUse = selectedDatabase;
+      if (userId) {
+        const prefix = `user_${userId.substring(0, 8)}_`;
+        databaseToUse = `${prefix}${selectedDatabase}`;
+      }
+
       // Get primary key columns
       const primaryKeyColumns = columns
         .filter(col => col.Key === 'PRI')
         .map(col => col.Field);
       
       // Insert all rows
-      for (const rowValues of rows) {
+      for (const row of rows) {
+        const rowValues = row.values;
         // Filter out empty primary key values (let them auto-increment)
         const filteredValues = { ...rowValues };
         primaryKeyColumns.forEach(pkCol => {
@@ -142,7 +156,7 @@ export default function InsertDataModal({
           }
         });
         
-        await onInsert(mysqlDatabaseName, selectedTable, filteredValues);
+        await onInsert(databaseToUse, selectedTable, filteredValues);
       }
       handleClose();
     } catch (err) {
@@ -157,18 +171,18 @@ export default function InsertDataModal({
     columns.forEach((col) => {
       initialValues[col.Field] = '';
     });
-    setRows([...rows, initialValues]);
+    setRows([...rows, { id: `${Date.now()}-${rows.length}`, values: initialValues }]);
   };
 
-  const removeRow = (index: number) => {
+  const removeRow = (rowIndex: number) => {
     if (rows.length > 1) {
-      setRows(rows.filter((_, i) => i !== index));
+      setRows(rows.filter((_, i) => i !== rowIndex));
     }
   };
 
   const updateRowValue = (rowIndex: number, field: string, value: string) => {
     const updatedRows = [...rows];
-    updatedRows[rowIndex] = { ...updatedRows[rowIndex], [field]: value };
+    updatedRows[rowIndex] = { ...updatedRows[rowIndex], values: { ...updatedRows[rowIndex].values, [field]: value } };
     setRows(updatedRows);
   };
 
@@ -176,7 +190,7 @@ export default function InsertDataModal({
     setSelectedDatabase('');
     setSelectedTable('');
     setColumns([]);
-    setRows([{}]);
+    setRows([{ id: '0', values: {} }]);
     setError(null);
     onClose();
   };
@@ -290,8 +304,8 @@ export default function InsertDataModal({
                       </h3>
                     </div>
                     
-                    {rows.map((rowValues, rowIndex) => (
-                      <div key={rowIndex} className="bg-gray-50 rounded-xl p-4 space-y-3 relative border border-gray-200">
+                    {rows.map((row, rowIndex) => (
+                      <div key={row.id} className="bg-gray-50 rounded-xl p-4 space-y-3 relative border border-gray-200">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-xs font-medium text-gray-500 bg-gray-200 px-2 py-1 rounded-md">Row {rowIndex + 1}</span>
                           {rows.length > 1 && (
@@ -307,8 +321,8 @@ export default function InsertDataModal({
                             </motion.button>
                           )}
                         </div>
-                        {columns.map((col) => (
-                          <div key={col.Field}>
+                        {columns.map((col, colIndex) => (
+                          <div key={`${row.id}-${colIndex}-${col.Field}`}>
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">
                               {col.Field}
                               <span className="text-gray-400 font-normal ml-2">
@@ -325,7 +339,7 @@ export default function InsertDataModal({
                             </label>
                             <input
                               type="text"
-                              value={rowValues[col.Field] || ''}
+                              value={row.values[col.Field] || ''}
                               onChange={(e) => updateRowValue(rowIndex, col.Field, e.target.value)}
                               placeholder={getPlaceholder(col)}
                               disabled={col.Extra === 'auto_increment'}

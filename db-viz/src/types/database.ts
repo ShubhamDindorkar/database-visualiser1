@@ -1,10 +1,9 @@
-// Database Types
+// Database Types (PostgreSQL)
 export interface Database {
   id: string;
-  name: string;
+  name: string; // User-friendly name, auto-prefixed in PostgreSQL
   userId: string;
   db_password_hash: string;
-  mysqlName?: string; // Actual prefixed name in MySQL
   createdAt: Date;
   updatedAt: Date;
 }
