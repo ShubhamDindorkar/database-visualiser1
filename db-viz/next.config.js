@@ -1,7 +1,5 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  // Image optimization and caching
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   images: {
     remotePatterns: [
       {
@@ -15,18 +13,11 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
-    // Optimize images for faster loading
     formats: ['image/avif', 'image/webp'],
-    // Cache optimized images
-    minimumCacheTTL: 31536000, // 1 year
+    minimumCacheTTL: 31536000,
   },
-
-  // Production source maps disabled for faster builds
   productionBrowserSourceMaps: false,
-
-  // Optimize for Vercel Edge (faster deployments)
   experimental: {
-    // Enable optimized package imports
     optimizePackageImports: [
       '@radix-ui/react-dialog',
       '@radix-ui/react-popover',
@@ -36,4 +27,5 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
+
