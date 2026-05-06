@@ -6,8 +6,6 @@ import ReactFlow, {
   Node,
   Edge,
   Controls,
-  Background,
-  BackgroundVariant,
   useNodesState,
   useEdgesState,
   Connection,
@@ -105,7 +103,6 @@ const THEMES = {
     buttonSecondary: 'bg-gray-100 hover:bg-gray-200 text-gray-900',
     modal: 'bg-white',
     input: 'bg-white border-gray-300 text-gray-900',
-    dots: '#000000',
   },
   dark: {
     bg: 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900',
@@ -117,7 +114,6 @@ const THEMES = {
     buttonSecondary: 'bg-slate-700 hover:bg-slate-600 text-white',
     modal: 'bg-slate-800',
     input: 'bg-slate-900 border-slate-600 text-white',
-    dots: '#ffffff',
   },
 };
 
@@ -2592,12 +2588,7 @@ export default function DashboardPage() {
                   proOptions={{ hideAttribution: true }}
                   className={THEMES[currentTheme as keyof typeof THEMES]?.bg || THEMES.light.bg}
                 >
-                  <Background
-                    variant={BackgroundVariant.Dots}
-                    gap={20}
-                    size={1}
-                    color={THEMES[currentTheme as keyof typeof THEMES]?.dots || THEMES.light.dots}
-                  />
+
                   <Controls
                     className="bg-white border border-gray-200 rounded-lg"
                   />

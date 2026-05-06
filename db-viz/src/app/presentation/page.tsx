@@ -6,8 +6,6 @@ import ReactFlow, {
   Node,
   Edge,
   Controls,
-  Background,
-  BackgroundVariant,
   useNodesState,
   useEdgesState,
   NodeChange,
@@ -62,11 +60,11 @@ function PresentationContent() {
 
   // Theme definitions
   const THEMES = {
-    light: { bg: 'bg-gradient-to-br from-gray-50 via-white to-gray-100', dots: '#000000' },
-    dark: { bg: 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900', dots: '#ffffff' },
-    blue: { bg: 'bg-gradient-to-br from-blue-50 via-blue-100 to-cyan-50', dots: '#000000' },
-    purple: { bg: 'bg-gradient-to-br from-purple-50 via-purple-100 to-pink-50', dots: '#000000' },
-    green: { bg: 'bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100', dots: '#000000' },
+    light: { bg: 'bg-gradient-to-br from-gray-50 via-white to-gray-100' },
+    dark: { bg: 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' },
+    blue: { bg: 'bg-gradient-to-br from-blue-50 via-blue-100 to-cyan-50' },
+    purple: { bg: 'bg-gradient-to-br from-purple-50 via-purple-100 to-pink-50' },
+    green: { bg: 'bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100' },
   };
 
   // Data State
@@ -453,12 +451,7 @@ function PresentationContent() {
             className="bg-white border-gray-200 rounded-lg shadow-md"
             showInteractive={false}
           />
-          <Background
-            variant={BackgroundVariant.Dots}
-            gap={20}
-            size={1}
-            color={THEMES[themeParam as keyof typeof THEMES]?.dots || THEMES.light.dots}
-          />
+
         </ReactFlow>
 
         {/* Query Results Panel */}

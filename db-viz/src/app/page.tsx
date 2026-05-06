@@ -2,14 +2,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useInView, animate } from 'framer-motion';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Database, Table, GitBranch, Terminal, ArrowRight, X, Presentation, FileOutput, ChevronDown } from 'lucide-react';
 import Button from '@/components/common/Button';
-import { LayoutTextFlip } from '@/components/ui/layout-text-flip';
 import { Navbar as LandingNavbar, NavBody, NavItems, NavbarButton } from '@/components/ui/landing-navbar';
-import DotGrid from '@/components/DotGrid';
-import { MacbookScroll } from '@/components/ui/macbook-scroll';
 import SmoothScroll from '@/components/SmoothScroll';
+import screenshotImg from '../../public/screenshot.png';
 
 function CountUp({ value, suffix = '', duration = 1.5, decimals = 0 }: { value: number; suffix?: string; duration?: number; decimals?: number }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -415,85 +414,89 @@ export default function LandingPage() {
         </NavBody>
       </LandingNavbar>
 
-      {/* Hero Section */}
-      <section className="pt-24 sm:pt-28 pb-12 sm:pb-16 px-4 relative overflow-hidden">
-        {/* DotGrid background */}
-        <div className="absolute inset-0 z-0">
-          <DotGrid
-            dotSize={3}
-            gap={15}
-            baseColor="#FFFFFF"
-            activeColor="#000000"
-            proximity={120}
-            shockRadius={250}
-            shockStrength={5}
-            resistance={750}
-            returnDuration={1.5}
-            style={{ width: '100%', height: '100%' }}
-          />
-        </div>
-        
-        <div className="max-w-6xl mx-auto relative z-10">
-          <div className="text-center">
-            <motion.h1
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="mb-6 text-center"
-            >
-              <div className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light text-black mb-2" style={{ fontFamily: 'var(--font-geist-sans)' }}>
-                Build Your
+      {/* Hero + Numbers */}
+      <section className="relative overflow-hidden bg-white bg-[url('/background.png')] bg-cover bg-center bg-no-repeat">
+
+        {/* Hero Section */}
+        <div className="pt-44 sm:pt-52 pb-12 sm:pb-14 px-4 relative z-10">
+          <div className="max-w-6xl mx-auto w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
+              <div className="lg:col-span-6">
+                <motion.h1
+                  initial={{ y: 18, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.45, delay: 0.08 }}
+                  className="text-left"
+                >
+                  <div className="font-sans font-normal text-black tracking-tight leading-[1.02] text-3xl sm:text-4xl md:text-5xl">
+                    <div>Modern Database Design</div>
+                    <div>for Modern Teams </div>
+                    
+                  </div>
+                </motion.h1>
+
+                <motion.div
+                  initial={{ y: 14, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.45, delay: 0.16 }}
+                  className="mt-6 flex items-center gap-3"
+                >
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    onClick={() => router.push('/login')}
+                    rightIcon={<ArrowRight className="w-4 h-4" />}
+                    className="rounded-full !bg-black !text-white hover:!bg-black/90 focus:!ring-black px-6 sm:px-7"
+                  >
+                    Start Building
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    onClick={() => router.push('/presentation')}
+                    className="rounded-full !bg-white/80 !text-black hover:!bg-white border border-black/10 px-6 sm:px-7"
+                  >
+                    Signup
+                  </Button>
+                </motion.div>
               </div>
-              <div className="flex flex-wrap items-center justify-center gap-3">
-                <LayoutTextFlip
-                  text="Database"
-                  words={["Visually", "Structured", "Optimised"]}
-                  duration={2500}
+
+              <motion.div
+                initial={{ y: 18, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.45, delay: 0.14 }}
+                className="lg:col-span-6 lg:pt-3"
+              >
+                <p className="text-left font-sans font-normal text-gray-700 tracking-tight leading-[1.35] text-base sm:text-lg">
+                  Design, visualize, and manage MySQL schemas with a clean drag-and-drop canvas.
+                  Export SQL instantly and present your database structure with confidence.
+                </p>
+              </motion.div>
+            </div>
+
+            {/* Product preview */}
+            <motion.div
+              initial={{ y: 22, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.55, delay: 0.22 }}
+              className="mt-10 sm:mt-12"
+            >
+              <div className="rounded-[28px] overflow-hidden shadow-[0_30px_90px_-60px_rgba(0,0,0,0.45)]">
+                <Image
+                  src={screenshotImg}
+                  alt="DB Visualiser canvas preview"
+                  priority
+                  className="w-full h-auto"
                 />
               </div>
-            </motion.h1>
-
-            <motion.p
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-base sm:text-lg text-gray-500 max-w-2xl mx-auto mb-6 sm:mb-8 px-1"
-            >
-              Design, visualize, and manage your MySQL databases with an intuitive 
-              drag-and-drop interface. No SQL expertise required.
-            </motion.p>
-
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex items-center justify-center"
-            >
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={() => router.push('/login')}
-                rightIcon={<ArrowRight className="w-4 h-4" />}
-              >
-                Start Building
-              </Button>
             </motion.div>
           </div>
-
-          {/* MacBook Scroll: SS starts in screen → scroll → stops with SS in middle */}
-          <div className="mt-4 sm:mt-6 w-full overflow-hidden max-w-full">
-            <MacbookScroll 
-              src="/Mac.png" 
-              showGradient={false} 
-            />
-          </div>
         </div>
-      </section>
 
-      {/* Numbers - appear after MacBook stops */}
-      <section className="pt-6 sm:pt-8 pb-14 sm:pb-20 px-4 bg-white -mt-4 sm:-mt-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 text-center">
+        {/* Numbers */}
+        <div className="relative z-10 px-4 pb-14 sm:pb-20 -mt-4 sm:-mt-6">
+          <div className="max-w-4xl mx-auto rounded-2xl bg-white/55 backdrop-blur-md border border-white/40 shadow-[0_20px_60px_-35px_rgba(0,0,0,0.45)] py-6 sm:py-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 text-center">
             {[
               { value: 10, suffix: 'K+', label: 'Schemas designed' },
               { unlimited: true, label: 'Tables & relations' },
@@ -522,6 +525,7 @@ export default function LandingPage() {
                 </motion.p>
               </motion.div>
             ))}
+            </div>
           </div>
         </div>
       </section>

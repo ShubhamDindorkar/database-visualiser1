@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import {
   motion,
@@ -36,11 +36,7 @@ interface NavItemsProps {
 }
 
 export const Navbar = ({ children, className, navItems, onSignIn, logo }: NavbarProps) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollY } = useScroll({
-    target: ref,
-    offset: ['start start', 'end start'],
-  });
+  const { scrollY } = useScroll();
   const [visible, setVisible] = useState<boolean>(false);
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
 
@@ -55,7 +51,6 @@ export const Navbar = ({ children, className, navItems, onSignIn, logo }: Navbar
   return (
     <>
       <motion.div
-        ref={ref}
         className={cn('fixed inset-x-0 top-4 z-40 w-full flex justify-center px-4 sm:px-6', className)}
       >
         {/* Desktop: full nav bar */}
@@ -70,7 +65,16 @@ export const Navbar = ({ children, className, navItems, onSignIn, logo }: Navbar
 
         {/* Mobile: logo + hamburger */}
         {navItems != null && (
-          <div className="flex w-full max-w-5xl items-center justify-between rounded-full bg-white/90 backdrop-blur-md px-4 py-3 shadow-lg lg:hidden">
+          <motion.div
+            animate={{
+              backgroundColor: visible ? 'rgba(255, 255, 255, 0.90)' : 'rgba(255, 255, 255, 0)',
+              backdropFilter: visible ? 'blur(10px)' : 'none',
+              boxShadow: visible ? '0 8px 20px rgba(15, 23, 42, 0.12)' : '0 0 0 rgba(0,0,0,0)',
+              borderColor: visible ? 'rgba(0,0,0,0.06)' : 'rgba(0,0,0,0)',
+            }}
+            transition={{ type: 'spring', stiffness: 200, damping: 50 }}
+            className="flex w-full max-w-5xl items-center justify-between rounded-full px-4 py-3 lg:hidden border"
+          >
             {logo != null ? logo : <span className="text-sm font-semibold text-gray-900">Menu</span>}
             <button
               type="button"
@@ -80,7 +84,7 @@ export const Navbar = ({ children, className, navItems, onSignIn, logo }: Navbar
             >
               {mobileOpen ? <X className="w-5 h-5 text-gray-700" /> : <Menu className="w-5 h-5 text-gray-700" />}
             </button>
-          </div>
+          </motion.div>
         )}
       </motion.div>
 
@@ -148,9 +152,11 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
         backdropFilter: visible ? 'blur(10px)' : 'none',
         boxShadow: visible
           ? '0 8px 20px rgba(15, 23, 42, 0.10)'
-          : '0 4px 10px rgba(15, 23, 42, 0.06)',
+          : '0 0 0 rgba(0,0,0,0)',
         width: visible ? '40%' : '60%',
         y: visible ? 10 : 0,
+        backgroundColor: visible ? 'rgba(255, 255, 255, 0.70)' : 'rgba(255, 255, 255, 0)',
+        borderColor: visible ? 'rgba(0,0,0,0.06)' : 'rgba(0,0,0,0)',
       }}
       transition={{
         type: 'spring',
@@ -158,7 +164,7 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
         damping: 50,
       }}
       className={cn(
-        'relative z-[60] mx-auto hidden w-full max-w-5xl flex-row items-center justify-between rounded-full bg-white/70 px-6 py-2 lg:flex',
+        'relative z-[60] mx-auto hidden w-full max-w-5xl flex-row items-center justify-between rounded-full px-6 py-2 lg:flex border',
         className,
       )}
     >
